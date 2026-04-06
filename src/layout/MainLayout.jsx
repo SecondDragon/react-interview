@@ -12,17 +12,18 @@ import { useTabStore } from "../store/useTabStore";
 import { usePermissionStore } from "../store/usePermissionStore";
 import { useNavigate, Outlet, useLocation } from "react-router-dom";
 import { dashboardRoutes } from "../router/config";
+import { observer } from "mobx-react-lite";
 
 const { Header, Content, Sider } = Layout;
 
-const MainLayout = () => {
+const MainLayout = observer(() => {
   const navigate = useNavigate();
   const location = useLocation();
 
   const { username, logout } = useUserStore();
   const { collapsed, toggleCollapsed } = useAppStore();
   const { tabs, activeKey, addTab, removeTab, setActiveKey } = useTabStore();
-  const { allowedPaths, fetchPermissions, isLoaded } = usePermissionStore();
+  const { allowedPaths, fetchPermissions, isLoaded, clearPermissions } = usePermissionStore();
 
   const siderWidth = collapsed ? 80 : 256;
   const minTotalWidth = 1920;
@@ -52,6 +53,7 @@ const MainLayout = () => {
           // 白名单页面始终显示
           if (route.isWhiteList) return true;
           // 如果路径在后端授权列表中，显示
+          // Note: MobX observable arrays are converted to native arrays implicitly in some cases, but slice() is safer if needed.
           if (allowedPaths.includes(route.path)) return true;
           // 如果是含有子路由的父级，子路由有权限，父级也显示
           if (route.children) {
@@ -205,7 +207,7 @@ const MainLayout = () => {
               icon={<LogoutOutlined />}
               onClick={() => {
                 logout();
-                usePermissionStore.getState().clearPermissions();
+                clearPermissions();
                 navigate("/login");
               }}
             >
@@ -260,6 +262,6 @@ const MainLayout = () => {
       </Layout>
     </Layout>
   );
-};
+});
 
 export default MainLayout;

@@ -1,8 +1,9 @@
 import React from 'react';
 import { Table, Tag, Card } from 'antd';
 import { useUserStore } from '../../store/useUserStore';
+import { observer } from 'mobx-react-lite';
 
-const UserList: React.FC = () => {
+const UserList: React.FC = observer(() => {
   const { username } = useUserStore();
   const columns = [
     { title: '姓名', dataIndex: 'name', key: 'name' },
@@ -41,6 +42,6 @@ const UserList: React.FC = () => {
       <Table columns={columns} dataSource={data} pagination={false} />
     </Card>
   );
-};
+});
 
 export default UserList;

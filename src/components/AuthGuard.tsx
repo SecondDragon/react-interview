@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useLocation, Navigate } from 'react-router-dom';
 import { usePermissionStore } from '../store/usePermissionStore';
 import { dashboardRoutes,type RouteConfig } from '../router/config';
+import { observer } from 'mobx-react-lite';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -18,7 +19,7 @@ interface AuthGuardProps {
  * 使用位置：
  * 在 main.tsx 或 App.tsx 中包裹在所有需要权限控制的路由外层。
  */
-export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
+export const AuthGuard: React.FC<AuthGuardProps> = observer(({ children }) => {
   const location = useLocation();
   const { allowedPaths, isLoaded } = usePermissionStore();
 
@@ -63,4 +64,4 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
    * 注意：此重定向会触发浏览器 URL 变更，直到命中白名单中的 403 页面。
    */
   return <Navigate to="/dashboard/forbidden" replace />;
-};
+});

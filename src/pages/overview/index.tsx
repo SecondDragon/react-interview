@@ -2,8 +2,9 @@ import React from 'react';
 import { Card, Statistic, Row, Col } from 'antd';
 import { useUserStore } from '../../store/useUserStore';
 import { useTodoStore } from '../../store/useTodoStore';
+import { observer } from 'mobx-react-lite';
 
-const Overview: React.FC = () => {
+const Overview: React.FC = observer(() => {
   const { username } = useUserStore();
   const { todos } = useTodoStore();
   const completedCount = todos.filter(t => t.completed).length;
@@ -16,6 +17,6 @@ const Overview: React.FC = () => {
       </Row>
     </Card>
   );
-};
+});
 
 export default Overview;

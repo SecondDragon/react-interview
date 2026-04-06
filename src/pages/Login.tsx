@@ -1,12 +1,13 @@
 import React from 'react';
 import { Form, Input, Button, Card, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { observer } from 'mobx-react-lite';
 
 import { useUserStore } from '../store/useUserStore';
 
-const Login: React.FC = () => {
+const Login: React.FC = observer(() => {
   const navigate = useNavigate();
-  const setUser = useUserStore((state) => state.setUser);
+  const { setUser } = useUserStore();
 
   const onFinish = (values: any) => {
     console.log('Success:', values);
@@ -34,6 +35,6 @@ const Login: React.FC = () => {
       </Card>
     </div>
   );
-};
+});
 
 export default Login;
