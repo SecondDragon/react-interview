@@ -1,4 +1,4 @@
-import { makeAutoObservable } from 'mobx';
+import {makeAutoObservable} from 'mobx';
 
 interface TabItem {
   key: string;
@@ -7,7 +7,7 @@ interface TabItem {
 }
 
 class TabStore {
-  tabs: TabItem[] = [{ key: '/dashboard/overview', label: '系统概览', closable: false }];
+  tabs: TabItem[] = [{key: '/dashboard/overview', label: '系统概览', closable: false}];
   activeKey: string = '/dashboard/overview';
   maxTabs: number = 8;
 
@@ -26,7 +26,7 @@ class TabStore {
     }
 
     this.tabs.push(newTab);
-    
+
     if (this.tabs.length > this.maxTabs) {
       const firstClosableIndex = this.tabs.findIndex(t => t.closable !== false);
       if (firstClosableIndex !== -1) {
@@ -40,7 +40,7 @@ class TabStore {
   removeTab = (targetKey: string): string | null => {
     let newActiveKey = this.activeKey;
     let lastIndex = -1;
-    
+
     this.tabs.forEach((tab, i) => {
       if (tab.key === targetKey) {
         lastIndex = i - 1;
@@ -48,7 +48,7 @@ class TabStore {
     });
 
     this.tabs = this.tabs.filter((tab) => tab.key !== targetKey);
-    
+
     if (this.tabs.length && this.activeKey === targetKey) {
       if (lastIndex >= 0) {
         newActiveKey = this.tabs[lastIndex].key;

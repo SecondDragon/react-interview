@@ -1,17 +1,17 @@
 import React from 'react';
-import { Table, Tag, Card } from 'antd';
-import { useUserStore } from '../../store/useUserStore';
-import { observer } from 'mobx-react-lite';
+import {Table, Tag, Card} from 'antd';
+import {useUserStore} from '../../store/useUserStore';
+import {observer} from 'mobx-react-lite';
 
 const UserList: React.FC = observer(() => {
-  const { username } = useUserStore();
+  const {username} = useUserStore();
   const columns = [
-    { title: '姓名', dataIndex: 'name', key: 'name' },
-    { title: '角色', dataIndex: 'role', key: 'role', render: (role: string) => <Tag color="blue">{role}</Tag> },
-    { title: '状态', dataIndex: 'status', key: 'status', render: (status: string) => <Tag color="green">{status}</Tag> },
+    {title: '姓名', dataIndex: 'name', key: 'name'},
+    {title: '角色', dataIndex: 'role', key: 'role', render: (role: string) => <Tag color="blue">{role}</Tag>},
+    {title: '状态', dataIndex: 'status', key: 'status', render: (status: string) => <Tag color="green">{status}</Tag>},
   ];
 
-  const data = Array.from({ length: 5 }).map((_, i) => ({
+  const data = Array.from({length: 5}).map((_, i) => ({
     key: i,
     name: `用户 ${i + 1}`,
     role: i === 0 ? '管理员' : '普通用户',
@@ -20,26 +20,26 @@ const UserList: React.FC = observer(() => {
 
   return (
     <Card title={`用户管理 (操作人: ${username})`}>
-      <Table columns={columns} dataSource={data} pagination={false} />
-      <Table columns={columns} dataSource={data} pagination={false} />
-      <Table columns={columns} dataSource={data} pagination={false} />
-      <Table columns={columns} dataSource={data} pagination={false} />
-      <Table columns={columns} dataSource={data} pagination={false} />
-      <Table columns={columns} dataSource={data} pagination={false} />
-      <Table columns={columns} dataSource={data} pagination={false} />
-      <Table columns={columns} dataSource={data} pagination={false} />
-      <Table columns={columns} dataSource={data} pagination={false} />
-      <Table columns={columns} dataSource={data} pagination={false} />
-      <Table columns={columns} dataSource={data} pagination={false} />
-      <Table columns={columns} dataSource={data} pagination={false} />
-      <Table columns={columns} dataSource={data} pagination={false} />
-      <Table columns={columns} dataSource={data} pagination={false} />
-      <Table columns={columns} dataSource={data} pagination={false} />
-      <Table columns={columns} dataSource={data} pagination={false} />
-      <Table columns={columns} dataSource={data} pagination={false} />
-      <Table columns={columns} dataSource={data} pagination={false} />
-      <Table columns={columns} dataSource={data} pagination={false} />
-      <Table columns={columns} dataSource={data} pagination={false} />
+      <Table columns={columns} dataSource={data} pagination={false}/>
+      <Table columns={columns} dataSource={data} pagination={false}/>
+      <Table columns={columns} dataSource={data} pagination={false}/>
+      <Table columns={columns} dataSource={data} pagination={false}/>
+      <Table columns={columns} dataSource={data} pagination={false}/>
+      <Table columns={columns} dataSource={data} pagination={false}/>
+      <Table columns={columns} dataSource={data} pagination={false}/>
+      <Table columns={columns} dataSource={data} pagination={false}/>
+      <Table columns={columns} dataSource={data} pagination={false}/>
+      <Table columns={columns} dataSource={data} pagination={false}/>
+      <Table columns={columns} dataSource={data} pagination={false}/>
+      <Table columns={columns} dataSource={data} pagination={false}/>
+      <Table columns={columns} dataSource={data} pagination={false}/>
+      <Table columns={columns} dataSource={data} pagination={false}/>
+      <Table columns={columns} dataSource={data} pagination={false}/>
+      <Table columns={columns} dataSource={data} pagination={false}/>
+      <Table columns={columns} dataSource={data} pagination={false}/>
+      <Table columns={columns} dataSource={data} pagination={false}/>
+      <Table columns={columns} dataSource={data} pagination={false}/>
+      <Table columns={columns} dataSource={data} pagination={false}/>
     </Card>
   );
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Descriptions, Tag } from 'antd';
+import {Card, Descriptions, Tag} from 'antd';
 
 const Sub1Page1: React.FC = () => (
   <Card title="三级路由 1-1">

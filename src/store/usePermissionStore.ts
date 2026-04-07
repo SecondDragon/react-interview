@@ -1,4 +1,4 @@
-import { makeAutoObservable } from 'mobx';
+import {makeAutoObservable} from 'mobx';
 
 class PermissionStore {
   allowedPaths: string[] = [];
@@ -20,6 +20,8 @@ class PermissionStore {
       '/dashboard/multi-level',
       '/dashboard/multi-level/sub1',
       '/dashboard/multi-level/sub1/page1',
+      '/dashboard/micro-vue/list',
+      '/dashboard/micro-vue/detail'
     ];
 
     this.allowedPaths = mockAllowed;

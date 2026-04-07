@@ -1,10 +1,10 @@
 import React from 'react';
-import { Card, Result, Button } from 'antd';
-import { useUserStore } from '../../store/useUserStore';
-import { observer } from 'mobx-react-lite';
+import {Card, Result, Button} from 'antd';
+import {useUserStore} from '../../store/useUserStore';
+import {observer} from 'mobx-react-lite';
 
 const MyTasks: React.FC = observer(() => {
-  const { username } = useUserStore();
+  const {username} = useUserStore();
   return (
     <Card title="我的专属任务">
       <Result

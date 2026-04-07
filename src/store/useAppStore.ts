@@ -1,4 +1,4 @@
-import { makeAutoObservable, reaction } from 'mobx';
+import {makeAutoObservable, reaction} from 'mobx';
 
 class AppStore {
   collapsed = false;
@@ -6,7 +6,7 @@ class AppStore {
 
   constructor() {
     makeAutoObservable(this);
-    
+
     // 从 localStorage 恢复数据
     const stored = localStorage.getItem('app-storage');
     if (stored) {
@@ -28,7 +28,7 @@ class AppStore {
         theme: this.theme,
       }),
       (state: { collapsed: boolean; theme: 'light' | 'dark' }) => {
-        localStorage.setItem('app-storage', JSON.stringify({ state }));
+        localStorage.setItem('app-storage', JSON.stringify({state}));
       }
     );
   }

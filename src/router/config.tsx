@@ -1,12 +1,12 @@
 import React, {lazy} from 'react';
 import {
-    DashboardOutlined,
-    CheckSquareOutlined,
-    TeamOutlined,
-    MenuOutlined,
-    SettingOutlined,
-    AppstoreOutlined,
-    LockOutlined
+  DashboardOutlined,
+  CheckSquareOutlined,
+  TeamOutlined,
+  MenuOutlined,
+  SettingOutlined,
+  AppstoreOutlined,
+  ApiOutlined,
 } from '@ant-design/icons';
 
 /**
@@ -14,19 +14,19 @@ import {
  * 用于规范系统内所有页面的路由属性，支持嵌套子路由和权限控制
  */
 export interface RouteConfig {
-    path: string;        // 路由访问路径，也是菜单项和标签页的唯一标识(Key)
-    label: string;       // 菜单显示的名称，以及标签页显示的标题
-    icon?: React.ReactNode;  // 菜单显示的图标 (Ant Design Icons)
-    element?: React.ReactNode; // 该路由对应的组件页面 (通常使用 lazy 加载)
-    closable?: boolean;  // 该页面在标签栏(Tabs)中是否允许被用户关闭
-    children?: RouteConfig[]; // 子路由配置，用于实现多级侧边菜单
-    hideInMenu?: boolean; // 是否在侧边导航菜单中隐藏 (例如一些详情页或 403 页面)
-    /**
-     * 是否为白名单路由
-     * 实现逻辑：即使后端权限接口没有返回该路径，AuthGuard 也会允许访问，MainLayout 也会将其显示在菜单中。
-     * 使用场景：首页概览、个人设置等通用页面。
-     */
-    isWhiteList?: boolean;
+  path: string;        // 路由访问路径，也是菜单项和标签页的唯一标识(Key)
+  label: string;       // 菜单显示的名称，以及标签页显示的标题
+  icon?: React.ReactNode;  // 菜单显示的图标 (Ant Design Icons)
+  element?: React.ReactNode; // 该路由对应的组件页面 (通常使用 lazy 加载)
+  closable?: boolean;  // 该页面在标签栏(Tabs)中是否允许被用户关闭
+  children?: RouteConfig[]; // 子路由配置，用于实现多级侧边菜单
+  hideInMenu?: boolean; // 是否在侧边导航菜单中隐藏 (例如一些详情页或 403 页面)
+  /**
+   * 是否为白名单路由
+   * 实现逻辑：即使后端权限接口没有返回该路径，AuthGuard 也会允许访问，MainLayout 也会将其显示在菜单中。
+   * 使用场景：首页概览、个人设置等通用页面。
+   */
+  isWhiteList?: boolean;
 }
 
 // 懒加载页面组件，优化首屏加载速度
@@ -49,212 +49,84 @@ const Sub2Page = lazy(() => import('../pages/multi-level/Sub2Page'));
  * 3. 用于 MainLayout 监听路径变化并同步更新顶部标签页(Tabs)。
  */
 export const dashboardRoutes: RouteConfig[] = [
-    {
-        path: '/dashboard/overview',
-        label: '系统概览',
-        icon: <DashboardOutlined/>,
-        element: <Overview/>,
-        closable: false,
-        isWhiteList: true // 首页通常设为白名单
-    },
+  {
+    path: '/dashboard/overview',
+    label: '系统概览',
+    icon: <DashboardOutlined/>,
+    element: <Overview/>,
+    closable: false,
+    isWhiteList: true // 首页通常设为白名单
+  },
 
-    {
-        path: '/dashboard/tasks-container',
-        label: '任务中心',
-        icon: <CheckSquareOutlined/>,
+  {
+    path: '/dashboard/tasks-container',
+    label: '任务中心',
+    icon: <CheckSquareOutlined/>,
+    children: [
+      {path: '/dashboard/tasks-container/list', label: '全部任务清单', element: <TaskList/>},
+      // 假设“我的任务”是白名单，不需要后端权限也能看
+      {path: '/dashboard/tasks-container/my', label: '我的私人任务', element: <MyTasks/>, isWhiteList: true},
+    ]
+  },
+
+  {
+    path: '/dashboard/multi-level',
+    label: '多级菜单示例',
+    icon: <MenuOutlined/>,
+    children: [
+      {
+        path: '/dashboard/multi-level/sub1',
+        label: '二级子菜单 A',
+        icon: <AppstoreOutlined/>,
         children: [
-            {path: '/dashboard/tasks-container/list', label: '全部任务清单', element: <TaskList/>},
-            // 假设“我的任务”是白名单，不需要后端权限也能看
-            {path: '/dashboard/tasks-container/my', label: '我的私人任务', element: <MyTasks/>, isWhiteList: true},
+          {path: '/dashboard/multi-level/sub1/page1', label: '三级路由 1-1', element: <Sub1Page1/>},
+          {path: '/dashboard/multi-level/sub1/page2', label: '三级路由 1-2', element: <Sub1Page2/>},
         ]
-    },
+      },
+      {
+        path: '/dashboard/multi-level/sub2',
+        label: '二级直达(限权)',
+        element: <Sub2Page/>
+      },
+    ]
+  },
 
-    {
-        path: '/dashboard/multi-level',
-        label: '多级菜单示例',
-        icon: <MenuOutlined/>,
-        children: [
-            {
-                path: '/dashboard/multi-level/sub1',
-                label: '二级子菜单 A',
-                icon: <AppstoreOutlined/>,
-                children: [
-                    {path: '/dashboard/multi-level/sub1/page1', label: '三级路由 1-1', element: <Sub1Page1/>},
-                    {path: '/dashboard/multi-level/sub1/page2', label: '三级路由 1-2', element: <Sub1Page2/>},
-                ]
-            },
-            {
-                path: '/dashboard/multi-level/sub2',
-                label: '二级直达(限权)',
-                element: <Sub2Page/>
-            }
-        ]
-    },
+  // ======== 改进后的微前端路由配置 ========
+  // 凡是匹配 /dashboard/micro-vue/* 的菜单，主路由都会渲染统一容器，由 qiankun 根据 URL 自动加载。
+  {
+    path: '/dashboard/micro-vue',
+    label: 'Vue 微应用中心',
+    icon: <ApiOutlined/>,
+    isWhiteList: true,
+    children: [
+      {path: '/dashboard/micro-vue/list', label: 'Vue 任务列表'},
+      {path: '/dashboard/micro-vue/detail', label: 'Vue 任务详情'},
+    ]
+  },
+  {
+    path: '/dashboard/micro-react',
+    label: 'React 微应用中心',
+    icon: <ApiOutlined/>,
+    isWhiteList: true,
+    children: [
+      {path: '/dashboard/micro-react/page-a', label: 'React 页面 A'},
+      {path: '/dashboard/micro-react/page-b', label: 'React 页面 B'},
+    ]
+  },
+  // ===================================
 
-    {
-        path: '/dashboard/users1',
-        isWhiteList: true, // 首页通常设为白名单
-        label: '用户权限管理',
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users2',
-        label: '用户权限管理',
-        isWhiteList: true, // 首页通常设为白名单
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users3',
-        isWhiteList: true, // 首页通常设为白名单
-        label: '用户权限管理',
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users4',
-        isWhiteList: true, // 首页通常设为白名单
-        label: '用户权限管理',
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users5',
-        isWhiteList: true, // 首页通常设为白名单
-        label: '用户权限管理',
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users6',
-        label: '用户权限管理',
-        icon: <TeamOutlined/>,
-        isWhiteList: true, // 首页通常设为白名单
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users7',
-        label: '用户权限管理',
-        isWhiteList: true, // 首页通常设为白名单
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users8',
-        label: '用户权限管理',
-        icon: <TeamOutlined/>,
-        isWhiteList: true, // 首页通常设为白名单
-
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users9',
-        label: '用户权限管理',
-        icon: <TeamOutlined/>,
-        isWhiteList: true, // 首页通常设为白名单
-        element: <UserList/>
-    },
-    {
-        path: '/dashboard/users10',
-        label: '用户权限管理',
-        isWhiteList: true, // 首页通常设为白名单
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users11',
-        label: '用户权限管理',
-        isWhiteList: true, // 首页通常设为白名单
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users12',
-        label: '用户权限管理',
-        isWhiteList: true, // 首页通常设为白名单
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users13',
-        label: '用户权限管理',
-        isWhiteList: true, // 首页通常设为白名单
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users14',
-        label: '用户权限管理',
-        isWhiteList: true, // 首页通常设为白名单
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users15',
-        label: '用户权限管理',
-        isWhiteList: true, // 首页通常设为白名单
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users16',
-        label: '用户权限管理',
-        isWhiteList: true, // 首页通常设为白名单
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users17',
-        label: '用户权限管理',
-        isWhiteList: true, // 首页通常设为白名单
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users18',
-        label: '用户权限管理',
-        isWhiteList: true, // 首页通常设为白名单
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users19',
-        label: '用户权限管理',
-        isWhiteList: true, // 首页通常设为白名单
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users20',
-        label: '用户权限管理',
-        isWhiteList: true, // 首页通常设为白名单
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users21',
-        label: '用户权限管理',
-        isWhiteList: true, // 首页通常设为白名单
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users22',
-        label: '用户权限管理',
-        isWhiteList: true, // 首页通常设为白名单
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users23',
-        label: '用户权限管理',
-        isWhiteList: true, // 首页通常设为白名单
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users24',
-        label: '用户权限管理',
-        isWhiteList: true, // 首页通常设为白名单
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users25',
-        label: '用户权限管理',
-        isWhiteList: true, // 首页通常设为白名单
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    }, {
-        path: '/dashboard/users26',
-        label: '用户权限管理',
-        isWhiteList: true, // 首页通常设为白名单
-        icon: <TeamOutlined/>,
-        element: <UserList/>
-    },
-    {
-        path: '/dashboard/settings',
-        label: '系统全局配置',
-        icon: <SettingOutlined/>,
-        element: <Settings/>,
-        isWhiteList: true // 设置页面通常也允许访问
-    },
+  {
+    path: '/dashboard/users1',
+    isWhiteList: true, // 首页通常设为白名单
+    label: '用户权限管理',
+    icon: <TeamOutlined/>,
+    element: <UserList/>
+  },
+  {
+    path: '/dashboard/settings',
+    label: '系统全局配置',
+    icon: <SettingOutlined/>,
+    element: <Settings/>,
+    isWhiteList: true // 设置页面通常也允许访问
+  },
 ];

@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
-import { useLocation, Navigate } from 'react-router-dom';
-import { usePermissionStore } from '../store/usePermissionStore';
-import { dashboardRoutes,type RouteConfig } from '../router/config';
-import { observer } from 'mobx-react-lite';
+import React, {useMemo} from 'react';
+import {useLocation, Navigate} from 'react-router-dom';
+import {usePermissionStore} from '../store/usePermissionStore';
+import {dashboardRoutes, type RouteConfig} from '../router/config';
+import {observer} from 'mobx-react-lite';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -10,18 +10,18 @@ interface AuthGuardProps {
 
 /**
  * 路由守卫组件
- * 
+ *
  * 功能职责：
  * 1. 拦截未授权的访问：检查用户是否有权访问当前 location.pathname。
  * 2. 状态前置检查：确保权限数据 (isLoaded) 加载完成后再进行校验。
  * 3. 自动重定向：对于无权访问的路径，统一跳转至 403 Forbidden 页面。
- * 
+ *
  * 使用位置：
  * 在 main.tsx 或 App.tsx 中包裹在所有需要权限控制的路由外层。
  */
-export const AuthGuard: React.FC<AuthGuardProps> = observer(({ children }) => {
+export const AuthGuard: React.FC<AuthGuardProps> = observer(({children}) => {
   const location = useLocation();
-  const { allowedPaths, isLoaded } = usePermissionStore();
+  const {allowedPaths, isLoaded} = usePermissionStore();
 
   /**
    * 展平路由配置 (Memoized)
@@ -48,7 +48,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = observer(({ children }) => {
   /**
    * 核心权限判断逻辑
    */
-  
+
   // 1. 白名单检查：如果该路径在 dashboardRoutes 中被标记为 isWhiteList，直接允许进入
   if (currentRoute?.isWhiteList) {
     return <>{children}</>;
@@ -63,5 +63,5 @@ export const AuthGuard: React.FC<AuthGuardProps> = observer(({ children }) => {
    * 3. 拦截：对于既非白名单也不在允许列表中的路径，强制跳转到 403 页面
    * 注意：此重定向会触发浏览器 URL 变更，直到命中白名单中的 403 页面。
    */
-  return <Navigate to="/dashboard/forbidden" replace />;
+  return <Navigate to="/dashboard/forbidden" replace/>;
 });

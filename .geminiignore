@@ -1,0 +1,39 @@
+# Node Modules
+node_modules/
+
+# Build outputs
+dist/
+build/
+out/
+
+# Images
+*.png
+*.jpg
+*.jpeg
+*.svg
+*.webp
+*.ico
+*.gif
+
+# Videos
+*.mp4
+*.webm
+*.avi
+*.mov
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor and OS
+.vscode/
+.idea/
+.DS_Store
+
+# Cache and testing
+.eslintcache
+tsconfig.tsbuildinfo
+coverage/
+.nyc_output/

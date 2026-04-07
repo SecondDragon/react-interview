@@ -1,4 +1,4 @@
-import { makeAutoObservable } from 'mobx';
+import {makeAutoObservable} from 'mobx';
 
 interface Todo {
   id: number;
@@ -8,8 +8,8 @@ interface Todo {
 
 class TodoStore {
   todos: Todo[] = [
-    { id: 1, text: '学习 React 19', completed: true },
-    { id: 2, text: '掌握 MobX 状态管理', completed: false },
+    {id: 1, text: '学习 React 19', completed: true},
+    {id: 2, text: '掌握 MobX 状态管理', completed: false},
   ];
 
   constructor() {
@@ -17,7 +17,7 @@ class TodoStore {
   }
 
   addTodo = (text: string) => {
-    this.todos.push({ id: Date.now(), text, completed: false });
+    this.todos.push({id: Date.now(), text, completed: false});
   };
 
   removeTodo = (id: number) => {

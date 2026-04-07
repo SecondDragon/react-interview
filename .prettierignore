@@ -1,0 +1,24 @@
+# 构建产物
+dist/
+build/
+out/
+coverage/
+
+# 依赖库
+node_modules/
+
+# 静态资源
+*.png
+*.jpg
+*.jpeg
+*.svg
+*.gif
+*.webp
+*.mp4
+*.webm
+
+# 其他
+.DS_Store
+.idea/
+.vscode/
+*.log

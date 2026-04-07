@@ -1,27 +1,32 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy } from 'react';
+import './App.css';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
 import Login from './pages/Login';
-import MainLayout from './layout/MainLayout';
+import MainLayout from './layout/MainLayout.tsx';
 import { dashboardRoutes } from './router/config';
 import type { RouteConfig } from './router/config';
 import { AuthGuard } from './components/AuthGuard';
-import './App.css';
 
 const Forbidden = lazy(() => import('./pages/error/Forbidden'));
 
+/**
+ * 递归渲染普通 React 业务路由
+ */
 const renderFlattenRoutes = (routes: RouteConfig[]): React.ReactNode[] => {
-  let result: React.ReactNode[] = [];
+  const result: React.ReactNode[] = [];
   routes.forEach((route) => {
-    if (route.element) {
-      const relativePath = route.path.startsWith('/dashboard/') 
-        ? route.path.substring('/dashboard/'.length) 
+    // 只有带有 element 且不是微前端前缀的普通路由才在这里生成 React Route
+    if (route.element && !route.path.includes('micro-')) {
+      const relativePath = route.path.startsWith('/dashboard/')
+        ? route.path.substring('/dashboard/'.length)
         : route.path;
 
       result.push(
-        <Route 
-          key={route.path} 
-          path={relativePath} 
-          element={<AuthGuard>{route.element}</AuthGuard>} 
+        <Route
+          key={route.path}
+          path={relativePath}
+          element={<AuthGuard>{route.element}</AuthGuard>}
         />
       );
     }
@@ -35,16 +40,12 @@ const App: React.FC = () => {
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
-        
         <Route path="/dashboard" element={<MainLayout />}>
+          {/* 渲染主应用的普通业务路由 */}
           {renderFlattenRoutes(dashboardRoutes)}
-          
-          {/* 注册 403 页面 */}
           <Route path="forbidden" element={<Forbidden />} />
-          
           <Route index element={<Navigate to="/dashboard/overview" replace />} />
         </Route>
-
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

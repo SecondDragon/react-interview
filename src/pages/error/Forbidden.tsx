@@ -1,6 +1,6 @@
 import React from 'react';
-import { Result, Button } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import {Result, Button} from 'antd';
+import {useNavigate} from 'react-router-dom';
 
 const Forbidden: React.FC = () => {
   const navigate = useNavigate();

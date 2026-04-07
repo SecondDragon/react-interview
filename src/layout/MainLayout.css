@@ -1,9 +1,5 @@
-1 /* 仅针对 MainLayout 中的 Tabs 生效 */
-2 .ant-tabs-tab-active .ant-tabs-tab-btn {
-3   /* 
-4      取消物理加粗，改用文字阴影模拟加粗效果。
-5      阴影向左右各偏移 0.3px，视觉上会变厚，但不会占用容器空间。
-6   */
-7   font-weight: normal !important; 
-8   text-shadow: 0.3px 0 0 currentColor, -0.3px 0 0 currentColor;
-9 }
+.ant-tabs-tab-btn {
+  font-weight: 400 !important;
+  /*8   text-shadow: 0.3px 0 0 currentColor, -0.3px 0 0 currentColor;*/
+
+}
