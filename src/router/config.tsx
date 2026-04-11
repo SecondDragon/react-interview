@@ -44,6 +44,7 @@ const Sub2Page = lazy(() => import('../pages/multi-level/Sub2Page'));
 
 // 瀑布流页面
 const WaterfallPage = lazy(() => import('../pages/waterfall/index'));
+const WaterfallProfessional = lazy(() => import('../pages/waterfall/Professional'));
 
 /**
  * 路由总表配置
@@ -63,11 +64,22 @@ export const dashboardRoutes: RouteConfig[] = [
   },
 
   {
-    path: '/dashboard/waterfall',
-    label: '瀑布流示例',
+    path: '/dashboard/waterfall-container',
+    label: '瀑布流专题',
     icon: <AppstoreOutlined/>,
-    element: <WaterfallPage/>,
-    isWhiteList: true
+    isWhiteList: true,
+    children: [
+      {
+        path: '/dashboard/waterfall',
+        label: '基础虚拟瀑布流',
+        element: <WaterfallPage/>,
+      },
+      {
+        path: '/dashboard/waterfall-pro',
+        label: 'Pro级空间索引瀑布流',
+        element: <WaterfallProfessional/>,
+      }
+    ]
   },
 
   {

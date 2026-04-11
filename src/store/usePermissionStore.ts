@@ -21,7 +21,10 @@ class PermissionStore {
       '/dashboard/multi-level/sub1',
       '/dashboard/multi-level/sub1/page1',
       '/dashboard/micro-vue/list',
-      '/dashboard/micro-vue/detail'
+      '/dashboard/micro-vue/detail',
+      '/dashboard/waterfall-pro',
+      '/dashboard/waterfall',
+
     ];
 
     this.allowedPaths = mockAllowed;

@@ -46,7 +46,6 @@ const fetchMockData = async (page: number, pageSize: number): Promise<WaterfallI
   });
 };
 
-
 const WaterfallPage: React.FC = () => {
   // =====================================================================
   // 【终极方案：将核心状态藏在 useRef 中，夺回控制权】
@@ -219,7 +218,10 @@ const WaterfallPage: React.FC = () => {
         在动画期间，卡片依然占据着原本较宽的位置，这会短暂地撑破容器宽度，导致 SimpleBar 出现极其影响体验的横向滚动条。
         加上横向隐藏后，即使动画还在进行中，溢出的部分也会被无情裁掉，完美解决横向滚动条闪烁的问题！
       */}
-      <div ref={wrapperRef} style={{ padding: '24px', boxSizing: 'border-box', overflowX: 'hidden' }}>
+      <div
+        ref={wrapperRef}
+        style={{ padding: '24px', boxSizing: 'border-box', overflowX: 'hidden' }}
+      >
         {/*<h2 style={{ marginBottom: 24 }}>瀑布流布局示例页面 (固定 {columns} 列)</h2>*/}
         {/*<div style={{ marginBottom: 16, color: '#666' }}>*/}
         {/*  <p>*/}
@@ -264,17 +266,25 @@ const WaterfallPage: React.FC = () => {
                 key={item.id}
                 style={{
                   position: 'absolute',
-                  // 使用计算出来的动态宽度，确保所有小项刚好占满 6 列
+                  // 【GPU 加速布局：小红书同款 translate3d 方案】
+                  // 相比直接修改 top/left，translate 会启用浏览器合成层加速，不触发布局重排。
+                  left: 0,
+                  top: 0,
+                  transform: `translate3d(${pos.left}px, ${pos.top}px, 0)`,
+                  willChange: 'transform',
+
                   width: itemWidth,
                   height: pos.itemHeight, // 使用我们在 Hook 里算好的动态总高度
-                  left: pos.left,
-                  top: pos.top,
-                  backgroundColor: '#fff', // 改为纯白底色
+                  backgroundColor: '#fff',
                   borderRadius: 8,
                   padding: 16,
                   boxSizing: 'border-box',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  transition: 'left 0.3s ease, top 0.3s ease, opacity 0.3s ease, width 0.3s ease',
+
+                  // 使用一个更具“高级感”的贝塞尔曲线，模拟这种自然回弹和重排的质感
+                  // 不要使用，很蠢，会使得页面跳动
+                  // transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease, width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+
                   opacity: isReady ? 1 : 0,
                   display: 'flex',
                   flexDirection: 'column',
@@ -290,7 +300,7 @@ const WaterfallPage: React.FC = () => {
                     backgroundColor: item.color, // 用柔和的随机色做骨架屏底色
                     borderRadius: '4px',
                     overflow: 'hidden',
-                    marginBottom: '8px'
+                    marginBottom: '8px',
                   }}
                 >
                   <img
@@ -300,14 +310,12 @@ const WaterfallPage: React.FC = () => {
                       width: '100%',
                       height: '100%',
                       objectFit: 'cover',
-                      display: 'block'
+                      display: 'block',
                     }}
                   />
                 </div>
 
-                <div style={{ fontWeight: 'bold', fontSize: 14, color: '#333' }}>
-                  {item.title}
-                </div>
+                <div style={{ fontWeight: 'bold', fontSize: 14, color: '#333' }}>{item.title}</div>
                 <div style={{ fontSize: 12, color: '#999', marginTop: '4px' }}>
                   尺寸: {item.imgWidth}x{item.imgHeight}
                 </div>

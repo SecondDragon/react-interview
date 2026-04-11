@@ -7,6 +7,6 @@ createRoot(document.getElementById('root')!).render(
   <App/>
   // </StrictMode>,
 )
-import {registerMicroApps} from "qiankun";
+// import {registerMicroApps} from "qiankun";
 // import "./micro-apps.js";
 
