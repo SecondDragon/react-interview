@@ -7,22 +7,6 @@ createRoot(document.getElementById('root')!).render(
   <App/>
   // </StrictMode>,
 )
-import {registerMicroApps, start} from "qiankun";
+import {registerMicroApps} from "qiankun";
 // import "./micro-apps.js";
-registerMicroApps([
-  {
-    name: "vue-app",
-    entry: "//localhost:8082",
-    container: "#micro-viewport", // 统一挂载点
-    activeRule: "/dashboard/micro-vue", // 只要路径以这个开头，就激活
-  },
-  {
-    name: "react-app",
-    entry: "//localhost:8083",
-    container: "#micro-viewport",
-    activeRule: "/dashboard/micro-react",
-  },
-]);
-start({
-  prefetch: true,
-});
+

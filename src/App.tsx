@@ -2,7 +2,6 @@ import React, { lazy } from 'react';
 import './App.css';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-import Login from './pages/Login';
 import MainLayout from './layout/MainLayout.tsx';
 import { dashboardRoutes } from './router/config';
 import type { RouteConfig } from './router/config';
@@ -39,15 +38,16 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<MainLayout />}>
+          <Route path="micro-vue/*" element={null} />
+
           {/* 渲染主应用的普通业务路由 */}
           {renderFlattenRoutes(dashboardRoutes)}
           <Route path="forbidden" element={<Forbidden />} />
           <Route index element={<Navigate to="/dashboard/overview" replace />} />
         </Route>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Navigate to="/dashboard/overview" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard/overview" replace />} />
       </Routes>
     </Router>
   );

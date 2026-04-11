@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, {lazy} from 'react';
 import {
   DashboardOutlined,
@@ -41,6 +42,9 @@ const Sub1Page1 = lazy(() => import('../pages/multi-level/sub1/Sub1Page1'));
 const Sub1Page2 = lazy(() => import('../pages/multi-level/sub1/Sub1Page2'));
 const Sub2Page = lazy(() => import('../pages/multi-level/Sub2Page'));
 
+// 瀑布流页面
+const WaterfallPage = lazy(() => import('../pages/waterfall/index'));
+
 /**
  * 路由总表配置
  * 该配置定义了系统的整个页面骨架结构。
@@ -56,6 +60,14 @@ export const dashboardRoutes: RouteConfig[] = [
     element: <Overview/>,
     closable: false,
     isWhiteList: true // 首页通常设为白名单
+  },
+
+  {
+    path: '/dashboard/waterfall',
+    label: '瀑布流示例',
+    icon: <AppstoreOutlined/>,
+    element: <WaterfallPage/>,
+    isWhiteList: true
   },
 
   {
