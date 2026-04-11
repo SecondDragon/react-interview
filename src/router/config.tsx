@@ -45,6 +45,7 @@ const Sub2Page = lazy(() => import('../pages/multi-level/Sub2Page'));
 // 瀑布流页面
 const WaterfallPage = lazy(() => import('../pages/waterfall/index'));
 const WaterfallProfessional = lazy(() => import('../pages/waterfall/Professional'));
+const WaterfallUltimate = lazy(() => import('../pages/waterfall/Ultimate'));
 
 /**
  * 路由总表配置
@@ -78,6 +79,11 @@ export const dashboardRoutes: RouteConfig[] = [
         path: '/dashboard/waterfall-pro',
         label: 'Pro级空间索引瀑布流',
         element: <WaterfallProfessional/>,
+      },
+      {
+        path: '/dashboard/waterfall-ultimate',
+        label: 'Ultimate级节点复用瀑布流',
+        element: <WaterfallUltimate/>,
       }
     ]
   },
