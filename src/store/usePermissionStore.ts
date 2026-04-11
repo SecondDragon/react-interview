@@ -24,6 +24,7 @@ class PermissionStore {
       '/dashboard/micro-vue/detail',
       '/dashboard/waterfall-pro',
       '/dashboard/waterfall',
+      '/dashboard/waterfall-ultimate',
 
     ];
 
