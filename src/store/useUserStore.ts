@@ -1,23 +1,15 @@
-import {makeAutoObservable} from 'mobx';
+import { create } from 'zustand';
 
-class UserStore {
-  username: string = '';
-  isLoggedIn: boolean = false;
-
-  constructor() {
-    makeAutoObservable(this);
-  }
-
-  setUser = (username: string) => {
-    this.username = username;
-    this.isLoggedIn = true;
-  };
-
-  logout = () => {
-    this.username = '';
-    this.isLoggedIn = false;
-  };
+interface UserState {
+  username: string;
+  isLoggedIn: boolean;
+  setUser: (username: string) => void;
+  logout: () => void;
 }
 
-const userStore = new UserStore();
-export const useUserStore = () => userStore;
+export const useUserStore = create<UserState>((set) => ({
+  username: '',
+  isLoggedIn: false,
+  setUser: (username: string) => set({ username, isLoggedIn: true }),
+  logout: () => set({ username: '', isLoggedIn: false }),
+}));

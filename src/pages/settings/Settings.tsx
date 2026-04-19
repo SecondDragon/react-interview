@@ -1,10 +1,9 @@
 import React from 'react';
-import {Card, Switch, Space, Typography, Alert} from 'antd';
-import {useAppStore} from '../../store/useAppStore';
-import {observer} from 'mobx-react-lite';
+import { Card, Switch, Space, Typography, Alert } from 'antd';
+import { useAppStore } from '../../store/useAppStore';
 
-const Settings: React.FC = observer(() => {
-  const {collapsed, toggleCollapsed} = useAppStore();
+const Settings: React.FC = () => {
+  const { collapsed, toggleCollapsed } = useAppStore();
 
   return (
     <Card title="系统配置 (持久化存储演示)">
@@ -13,9 +12,9 @@ const Settings: React.FC = observer(() => {
         description="您可以尝试刷新页面，下面的开关状态会自动从 localStorage 恢复。"
         type="info"
         showIcon
-        style={{marginBottom: 20}}
+        style={{ marginBottom: 20 }}
       />
-      <Space direction="vertical" style={{width: '100%'}}>
+      <Space direction="vertical" style={{ width: '100%' }}>
         <Space align="center">
           <Typography.Text>侧边栏折叠状态：</Typography.Text>
           <Switch
@@ -28,6 +27,6 @@ const Settings: React.FC = observer(() => {
       </Space>
     </Card>
   );
-});
+};
 
 export default Settings;

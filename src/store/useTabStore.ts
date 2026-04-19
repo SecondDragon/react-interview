@@ -1,4 +1,4 @@
-import {makeAutoObservable} from 'mobx';
+import { create } from 'zustand';
 
 interface TabItem {
   key: string;
@@ -6,61 +6,63 @@ interface TabItem {
   closable?: boolean;
 }
 
-class TabStore {
-  tabs: TabItem[] = [{key: '/dashboard/overview', label: '系统概览', closable: false}];
-  activeKey: string = '/dashboard/overview';
-  maxTabs: number = 8;
+interface TabState {
+  tabs: TabItem[];
+  activeKey: string;
+  maxTabs: number;
+  setActiveKey: (key: string) => void;
+  addTab: (newTab: TabItem) => void;
+  removeTab: (targetKey: string) => string | null;
+}
 
-  constructor() {
-    makeAutoObservable(this);
-  }
+export const useTabStore = create<TabState>((set, get) => ({
+  tabs: [{ key: '/dashboard/overview', label: '系统概览', closable: false }],
+  activeKey: '/dashboard/overview',
+  maxTabs: 8,
 
-  setActiveKey = (key: string) => {
-    this.activeKey = key;
-  };
+  setActiveKey: (key: string) => set({ activeKey: key }),
 
-  addTab = (newTab: TabItem) => {
-    if (this.tabs.find((t) => t.key === newTab.key)) {
-      this.activeKey = newTab.key;
+  addTab: (newTab: TabItem) => {
+    const { tabs, maxTabs } = get();
+    if (tabs.find((t) => t.key === newTab.key)) {
+      set({ activeKey: newTab.key });
       return;
     }
 
-    this.tabs.push(newTab);
+    const newTabs = [...tabs, newTab];
 
-    if (this.tabs.length > this.maxTabs) {
-      const firstClosableIndex = this.tabs.findIndex(t => t.closable !== false);
+    if (newTabs.length > maxTabs) {
+      const firstClosableIndex = newTabs.findIndex((t) => t.closable !== false);
       if (firstClosableIndex !== -1) {
-        this.tabs.splice(firstClosableIndex, 1);
+        newTabs.splice(firstClosableIndex, 1);
       }
     }
 
-    this.activeKey = newTab.key;
-  };
+    set({ tabs: newTabs, activeKey: newTab.key });
+  },
 
-  removeTab = (targetKey: string): string | null => {
-    let newActiveKey = this.activeKey;
+  removeTab: (targetKey: string): string | null => {
+    const { tabs, activeKey } = get();
+    let newActiveKey = activeKey;
     let lastIndex = -1;
 
-    this.tabs.forEach((tab, i) => {
+    tabs.forEach((tab, i) => {
       if (tab.key === targetKey) {
         lastIndex = i - 1;
       }
     });
 
-    this.tabs = this.tabs.filter((tab) => tab.key !== targetKey);
+    const filteredTabs = tabs.filter((tab) => tab.key !== targetKey);
 
-    if (this.tabs.length && this.activeKey === targetKey) {
+    if (filteredTabs.length && activeKey === targetKey) {
       if (lastIndex >= 0) {
-        newActiveKey = this.tabs[lastIndex].key;
+        newActiveKey = filteredTabs[lastIndex].key;
       } else {
-        newActiveKey = this.tabs[0].key;
+        newActiveKey = filteredTabs[0].key;
       }
     }
 
-    this.activeKey = newActiveKey;
+    set({ tabs: filteredTabs, activeKey: newActiveKey });
     return newActiveKey;
-  };
-}
-
-const tabStore = new TabStore();
-export const useTabStore = () => tabStore;
+  },
+}));

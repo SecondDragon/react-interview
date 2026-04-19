@@ -9,10 +9,10 @@ import { usePermissionStore } from '../store/usePermissionStore';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { dashboardRoutes } from '../router/config';
 import type { RouteConfig } from '../router/config';
-import { observer } from 'mobx-react-lite';
 import type { MenuItem, FlattenedRouteMap } from './MainLayout.types';
 import { registerMicroApps, start } from 'qiankun';
 import { useOpenKeysByPath } from '../hooks/hooks.ts';
+import DraggablePhoneBar from '../pages/phone-work-bench/phone-bar/DraggablePhoneBar';
 
 registerMicroApps([
   {
@@ -31,7 +31,7 @@ registerMicroApps([
 
 const { Header, Content, Sider } = Layout;
 
-const MainLayout: React.FC = observer(() => {
+const MainLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -266,8 +266,9 @@ const MainLayout: React.FC = observer(() => {
           />
         </Content>
       </Layout>
+      <DraggablePhoneBar />
     </Layout>
   );
-});
+};
 
 export default MainLayout;

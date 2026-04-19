@@ -1,8 +1,7 @@
-import React, {useMemo} from 'react';
-import {useLocation, Navigate} from 'react-router-dom';
-import {usePermissionStore} from '../store/usePermissionStore';
-import {dashboardRoutes, type RouteConfig} from '../router/config';
-import {observer} from 'mobx-react-lite';
+import React, { useMemo } from 'react';
+import { useLocation, Navigate } from 'react-router-dom';
+import { usePermissionStore } from '../store/usePermissionStore';
+import { dashboardRoutes, type RouteConfig } from '../router/config';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -19,9 +18,9 @@ interface AuthGuardProps {
  * 使用位置：
  * 在 main.tsx 或 App.tsx 中包裹在所有需要权限控制的路由外层。
  */
-export const AuthGuard: React.FC<AuthGuardProps> = observer(({children}) => {
+export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const location = useLocation();
-  const {allowedPaths, isLoaded} = usePermissionStore();
+  const { allowedPaths, isLoaded } = usePermissionStore();
 
   /**
    * 展平路由配置 (Memoized)
@@ -31,7 +30,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = observer(({children}) => {
   const flattenedRoutes = useMemo(() => {
     const map: Record<string, RouteConfig> = {};
     const flatten = (items: RouteConfig[]) => {
-      items.forEach(item => {
+      items.forEach((item) => {
         map[item.path] = item;
         if (item.children) flatten(item.children);
       });
@@ -63,5 +62,5 @@ export const AuthGuard: React.FC<AuthGuardProps> = observer(({children}) => {
    * 3. 拦截：对于既非白名单也不在允许列表中的路径，强制跳转到 403 页面
    * 注意：此重定向会触发浏览器 URL 变更，直到命中白名单中的 403 页面。
    */
-  return <Navigate to="/dashboard/forbidden" replace/>;
-});
+  return <Navigate to="/dashboard/forbidden" replace />;
+};

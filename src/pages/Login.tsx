@@ -1,13 +1,12 @@
 import React from 'react';
-import {Form, Input, Button, Card, message} from 'antd';
-import {useNavigate} from 'react-router-dom';
-import {observer} from 'mobx-react-lite';
+import { Form, Input, Button, Card, message } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
-import {useUserStore} from '../store/useUserStore';
+import { useUserStore } from '../store/useUserStore';
 
-const Login: React.FC = observer(() => {
+const Login: React.FC = () => {
   const navigate = useNavigate();
-  const {setUser} = useUserStore();
+  const { setUser } = useUserStore();
 
   const onFinish = (values: any) => {
     console.log('Success:', values);
@@ -18,14 +17,29 @@ const Login: React.FC = observer(() => {
 
   return (
     <div
-      style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f0f2f5'}}>
-      <Card title="用户登录" style={{width: 400}}>
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        background: '#f0f2f5',
+      }}
+    >
+      <Card title="用户登录" style={{ width: 400 }}>
         <Form name="basic" onFinish={onFinish} layout="vertical">
-          <Form.Item label="用户名" name="username" rules={[{required: true, message: '请输入用户名'}]}>
-            <Input/>
+          <Form.Item
+            label="用户名"
+            name="username"
+            rules={[{ required: true, message: '请输入用户名' }]}
+          >
+            <Input />
           </Form.Item>
-          <Form.Item label="密码" name="password" rules={[{required: true, message: '请输入密码'}]}>
-            <Input.Password/>
+          <Form.Item
+            label="密码"
+            name="password"
+            rules={[{ required: true, message: '请输入密码' }]}
+          >
+            <Input.Password />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit" block>
@@ -36,6 +50,6 @@ const Login: React.FC = observer(() => {
       </Card>
     </div>
   );
-});
+};
 
 export default Login;

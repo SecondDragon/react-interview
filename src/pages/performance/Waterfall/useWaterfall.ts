@@ -10,6 +10,7 @@ export interface WaterfallItem {
   imgWidth: number;
   imgHeight: number;
   title: string;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
@@ -32,7 +33,7 @@ interface LayoutCache {
   positions: Position[];
   columnHeights: number[];
 }
-
+/* eslint-disable react-hooks/exhaustive-deps */
 export function useWaterfall(
   items: WaterfallItem[],
   containerWidth: number,
@@ -62,13 +63,11 @@ export function useWaterfall(
     // 1. 判断是否需要“彻底重算” (全量计算)
     // 场景：容器宽度变了、列数变了、间距变了、或者数据被清空/重置了
     const isParamChanged =
-      containerWidth !== cache.containerWidth ||
-      columns !== cache.columns ||
-      gap !== cache.gap;
-    
+      containerWidth !== cache.containerWidth || columns !== cache.columns || gap !== cache.gap;
+
     // 如果 items 是被重置了（比如下拉刷新，第一条数据变了或者长度变小了），也要重算
-    const isItemsReset = 
-      items.length === 0 || 
+    const isItemsReset =
+      items.length === 0 ||
       (cache.items.length > 0 && items[0]?.id !== cache.items[0]?.id) ||
       items.length < cache.items.length;
 
@@ -82,13 +81,13 @@ export function useWaterfall(
       startIndex = cache.items.length; // 从老数据的下一条开始算
       currentColumnHeights = [...cache.columnHeights]; // 继承之前的“阵地高度”
       currentPositions = [...cache.positions]; // 继承之前的坐标缓存
-      
+
       // 如果新老数据长度一样，说明没有任何变化，直接返回缓存
       if (startIndex === items.length) {
         return {
           positions: cache.positions,
           containerHeight: Math.max(...cache.columnHeights, 0),
-          itemWidth: (containerWidth - (columns - 1) * gap) / columns
+          itemWidth: (containerWidth - (columns - 1) * gap) / columns,
         };
       }
     }
@@ -111,7 +110,8 @@ export function useWaterfall(
       }
 
       // 计算当前卡片的高度 (图片比例高度 + 预估文本高度)
-      const scaledImgHeight = item.imgWidth > 0 ? (calculatedItemWidth / item.imgWidth) * item.imgHeight : 100;
+      const scaledImgHeight =
+        item.imgWidth > 0 ? (calculatedItemWidth / item.imgWidth) * item.imgHeight : 100;
       const fixedHeight = 80;
       const itemHeight = scaledImgHeight + fixedHeight;
 
@@ -141,7 +141,8 @@ export function useWaterfall(
     return {
       positions: currentPositions,
       containerHeight: maxHeight,
-      itemWidth: calculatedItemWidth
+      itemWidth: calculatedItemWidth,
     };
   }, [items, containerWidth, columns, gap]);
 }
+/* eslint-enable react-hooks/exhaustive-deps */
