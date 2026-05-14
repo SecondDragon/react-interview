@@ -20,16 +20,13 @@ export interface RouteConfig {
   closable?: boolean;
   children?: RouteConfig[];
   hideInMenu?: boolean;
-  isWhiteList?: boolean;
 }
 
 // 懒加载组件
 const Overview = lazy(() => import('../pages/overview/index'));
+const ReactApiLearning = lazy(() => import('../pages/react-api/index'));
 const TaskList = lazy(() => import('../pages/tasks/TaskList'));
 const MyTasks = lazy(() => import('../pages/tasks/MyTasks'));
-const CallCenterLayout = lazy(() =>
-  import('../pages/phone-work-bench/call-center/CallCenterLayout.tsx')
-);
 const UserList = lazy(() => import('../pages/users/UserList'));
 const Settings = lazy(() => import('../pages/settings/Settings'));
 const Sub1Page1 = lazy(() => import('../pages/multi-level/sub1/Sub1Page1'));
@@ -39,7 +36,6 @@ const WaterfallPage = lazy(() => import('../pages/performance/Waterfall/index'))
 const WaterfallProfessional = lazy(() => import('../pages/performance/Waterfall/Professional'));
 const WaterfallUltimate = lazy(() => import('../pages/performance/Waterfall/Ultimate'));
 const WaterfallUltimate2 = lazy(() => import('../pages/performance/Waterfall/Ultimate2'));
-const RefsBestPractice = lazy(() => import('../pages/refs-guide/RefsBestPractice'));
 const IdleLoadPage = lazy(() => import('../pages/performance/IdleLoad/index'));
 const HoverPreloadPage = lazy(() => import('../pages/performance/HoverPreload/index'));
 const VirtualTablePage = lazy(() => import('../pages/performance/VirtualTable/index'));
@@ -47,6 +43,7 @@ const NoStableHeightVirtualListPage = lazy(
   () => import('../pages/performance/NoStableHeightVirtualList/index')
 );
 const VirtuosoListPage = lazy(() => import('../pages/performance/VirtuosoList/index'));
+const ConcurrentRenderPage = lazy(() => import('../pages/performance/ConcurrentRender/index'));
 const DynamicFormPage = lazy(() => import('../pages/components-encapsulation/DynamicForm/index'));
 const ProDynamicFormPage = lazy(
   () => import('../pages/components-encapsulation/ProDynamicForm/index')
@@ -80,13 +77,11 @@ export const dashboardRoutes: RouteConfig[] = [
     icon: <DashboardOutlined />,
     element: <Overview />,
     closable: false,
-    isWhiteList: true,
   },
   {
     path: '/dashboard/compatibility',
     label: '兼容性问题解决',
     icon: <ToolOutlined />,
-    isWhiteList: true,
     children: [
       {
         path: '/dashboard/compatibility/1px',
@@ -182,7 +177,6 @@ export const dashboardRoutes: RouteConfig[] = [
     path: '/dashboard/components-encapsulation',
     label: '通用组件封装',
     icon: <AppstoreOutlined />,
-    isWhiteList: true,
     children: [
       {
         path: '/dashboard/components-encapsulation/dynamic-form',
@@ -197,15 +191,14 @@ export const dashboardRoutes: RouteConfig[] = [
     ],
   },
   {
-    path: '/dashboard/react-guide',
-    label: 'React 进阶指南',
+    path: '/dashboard/react-api',
+    label: 'React API 学习',
     icon: <ApiOutlined />,
-    isWhiteList: true,
     children: [
       {
-        path: '/dashboard/react-guide/refs-best-practice',
-        label: 'Refs 最佳实践',
-        element: <RefsBestPractice />,
+        path: '/dashboard/react-api/overview',
+        label: '专题概览',
+        element: <ReactApiLearning />,
       },
     ],
   },
@@ -213,7 +206,6 @@ export const dashboardRoutes: RouteConfig[] = [
     path: '/dashboard/performance',
     label: '性能优化专题',
     icon: <ToolOutlined />,
-    isWhiteList: true,
     children: [
       {
         path: '/dashboard/performance/idle-load',
@@ -260,6 +252,11 @@ export const dashboardRoutes: RouteConfig[] = [
         label: 'Ultimate级节点复用瀑布流2',
         element: <WaterfallUltimate2 />,
       },
+      {
+        path: '/dashboard/performance/concurrent-render',
+        label: '并发渲染(Task Slicing)',
+        element: <ConcurrentRenderPage />,
+      },
     ],
   },
 
@@ -273,19 +270,6 @@ export const dashboardRoutes: RouteConfig[] = [
         path: '/dashboard/tasks-container/my',
         label: '我的私人任务',
         element: <MyTasks />,
-        isWhiteList: true,
-      },
-    ],
-  },
-  {
-    path: '/dashboard/phone-work-bench',
-    label: '话务工作台',
-    icon: <PhoneOutlined />,
-    children: [
-      {
-        path: '/dashboard/phone-work-bench/call-center',
-        label: '呼叫中心布局',
-        element: <CallCenterLayout />,
       },
     ],
   },
@@ -315,28 +299,25 @@ export const dashboardRoutes: RouteConfig[] = [
     ],
   },
   {
-    path: '/dashboard/micro-vue',
+    path: '/dashboard/micro-vue/*',
     label: 'Vue 微应用中心',
     icon: <ApiOutlined />,
-    isWhiteList: true,
     children: [
       { path: '/dashboard/micro-vue/list', label: 'Vue 任务列表' },
       { path: '/dashboard/micro-vue/detail', label: 'Vue 任务详情' },
     ],
   },
-  {
-    path: '/dashboard/micro-react',
-    label: 'React 微应用中心',
-    icon: <ApiOutlined />,
-    isWhiteList: true,
-    children: [
-      { path: '/dashboard/micro-react/page-a', label: 'React 页面 A' },
-      { path: '/dashboard/micro-react/page-b', label: 'React 页面 B' },
-    ],
-  },
+  // {
+  //   path: '/dashboard/micro-react',
+  //   label: 'React 微应用中心',
+  //   icon: <ApiOutlined />,
+  //   children: [
+  //     { path: '/dashboard/micro-react/page-a', label: 'React 页面 A' },
+  //     { path: '/dashboard/micro-react/page-b', label: 'React 页面 B' },
+  //   ],
+  // },
   {
     path: '/dashboard/users1',
-    isWhiteList: true,
     label: '用户权限管理',
     icon: <TeamOutlined />,
     element: <UserList />,
@@ -346,6 +327,5 @@ export const dashboardRoutes: RouteConfig[] = [
     label: '系统全局配置',
     icon: <SettingOutlined />,
     element: <Settings />,
-    isWhiteList: true,
   },
 ];

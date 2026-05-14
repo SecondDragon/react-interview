@@ -1,9 +1,9 @@
-import {  useMemo, useRef } from 'react';
+import {useMemo, useRef} from 'react';
 
 /**
  * 根据当前路由路径，在路由树中找出所有需要展开的父级菜单 Key
  */
-export const useOpenKeysByPath = (routes: any[], targetPath: string): string[][] => {
+export const useOpenKeysByPath = (routes: any[], targetPath: string): string[] => {
   const keyPathMap = useRef(new Map<string, string[]>());
 
   const openKeys = useMemo(() => {
@@ -20,27 +20,29 @@ export const useOpenKeysByPath = (routes: any[], targetPath: string): string[][]
         const cleanPath = route.path.replace(/\/\*$/, '');
         // console.log('cleanPath', cleanPath);
         // console.log('parentPaths', parentPaths);
-        // eslint-disable-next-line no-debugger
-        // debugger
 
         // 1. 命中目标判断：
         // 情况 A: 路径完全相等 (比如找到了 '/dashboard/users')
         // 情况 B: 目标路径包含当前路径 (比如浏览器的 '/dashboard/micro-vue/detail' 匹配到了 '/dashboard/micro-vue')
         if (targetPath === cleanPath) {
-          // debugger
           // 🎉 找到了！说明沿途记录下来的 parentPaths 就是我们要展开的菜单！
           keys = [...parentPaths];
           return true; // 向上层通知：找到了，停止后续无意义的搜索
         }
 
+        // 2. 优先递归子节点，寻找更精确的匹配
         if (route.children && route.children.length > 0) {
           const isFoundInChildren = dfs(route.children, [...parentPaths, route.path]);
-          // debugger
           // 如果在它的某一个子孙里面找到了目标，直接一路向上返回 true，结束战斗
           if (isFoundInChildren) {
-            // debugger
             return true;
           }
+        }
+        // 3. 兜底：子节点中没找到，且目标路径以当前路径为前缀
+        // 说明是微前端通配符场景下"未声明的子页面"
+        if (targetPath.startsWith(cleanPath + '/')) {
+          keys = [...parentPaths, route.path];
+          return true;
         }
       }
       // 当前层级的所有节点以及它们的子孙全找遍了，都没匹配上，返回 false
@@ -60,5 +62,5 @@ export const useOpenKeysByPath = (routes: any[], targetPath: string): string[][]
     }
   }, [targetPath, routes]);
 
-  return [openKeys];
+  return openKeys;
 };

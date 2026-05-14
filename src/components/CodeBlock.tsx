@@ -70,7 +70,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
           borderRadius: 0 // 覆盖默认圆角，使用外层 Card 的圆角
         }}
       >
-        {code.trim()}
+        {code?.trim()}
       </SyntaxHighlighter>
     </div>
   );

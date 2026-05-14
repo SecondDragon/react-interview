@@ -46,3 +46,5 @@
     >@src/pages/performance/Waterfall/** 下的组件可以不遵循上述标准
 
 *注：本文件定义了项目的最高优先级规则，覆盖一切通用偏好。*
+
+将所有styled-components生成的样式变量都放在组件页面的最后,以免影响对组件代码的阅读

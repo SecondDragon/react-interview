@@ -7,39 +7,6 @@ import { PlayCircleOutlined, PauseCircleOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
-const PlayerWrapper = styled(Flex)`
-  margin-top: 0.75rem;
-  background-color: rgba(255, 255, 255, 0.8);
-  border-radius: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  width: 100%;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-`;
-
-const PlayIcon = styled(PlayCircleOutlined)`
-  font-size: 1.25rem;
-  color: #3b82f6;
-  cursor: pointer;
-  transition: all 0.2s;
-  &:hover { color: #2563eb; transform: scale(1.1); }
-`;
-
-const PauseIcon = styled(PauseCircleOutlined)`
-  font-size: 1.25rem;
-  color: #3b82f6;
-  cursor: pointer;
-  transition: all 0.2s;
-  &:hover { color: #2563eb; transform: scale(1.1); }
-`;
-
-const TimeText = styled(Text)`
-  font-size: 0.75rem;
-  color: #6b7280;
-  min-width: 85px;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-`;
-
 interface AudioPlayerProps {
   src?: string;
   id?: string;
@@ -136,3 +103,36 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ src, id, activeId, onP
     </PlayerWrapper>
   );
 };
+
+const PlayerWrapper = styled(Flex)`
+  margin-top: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+`;
+
+const PlayIcon = styled(PlayCircleOutlined)`
+  font-size: 1.25rem;
+  color: #3b82f6;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover { color: #2563eb; transform: scale(1.1); }
+`;
+
+const PauseIcon = styled(PauseCircleOutlined)`
+  font-size: 1.25rem;
+  color: #3b82f6;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover { color: #2563eb; transform: scale(1.1); }
+`;
+
+const TimeText = styled(Text)`
+  font-size: 0.75rem;
+  color: #6b7280;
+  min-width: 85px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+`;

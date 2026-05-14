@@ -3,21 +3,11 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Typography, Card, Space, Divider, Alert, Tag } from 'antd';
-import { AudioPlayer } from '../../phone-work-bench/call-center/AudioPlayer';
+import { AudioPlayer } from '../../../components/AudioPlayer.tsx';
 import CodeBlock from '../../../components/CodeBlock';
 import { AudioPlaybackExamples } from './Examples';
 
 const { Title, Paragraph, Text } = Typography;
-
-const DemoContainer = styled.div`
-  padding: 24px;
-  background: #f9fafb;
-  border-radius: 8px;
-`;
-
-const Section = styled.div`
-  margin-bottom: 32px;
-`;
 
 const AudioPlaybackDemo: React.FC = () => {
   return (
@@ -86,7 +76,7 @@ const AudioPlaybackDemo: React.FC = () => {
                 <AudioPlayer src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" />
               </DemoContainer>
             </div>
-            
+
             <div>
               <Text type="secondary">录音文件 B (模拟长对话音频)</Text>
               <DemoContainer>
@@ -115,3 +105,13 @@ const AudioPlaybackDemo: React.FC = () => {
 };
 
 export default AudioPlaybackDemo;
+
+const DemoContainer = styled.div`
+  padding: 24px;
+  background: #f9fafb;
+  border-radius: 8px;
+`;
+
+const Section = styled.div`
+  margin-bottom: 32px;
+`;

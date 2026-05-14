@@ -5,7 +5,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import MainLayout from './layout/MainLayout.tsx';
 import { dashboardRoutes } from './router/config';
 import type { RouteConfig } from './router/config';
-import { AuthGuard } from './components/AuthGuard';
 
 const Forbidden = lazy(() => import('./pages/error/Forbidden'));
 
@@ -25,7 +24,7 @@ const renderFlattenRoutes = (routes: RouteConfig[]): React.ReactNode[] => {
         <Route
           key={route.path}
           path={relativePath}
-          element={<AuthGuard>{route.element}</AuthGuard>}
+          element={route.element}
         />
       );
     }
