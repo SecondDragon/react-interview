@@ -3,7 +3,7 @@ import { Card, Typography, Tag, List, Collapse, Alert, Button, Input } from 'ant
 import { useCaseData } from './Examples';
 import CodeDiff from '@/components/CodeDiff';
 
-const { Text, Title } = Typography;
+const { Text, Title,Paragraph } = Typography;
 const { Panel } = Collapse;
 
 /**

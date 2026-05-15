@@ -350,7 +350,13 @@ export const dashboardRoutes: RouteConfig[] = [
     path: '/dashboard/browser-dimensions',
     label: '浏览器的各种尺寸',
     icon: <FullscreenOutlined />,
-    element: <BrowserDimensions />,
+    children: [
+      {
+        path: '/dashboard/browser-dimensions/overview',
+        label: '尺寸 API 概述',
+        element: <BrowserDimensions />,
+      },
+    ],
   },
   {
     path: '/dashboard/settings',
