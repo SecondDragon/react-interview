@@ -926,7 +926,7 @@ const Baseline375Demo = () => {
               </div>
             </div>
             <Text type="secondary" style={{ fontSize: '12px' }}>
-              DIP: {current.dip}px | 缩放: {scale.toFixed(2)}× | 
+              DIP: {current.dip}px | 缩放: {scale.toFixed(2)}× |
               卡片: {Math.round(187 * scale)}px | 按钮: {Math.round(345 * scale)}px
             </Text>
           </div>
@@ -1208,7 +1208,7 @@ const viewportTypeData = [
  */
 const MobileViewport: React.FC = () => {
   return (
-    <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div style={{ padding: '24px',  margin: '0 auto' }}>
       <Title level={2}>{MobileViewportExamples.title}</Title>
       <Paragraph type="secondary">
         {MobileViewportExamples.description}

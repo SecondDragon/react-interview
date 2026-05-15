@@ -77,13 +77,13 @@ const CodeDiff: React.FC<CodeDiffProps> = ({
           <div
             style={{
               padding: '10px 16px',
-              background: currentTheme.bg,
+              // background: currentTheme.bg,
               borderBottom: `1px solid ${currentTheme.border}`,
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
               fontWeight: 'bold',
-              color: '#e0e0e0',
+              // color: '#e0e0e0',
             }}
           >
             <span>{title}</span>
@@ -117,7 +117,7 @@ const CodeDiff: React.FC<CodeDiffProps> = ({
     <div
       style={{
         margin: '16px 0',
-        border: `1px solid ${currentTheme.border}`,
+        // border: `1px solid ${currentTheme.border}`,
         borderRadius: '8px',
         overflow: 'hidden',
         boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
@@ -127,13 +127,13 @@ const CodeDiff: React.FC<CodeDiffProps> = ({
       <div
         style={{
           padding: '10px 16px',
-          background: currentTheme.bg,
-          borderBottom: `1px solid ${currentTheme.border}`,
+          // background: currentTheme.bg,
+          borderBottom: `1px solid #e0e0e0`,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           fontWeight: 'bold',
-          color: '#e0e0e0',
+          // color: '#e0e0e0',
         }}
       >
         <span>{title || '代码对比'}</span>
@@ -147,7 +147,7 @@ const CodeDiff: React.FC<CodeDiffProps> = ({
           style={{
             flex: 1,
             minWidth: 0,
-            borderRight: '1px solid #333',
+            borderRight: '1px solid #e0e0e0',
             display: 'flex',
             flexDirection: 'column',
           }}

@@ -23,12 +23,12 @@ const KeyboardDemo = () => {
         </Button>
       </Space>
 
-      <div style={{ 
-        position: 'relative', 
-        width: '280px', 
-        height: '350px', 
-        border: '8px solid #333', 
-        borderRadius: '20px', 
+      <div style={{
+        position: 'relative',
+        width: '280px',
+        height: '350px',
+        border: '8px solid #333',
+        borderRadius: '20px',
         margin: '0 auto',
         overflow: 'hidden',
         background: '#f0f2f5'
@@ -90,9 +90,9 @@ const KeyboardDemo = () => {
  */
 const KeyboardOverlap: React.FC = () => {
   return (
-    <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div style={{ padding: '24px',  margin: '0 auto' }}>
       <Title level={2}>移动端软键盘遮挡输入框</Title>
-      
+
       {/* 一、 Bug 出现的现象 */}
       <Card title="一、 Bug 出现的现象" style={{ marginBottom: '24px' }}>
         <Paragraph>
@@ -131,8 +131,8 @@ const KeyboardOverlap: React.FC = () => {
       </Card>
 
       {/* 四、 为什么要这样解决 且互动演示 */}
-      <Card 
-        title={<span>四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag></span>} 
+      <Card
+        title={<span>四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag></span>}
         style={{ marginBottom: '24px' }}
       >
         <Paragraph>

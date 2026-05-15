@@ -10,9 +10,9 @@ const { Title, Paragraph, Text } = Typography;
  */
 const MixedContent: React.FC = () => {
   return (
-    <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div style={{ padding: '24px', margin: '0 auto' }}>
       <Title level={2}>{MixedContentExamples.title}</Title>
-      
+
       {/* 一、 Bug 出现的现象 */}
       <Card title="一、 Bug 出现的现象" style={{ marginBottom: '24px' }}>
         <Paragraph>
@@ -50,18 +50,18 @@ const MixedContent: React.FC = () => {
       </Card>
 
       {/* 四、 为什么要这样解决 且现状模拟 */}
-      <Card 
-        title={<span>四、 为什么要这样解决 且现状模拟 <Tag color="blue">Live Simulation</Tag></span>} 
+      <Card
+        title={<span>四、 为什么要这样解决 且现状模拟 <Tag color="blue">Live Simulation</Tag></span>}
         style={{ marginBottom: '24px' }}
       >
         <Paragraph>
           手动将成千上万个 URL 改为 HTTPS 既耗时又容易遗漏。使用 CSP 的 <Text code>upgrade-insecure-requests</Text> 是一种低成本、高效率的批量修复手段，特别适用于包含大量旧资源的遗留系统。
         </Paragraph>
         <Divider />
-        <Alert 
-          message="模拟测试" 
-          description="如果你正在 localhost 下开发，浏览器通常会允许混合内容，因为 localhost 被视为安全源。但在部署到生产 HTTPS 环境后，拦截会立即生效。" 
-          type="warning" 
+        <Alert
+          message="模拟测试"
+          description="如果你正在 localhost 下开发，浏览器通常会允许混合内容，因为 localhost 被视为安全源。但在部署到生产 HTTPS 环境后，拦截会立即生效。"
+          type="warning"
         />
       </Card>
 

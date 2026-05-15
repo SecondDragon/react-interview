@@ -10,7 +10,7 @@ const { Title, Paragraph, Text } = Typography;
  */
 const TabSyncDemo = () => {
   const [log, setLog] = useState<string[]>([]);
-  
+
   useEffect(() => {
     const bc = new BroadcastChannel('auth_channel');
     bc.onmessage = (event) => {
@@ -33,8 +33,8 @@ const TabSyncDemo = () => {
       </Paragraph>
       <Button onClick={sendLogout} type="primary" danger>全站安全退出</Button>
       <Divider />
-      <List 
-        size="small" 
+      <List
+        size="small"
         header={<div>通信日志:</div>}
         bordered
         dataSource={log}
@@ -50,9 +50,9 @@ const TabSyncDemo = () => {
  */
 const TabSync: React.FC = () => {
   return (
-    <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div style={{ padding: '24px', margin: '0 auto' }}>
       <Title level={2}>{TabSyncExamples.title}</Title>
-      
+
       {/* 一、 Bug 出现的现象 */}
       <Card title="一、 Bug 出现的现象" style={{ marginBottom: '24px' }}>
         <Paragraph>
@@ -84,8 +84,8 @@ const TabSync: React.FC = () => {
       </Card>
 
       {/* 四、 为什么要这样解决 且互动演示 */}
-      <Card 
-        title={<span>四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag></span>} 
+      <Card
+        title={<span>四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag></span>}
         style={{ marginBottom: '24px' }}
       >
         <Paragraph>

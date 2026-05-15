@@ -22,9 +22,9 @@ const BankCookie: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div style={{ padding: '24px', margin: '0 auto' }}>
       <Title level={2}>{BankCookieExamples.title}</Title>
-      
+
       {/* 一、 Bug 出现的现象 */}
       <Card title="一、 Bug 出现的现象" style={{ marginBottom: '24px' }}>
         <Paragraph>
@@ -57,18 +57,18 @@ const BankCookie: React.FC = () => {
       </Card>
 
       {/* 四、 为什么要这样解决 且现状模拟 */}
-      <Card 
-        title={<span>四、 为什么要这样解决 且现状模拟 <Tag color="blue">Live Simulation</Tag></span>} 
+      <Card
+        title={<span>四、 为什么要这样解决 且现状模拟 <Tag color="blue">Live Simulation</Tag></span>}
         style={{ marginBottom: '24px' }}
       >
         <Paragraph>
           设置 <Text code>SameSite=None</Text> 是目前解决跨域 iframe 登录的唯一标准路径。但在银行系统中，这必须配合 <Text code>Secure</Text> 和 <Text code>HttpOnly</Text> 使用，以防止 Cookie 被脚本窃取或在明文网络中泄露。
         </Paragraph>
         <Divider />
-        <Alert 
-          message="模拟测试环境" 
-          description="如果你在 localhost (HTTP) 下测试，即便设置了 None 也无法生效，因为浏览器要求 None 必须与 Secure 绑定。" 
-          type="warning" 
+        <Alert
+          message="模拟测试环境"
+          description="如果你在 localhost (HTTP) 下测试，即便设置了 None 也无法生效，因为浏览器要求 None 必须与 Secure 绑定。"
+          type="warning"
         />
       </Card>
 

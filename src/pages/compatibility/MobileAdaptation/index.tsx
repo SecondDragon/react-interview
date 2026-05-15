@@ -234,7 +234,7 @@ const comparisonData = [
 
 const MobileAdaptation: React.FC = () => {
   return (
-    <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div style={{ padding: '24px',  margin: '0 auto' }}>
       {/* 页面标题 */}
       <Title level={2}>{MobileAdaptationMeta.title}</Title>
       <Paragraph type="secondary">{MobileAdaptationMeta.description}</Paragraph>

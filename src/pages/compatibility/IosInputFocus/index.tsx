@@ -10,24 +10,24 @@ const { Title, Paragraph, Text } = Typography;
  */
 const IosInputFocus: React.FC = () => {
   return (
-    <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div style={{ padding: '24px',  margin: '0 auto' }}>
       <Title level={2}>iOS 聚焦跳转与滚动穿透</Title>
-      
+
       {/* 一、 Bug 出现的现象 */}
       <Card title="一、 Bug 出现的现象" style={{ marginBottom: '24px' }}>
         <Paragraph>
           在 iOS Safari 中，点击弹窗内的输入框聚焦时，原本居中的弹窗会突然发生剧烈位移，或者在滑动弹窗内容时，背后的主页面也跟着滚动。
         </Paragraph>
-        <Alert 
-          message="Bug 特征" 
+        <Alert
+          message="Bug 特征"
           description={
             <List size="small">
               <List.Item><Badge status="error" text="坐标崩溃：" /> 聚焦时，浏览器强制滚动导致 position: fixed 元素瞬间错位。</List.Item>
               <List.Item><Badge status="error" text="背景失控：" /> 滚动穿透导致用户体验混乱，操作反馈滞后。</List.Item>
             </List>
-          } 
-          type="error" 
-          showIcon 
+          }
+          type="error"
+          showIcon
         />
       </Card>
 
@@ -53,8 +53,8 @@ const IosInputFocus: React.FC = () => {
       </Card>
 
       {/* 四、 为什么要这样解决 且现状模拟 */}
-      <Card 
-        title={<span>四、 为什么要这样解决 且现状模拟 <Tag color="blue">Live Simulation</Tag></span>} 
+      <Card
+        title={<span>四、 为什么要这样解决 且现状模拟 <Tag color="blue">Live Simulation</Tag></span>}
         style={{ marginBottom: '24px' }}
       >
         <Paragraph>

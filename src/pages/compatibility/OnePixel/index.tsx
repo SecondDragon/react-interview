@@ -4,7 +4,7 @@ import { OnePixelMeta } from './Examples';
 import CodeDiff from '@/components/CodeDiff';
 
 // 各方案独立组件
-// import PseudoElementSolution from './PseudoElementSolution';
+import PseudoElementSolution from './PseudoElementSolution';
 import ViewportScaleSolution from './ViewportScaleSolution';
 import BoxShadowSolution from './BoxShadowSolution';
 import SvgBackgroundSolution from './SvgBackgroundSolution';
@@ -93,7 +93,7 @@ const comparisonData = [
 
 const OnePixel: React.FC = () => {
   return (
-    <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div style={{ padding: '24px', margin: '0 auto' }}>
       {/* 页面标题 */}
       <Title level={2}>{OnePixelMeta.title}</Title>
       <Paragraph type="secondary">{OnePixelMeta.description}</Paragraph>
@@ -136,7 +136,7 @@ const OnePixel: React.FC = () => {
       </Card>
 
       {/* 五种方案独立组件 */}
-      {/*<PseudoElementSolution />*/}
+      <PseudoElementSolution />
       <ViewportScaleSolution />
       <BoxShadowSolution />
       <SvgBackgroundSolution />

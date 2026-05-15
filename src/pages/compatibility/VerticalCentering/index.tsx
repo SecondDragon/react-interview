@@ -10,24 +10,24 @@ const { Title, Paragraph, Text } = Typography;
  */
 const VerticalCentering: React.FC = () => {
   return (
-    <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div style={{ padding: '24px', margin: '0 auto' }}>
       <Title level={2}>跨平台字体垂直居中偏差</Title>
-      
+
       {/* 一、 Bug 出现的现象 */}
       <Card title="一、 Bug 出现的现象" style={{ marginBottom: '24px' }}>
         <Paragraph>
           同样的 CSS 代码，按钮里的文字在 iOS 上完美居中，但在某些 Android 机型上却显得整体偏上 1px，产生视觉上的不和谐。
         </Paragraph>
-        <Alert 
-          message="渲染引擎差异" 
+        <Alert
+          message="渲染引擎差异"
           description={
             <List size="small">
               <List.Item><Badge status="success" text="iOS (CoreText):" /> 默认对基线处理非常优雅。</List.Item>
               <List.Item><Badge status="warning" text="Android (FreeType):" /> 渲染时对中文字体上下间距分配不均。</List.Item>
             </List>
-          } 
-          type="info" 
-          showIcon 
+          }
+          type="info"
+          showIcon
         />
       </Card>
 
@@ -57,8 +57,8 @@ const VerticalCentering: React.FC = () => {
       </Card>
 
       {/* 四、 为什么要这样解决 且互动演示 */}
-      <Card 
-        title={<span>四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag></span>} 
+      <Card
+        title={<span>四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag></span>}
         style={{ marginBottom: '24px' }}
       >
         <Paragraph>
@@ -73,14 +73,14 @@ const VerticalCentering: React.FC = () => {
             <Text type="secondary" size="small">可能偏上</Text>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ 
-              width: '120px', 
-              height: '40px', 
-              background: '#52c41a', 
-              color: '#fff', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center' 
+            <div style={{
+              width: '120px',
+              height: '40px',
+              background: '#52c41a',
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}>
               Flexbox
             </div>

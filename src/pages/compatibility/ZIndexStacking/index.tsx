@@ -21,13 +21,13 @@ const ZIndexDemo = () => {
 
       <div style={{ position: 'relative', height: '150px', background: '#eee', padding: '20px', overflow: 'hidden' }}>
         {/* 背景层：z-index 比较大 */}
-        <div style={{ 
-          position: 'absolute', 
-          top: '20px', 
-          left: '20px', 
-          width: '200px', 
-          height: '100px', 
-          background: '#ff4d4f', 
+        <div style={{
+          position: 'absolute',
+          top: '20px',
+          left: '20px',
+          width: '200px',
+          height: '100px',
+          background: '#ff4d4f',
           zIndex: 10,
           color: '#fff',
           padding: '10px'
@@ -36,22 +36,22 @@ const ZIndexDemo = () => {
         </div>
 
         {/* 陷阱父层：设置了 transform，触发了新的层叠上下文 */}
-        <div style={{ 
-          transform: 'translateZ(0)', 
-          position: 'relative', 
-          zIndex: 1, 
+        <div style={{
+          transform: 'translateZ(0)',
+          position: 'relative',
+          zIndex: 1,
           background: 'rgba(24, 144, 255, 0.2)',
           padding: '40px'
         }}>
           {/* 目标子层：虽然 z-index: 999，但在 transform 父层里它只能排第 1 */}
-          <div style={{ 
-            position: useFix ? 'fixed' : 'absolute', 
-            top: useFix ? '50%' : '10px', 
+          <div style={{
+            position: useFix ? 'fixed' : 'absolute',
+            top: useFix ? '50%' : '10px',
             left: useFix ? '50%' : '100px',
             transform: useFix ? 'translate(-50%, -50%)' : 'none',
-            width: '100px', 
-            height: '60px', 
-            background: '#52c41a', 
+            width: '100px',
+            height: '60px',
+            background: '#52c41a',
             zIndex: 999,
             color: '#fff',
             padding: '10px',
@@ -71,9 +71,9 @@ const ZIndexDemo = () => {
  */
 const ZIndexStacking: React.FC = () => {
   return (
-    <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div style={{ padding: '24px', margin: '0 auto' }}>
       <Title level={2}>z-index 层叠上下文陷阱</Title>
-      
+
       {/* 一、 Bug 出现的现象 */}
       <Card title="一、 Bug 出现的现象" style={{ marginBottom: '24px' }}>
         <Paragraph>
@@ -108,8 +108,8 @@ const ZIndexStacking: React.FC = () => {
       </Card>
 
       {/* 四、 为什么要这样解决 且互动演示 */}
-      <Card 
-        title={<span>四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag></span>} 
+      <Card
+        title={<span>四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag></span>}
         style={{ marginBottom: '24px' }}
       >
         <Paragraph>

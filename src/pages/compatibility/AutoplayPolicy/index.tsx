@@ -36,17 +36,17 @@ const AutoplayDemo = () => {
         <Button onClick={() => { if(audioRef.current) audioRef.current.pause(); setStatus('idle'); }}>重置</Button>
       </Space>
       <div style={{ marginTop: '16px' }}>
-        状态: 
+        状态:
         {status === 'playing' && <Tag color="success">正在播放</Tag>}
         {status === 'blocked' && <Tag color="error">被拦截 (NotAllowedError)</Tag>}
         {status === 'idle' && <Tag>等待测试</Tag>}
       </div>
       {status === 'blocked' && (
-        <Alert 
+        <Alert
           style={{ marginTop: '10px' }}
-          message="拦截原因" 
-          description="浏览器检测到当前操作不是由用户直接点击触发的同步行为（或参与度分数不足），拒绝了有声媒体的播放请求。" 
-          type="warning" 
+          message="拦截原因"
+          description="浏览器检测到当前操作不是由用户直接点击触发的同步行为（或参与度分数不足），拒绝了有声媒体的播放请求。"
+          type="warning"
         />
       )}
     </Card>
@@ -58,9 +58,9 @@ const AutoplayDemo = () => {
  */
 const AutoplayPolicy: React.FC = () => {
   return (
-    <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div style={{ padding: '24px',  margin: '0 auto' }}>
       <Title level={2}>多端媒体自动播放限制</Title>
-      
+
       {/* 一、 Bug 出现的现象 */}
       <Card title="一、 Bug 出现的现象" style={{ marginBottom: '24px' }}>
         <Paragraph>
@@ -95,8 +95,8 @@ const AutoplayPolicy: React.FC = () => {
       </Card>
 
       {/* 四、 为什么要这样解决 且互动演示 */}
-      <Card 
-        title={<span>四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag></span>} 
+      <Card
+        title={<span>四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag></span>}
         style={{ marginBottom: '24px' }}
       >
         <Paragraph>
