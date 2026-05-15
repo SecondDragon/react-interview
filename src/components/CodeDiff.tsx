@@ -1,6 +1,4 @@
 import React from 'react';
-import ReactDiffViewerPkg from 'react-diff-viewer';
-const ReactDiffViewer = (ReactDiffViewerPkg as any).default || ReactDiffViewerPkg;
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Tag } from 'antd';
@@ -29,8 +27,8 @@ interface CodeDiffProps {
 /**
  * 统一代码展示组件
  * - 单代码模式：当只传 code 时，使用 react-syntax-highlighter 展示
- * - 对比模式：当传 oldValue + newValue 时，使用 react-diff-viewer 展示
- * - 支持隐藏 diff 标记，只做左右并列展示
+ * - 对比模式：当传 oldValue + newValue 时，使用双列 SyntaxHighlighter 展示
+ * - 黑色底色 (vscDarkPlus)，支持代码语法高亮
  */
 const CodeDiff: React.FC<CodeDiffProps> = ({
   oldValue,
@@ -45,13 +43,23 @@ const CodeDiff: React.FC<CodeDiffProps> = ({
   hideDiffMarkers = false,
 }) => {
   const colorMap = {
-    error: { border: '#ffa39e', bg: '#fff1f0', label: 'Bad Practice', tagColor: 'red' as const },
-    success: { border: '#b7eb8f', bg: '#f6ffed', label: 'Best Practice', tagColor: 'green' as const },
-    warning: { border: '#ffe58f', bg: '#fffbe6', label: 'Alternative', tagColor: 'orange' as const },
-    info: { border: '#d9d9d9', bg: '#fafafa', label: 'Reference', tagColor: 'blue' as const },
+    error: { border: '#ff4d4f', bg: '#2b1d1d', label: '反面教材', tagColor: 'red' as const },
+    success: { border: '#52c41a', bg: '#1d2b1d', label: '最佳实践', tagColor: 'green' as const },
+    warning: { border: '#faad14', bg: '#2b261d', label: '替代方案', tagColor: 'orange' as const },
+    info: { border: '#434343', bg: '#1a1a1a', label: '参考代码', tagColor: 'blue' as const },
   };
 
   const currentTheme = colorMap[type];
+
+  // 代码高亮容器的统一样式
+  const highlighterCustomStyle: React.CSSProperties = {
+    margin: 0,
+    padding: '16px',
+    fontSize: '13px',
+    lineHeight: '1.6',
+    borderRadius: 0,
+    background: '#1e1e1e',
+  };
 
   // ========== 单代码展示模式 ==========
   if (code !== undefined && oldValue === undefined && newValue === undefined) {
@@ -62,7 +70,7 @@ const CodeDiff: React.FC<CodeDiffProps> = ({
           border: `1px solid ${currentTheme.border}`,
           borderRadius: '8px',
           overflow: 'hidden',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
         }}
       >
         {title && (
@@ -75,6 +83,7 @@ const CodeDiff: React.FC<CodeDiffProps> = ({
               justifyContent: 'space-between',
               alignItems: 'center',
               fontWeight: 'bold',
+              color: '#e0e0e0',
             }}
           >
             <span>{title}</span>
@@ -85,13 +94,7 @@ const CodeDiff: React.FC<CodeDiffProps> = ({
           language={language}
           style={vscDarkPlus}
           showLineNumbers={showLineNumbers}
-          customStyle={{
-            margin: 0,
-            padding: '16px',
-            fontSize: '13px',
-            lineHeight: '1.6',
-            borderRadius: 0,
-          }}
+          customStyle={highlighterCustomStyle}
         >
           {code?.trim()}
         </SyntaxHighlighter>
@@ -117,7 +120,7 @@ const CodeDiff: React.FC<CodeDiffProps> = ({
         border: `1px solid ${currentTheme.border}`,
         borderRadius: '8px',
         overflow: 'hidden',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
       }}
     >
       {/* 顶部标题栏 */}
@@ -130,45 +133,81 @@ const CodeDiff: React.FC<CodeDiffProps> = ({
           justifyContent: 'space-between',
           alignItems: 'center',
           fontWeight: 'bold',
+          color: '#e0e0e0',
         }}
       >
         <span>{title || '代码对比'}</span>
         <Tag color={currentTheme.tagColor}>{currentTheme.label}</Tag>
       </div>
 
-      <ReactDiffViewer
-        oldValue={oldValue?.trim()}
-        newValue={newValue?.trim()}
-        splitView={true}
-        hideLineNumbers={!showLineNumbers}
-        showDiffOnly={false}
-        disableWordDiff={hideDiffMarkers}
-        leftTitle={leftTitle}
-        rightTitle={rightTitle}
-        styles={{
-          variables: {
-            light: {
-              diffViewerBackground: '#fafafa',
-              gutterBackground: '#f0f0f0',
-              gutterBackgroundDark: '#e8e8e8',
-              addedBackground: hideDiffMarkers ? '#fafafa' : '#f6ffed',
-              addedColor: hideDiffMarkers ? '#262626' : '#237804',
-              removedBackground: hideDiffMarkers ? '#fafafa' : '#fff1f0',
-              removedColor: hideDiffMarkers ? '#262626' : '#cf1322',
-              wordAddedBackground: hideDiffMarkers ? 'transparent' : '#b7eb8f',
-              wordRemovedBackground: hideDiffMarkers ? 'transparent' : '#ffa39e',
-              emptyLineBackground: '#fafafa',
-            },
-          },
-          diffContainer: {
-            fontSize: '13px',
-            lineHeight: '1.6',
-          },
-          line: {
-            fontFamily: 'monospace',
-          },
-        }}
-      />
+      {/* 双列代码对比 */}
+      <div style={{ display: 'flex', flexDirection: 'row' }}>
+        {/* 左侧：旧代码 */}
+        <div
+          style={{
+            flex: 1,
+            minWidth: 0,
+            borderRight: '1px solid #333',
+          }}
+        >
+          {leftTitle && (
+            <div
+              style={{
+                padding: '8px 16px',
+                background: hideDiffMarkers ? '#1e1e1e' : '#2b1d1d',
+                borderBottom: '1px solid #333',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                color: hideDiffMarkers ? '#999' : '#ff7875',
+                textAlign: 'center',
+              }}
+            >
+              {leftTitle}
+            </div>
+          )}
+          <SyntaxHighlighter
+            language={language}
+            style={vscDarkPlus}
+            showLineNumbers={showLineNumbers}
+            customStyle={{
+              ...highlighterCustomStyle,
+              background: hideDiffMarkers ? '#1e1e1e' : '#2b1d1d',
+            }}
+          >
+            {oldValue?.trim()}
+          </SyntaxHighlighter>
+        </div>
+
+        {/* 右侧：新代码 */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {rightTitle && (
+            <div
+              style={{
+                padding: '8px 16px',
+                background: hideDiffMarkers ? '#1e1e1e' : '#1d2b1d',
+                borderBottom: '1px solid #333',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                color: hideDiffMarkers ? '#999' : '#73d13d',
+                textAlign: 'center',
+              }}
+            >
+              {rightTitle}
+            </div>
+          )}
+          <SyntaxHighlighter
+            language={language}
+            style={vscDarkPlus}
+            showLineNumbers={showLineNumbers}
+            customStyle={{
+              ...highlighterCustomStyle,
+              background: hideDiffMarkers ? '#1e1e1e' : '#1d2b1d',
+            }}
+          >
+            {newValue?.trim()}
+          </SyntaxHighlighter>
+        </div>
+      </div>
     </div>
   );
 };
