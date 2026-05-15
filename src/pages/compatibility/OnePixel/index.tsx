@@ -1,7 +1,7 @@
-import React from 'react';
+﻿import React from 'react';
 import { Card, Typography, Divider, Tag, Alert } from 'antd';
 import { OnePixelExamples } from './Examples';
-import CodeBlock from '../../../components/CodeBlock';
+import CodeDiff from '@/components/CodeDiff';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -50,26 +50,14 @@ const OnePixel: React.FC = () => {
         <Paragraph>
           使用 <Text strong>伪元素 + Transform 缩放</Text> 是目前业界公认最稳健的方案。
         </Paragraph>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '16px' }}>
-          <div>
-            <Title level={5}>❌ 反面教材 (Bad Practice)</Title>
-            <CodeBlock 
-              title="直接写 1px"
-              code={OnePixelExamples.bad} 
-              type="error" 
-              language="css" 
-            />
-          </div>
-          <div>
-            <Title level={5}>✅ 最佳实践 (Best Practice)</Title>
-            <CodeBlock 
-              title="伪元素缩放方案"
-              code={OnePixelExamples.good} 
-              type="success" 
-              language="css" 
-            />
-          </div>
-        </div>
+        <CodeDiff
+          oldValue={OnePixelExamples.bad}
+          newValue={OnePixelExamples.good}
+          leftTitle="❌ 反面教材"
+          rightTitle="✅ 最佳实践"
+          type="error"
+          hideDiffMarkers={true}
+        />
       </Card>
 
       {/* 四、 为什么要这样解决 且新增互动演示 (Live Demo) */}

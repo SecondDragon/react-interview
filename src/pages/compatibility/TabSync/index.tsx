@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Typography, Alert, Divider, Tag, List, Button } from 'antd';
 import { TabSyncExamples } from './Examples';
-import CodeBlock from '../../../components/CodeBlock';
+import CodeDiff from '@/components/CodeDiff';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -73,10 +73,14 @@ const TabSync: React.FC = () => {
 
       {/* 三、 Bug 如何解决 */}
       <Card title="三、 Bug 如何解决" style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '16px' }}>
-          <CodeBlock title="❌ 仅单页清除" code={TabSyncExamples.bad} type="error" language="javascript" />
-          <CodeBlock title="✅ 全站广播同步" code={TabSyncExamples.good} type="success" language="javascript" />
-        </div>
+        <CodeDiff
+          oldValue={TabSyncExamples.bad}
+          newValue={TabSyncExamples.good}
+          leftTitle="❌ 反面教材"
+          rightTitle="✅ 最佳实践"
+          type="error"
+          hideDiffMarkers={true}
+        />
       </Card>
 
       {/* 四、 为什么要这样解决 且互动演示 */}

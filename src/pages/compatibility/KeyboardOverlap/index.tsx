@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Typography, Alert, Divider, Tag, Badge, List, Space, Button } from 'antd';
 import { KeyboardOverlapExamples } from './Examples';
-import CodeBlock from '../../../components/CodeBlock';
+import CodeDiff from '@/components/CodeDiff';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -120,16 +120,14 @@ const KeyboardOverlap: React.FC = () => {
 
       {/* 三、 Bug 如何解决 */}
       <Card title="三、 Bug 如何解决" style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '16px' }}>
-          <div>
-            <Title level={5}>❌ 简单 Fixed 定位 (必挂)</Title>
-            <CodeBlock code={KeyboardOverlapExamples.bad} type="error" language="css" />
-          </div>
-          <div>
-            <Title level={5}>✅ 动态响应视觉窗口</Title>
-            <CodeBlock code={KeyboardOverlapExamples.good} type="success" language="javascript" />
-          </div>
-        </div>
+        <CodeDiff
+          oldValue={KeyboardOverlapExamples.bad}
+          newValue={KeyboardOverlapExamples.good}
+          leftTitle="❌ 反面教材"
+          rightTitle="✅ 最佳实践"
+          type="error"
+          hideDiffMarkers={true}
+        />
       </Card>
 
       {/* 四、 为什么要这样解决 且互动演示 */}

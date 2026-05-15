@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Typography, Alert, Divider, Tag, Table } from 'antd';
 import { BankCookieExamples } from './Examples';
-import CodeBlock from '../../../components/CodeBlock';
+import CodeDiff from '@/components/CodeDiff';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -46,10 +46,14 @@ const BankCookie: React.FC = () => {
 
       {/* 三、 Bug 如何解决 */}
       <Card title="三、 Bug 如何解决" style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '16px' }}>
-          <CodeBlock title="❌ 默认配置 (会导致丢失)" code={BankCookieExamples.bad} type="error" language="javascript" />
-          <CodeBlock title="✅ 银行级安全配置" code={BankCookieExamples.good} type="success" language="http" />
-        </div>
+        <CodeDiff
+          oldValue={BankCookieExamples.bad}
+          newValue={BankCookieExamples.good}
+          leftTitle="❌ 反面教材"
+          rightTitle="✅ 最佳实践"
+          type="error"
+          hideDiffMarkers={true}
+        />
       </Card>
 
       {/* 四、 为什么要这样解决 且现状模拟 */}

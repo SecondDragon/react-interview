@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Typography, Alert, Divider, Tag } from 'antd';
 import { MixedContentExamples } from './Examples';
-import CodeBlock from '../../../components/CodeBlock';
+import CodeDiff from '@/components/CodeDiff';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -39,10 +39,14 @@ const MixedContent: React.FC = () => {
 
       {/* 三、 Bug 如何解决 */}
       <Card title="三、 Bug 如何解决" style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '16px' }}>
-          <CodeBlock title="❌ 被拦截的旧写法" code={MixedContentExamples.bad} type="error" language="html" />
-          <CodeBlock title="✅ 自动升级方案" code={MixedContentExamples.good} type="success" language="html" />
-        </div>
+        <CodeDiff
+          oldValue={MixedContentExamples.bad}
+          newValue={MixedContentExamples.good}
+          leftTitle="❌ 反面教材"
+          rightTitle="✅ 最佳实践"
+          type="error"
+          hideDiffMarkers={true}
+        />
       </Card>
 
       {/* 四、 为什么要这样解决 且现状模拟 */}

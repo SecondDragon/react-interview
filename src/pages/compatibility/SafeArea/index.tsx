@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Card, Typography, Divider, Tag, Space, Switch } from 'antd';
 import { SafeAreaExamples } from './Examples';
-import CodeBlock from '../../../components/CodeBlock';
+import CodeDiff from '@/components/CodeDiff';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -109,25 +109,22 @@ const SafeArea: React.FC = () => {
         <Paragraph>
           1. 首先在 <Text code>meta</Text> 标签中开启适配。
         </Paragraph>
-        <CodeBlock 
+        <CodeDiff
+          code='<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">'
+          type="info"
           title="HTML 配置"
-          code='<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">' 
-          type="info" 
-          language="html" 
         />
         
         <Divider />
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '16px' }}>
-          <div>
-            <Title level={5}>❌ 错误做法</Title>
-            <CodeBlock code={SafeAreaExamples.bad} type="error" language="css" />
-          </div>
-          <div>
-            <Title level={5}>✅ 推荐做法</Title>
-            <CodeBlock code={SafeAreaExamples.good} type="success" language="css" />
-          </div>
-        </div>
+        <CodeDiff
+          oldValue={SafeAreaExamples.bad}
+          newValue={SafeAreaExamples.good}
+          leftTitle="❌ 反面教材"
+          rightTitle="✅ 最佳实践"
+          type="error"
+          hideDiffMarkers={true}
+        />
       </Card>
 
       {/* 四、 为什么要这样解决 且互动演示 */}

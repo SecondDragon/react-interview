@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Card, Typography, Alert, Divider, Radio, Button, Modal, Row, Col, Tag, Table, Space } from 'antd';
 import { ScrollbarExamples } from './Examples';
-import CodeBlock from '../../../components/CodeBlock';
+import CodeDiff from '@/components/CodeDiff';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -109,16 +109,16 @@ const ScrollbarStyle: React.FC = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '16px' }}>
           <div>
             <Title level={5}>✅ 方案 A：现代 CSS (解决抖动)</Title>
-            <CodeBlock title="scrollbar-gutter" code={ScrollbarExamples.solutionA} type="success" language="css" />
+            <CodeDiff code={ScrollbarExamples.solutionA} type="success" title="scrollbar-gutter" />
           </div>
           <div>
             <Title level={5}>✅ 方案 B：全局美化 (视觉一致)</Title>
-            <CodeBlock title="WebKit 伪元素" code={ScrollbarExamples.solutionB} type="info" language="css" />
+            <CodeDiff code={ScrollbarExamples.solutionB} type="info" title="WebKit 伪元素" />
           </div>
         </div>
         <Divider />
         <Title level={5}>🚀 方案 C：Overlay 进阶方案 (终极抹平)</Title>
-        <CodeBlock title="OverlayScrollbars" code={ScrollbarExamples.solutionC} type="warning" />
+        <CodeDiff code={ScrollbarExamples.solutionC} type="warning" title="OverlayScrollbars" />
       </Card>
 
       {/* 四、 为什么要这样解决 且互动演示 */}

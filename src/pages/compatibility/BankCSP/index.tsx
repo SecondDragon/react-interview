@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Typography, Alert, Divider, Tag, List } from 'antd';
 import { BankCSPExamples } from './Examples';
-import CodeBlock from '../../../components/CodeBlock';
+import CodeDiff from '@/components/CodeDiff';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -42,10 +42,14 @@ const BankCSP: React.FC = () => {
 
       {/* 三、 Bug 如何解决 */}
       <Card title="三、 Bug 如何解决" style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '16px' }}>
-          <CodeBlock title="❌ 被拦截的写法" code={BankCSPExamples.bad} type="error" language="html" />
-          <CodeBlock title="✅ 资源本地化方案" code={BankCSPExamples.good} type="success" language="html" />
-        </div>
+        <CodeDiff
+          oldValue={BankCSPExamples.bad}
+          newValue={BankCSPExamples.good}
+          leftTitle="❌ 反面教材"
+          rightTitle="✅ 最佳实践"
+          type="error"
+          hideDiffMarkers={true}
+        />
       </Card>
 
       {/* 四、 为什么要这样解决 且互动演示 */}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Typography, Alert, Divider, Tag, Button } from 'antd';
 import { ZIndexExamples } from './Examples';
-import CodeBlock from '../../../components/CodeBlock';
+import CodeDiff from '@/components/CodeDiff';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -97,10 +97,14 @@ const ZIndexStacking: React.FC = () => {
 
       {/* 三、 Bug 如何解决 */}
       <Card title="三、 Bug 如何解决" style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '16px' }}>
-          <CodeBlock title="❌ 受限的嵌套写法" code={ZIndexExamples.bad} type="error" />
-          <CodeBlock title="✅ React Portal 方案" code={ZIndexExamples.good} type="success" />
-        </div>
+        <CodeDiff
+          oldValue={ZIndexExamples.bad}
+          newValue={ZIndexExamples.good}
+          leftTitle="❌ 反面教材"
+          rightTitle="✅ 最佳实践"
+          type="error"
+          hideDiffMarkers={true}
+        />
       </Card>
 
       {/* 四、 为什么要这样解决 且互动演示 */}

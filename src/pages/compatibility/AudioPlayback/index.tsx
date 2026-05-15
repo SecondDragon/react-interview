@@ -4,7 +4,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { Typography, Card, Space, Divider, Alert, Tag } from 'antd';
 import { AudioPlayer } from '../../../components/AudioPlayer.tsx';
-import CodeBlock from '../../../components/CodeBlock';
+import CodeDiff from '@/components/CodeDiff';
 import { AudioPlaybackExamples } from './Examples';
 
 const { Title, Paragraph, Text } = Typography;
@@ -45,18 +45,14 @@ const AudioPlaybackDemo: React.FC = () => {
         <Paragraph>
           通过封装一个 <Tag color="blue">AudioPlayer</Tag> 组件，利用 React 的 `useRef` 持有音频对象，并使用状态管理同步播放进度与总时长。
         </Paragraph>
-        <Space direction="vertical" style={{ width: '100%' }} size="middle">
-          <CodeBlock
-            code={AudioPlaybackExamples.bad}
-            title="原生 Audio 控件 (样式不可控)"
-            type="error"
-          />
-          <CodeBlock
-            code={AudioPlaybackExamples.good}
-            title="自定义 AudioPlayer (高度可定制)"
-            type="success"
-          />
-        </Space>
+        <CodeDiff
+          oldValue={AudioPlaybackExamples.bad}
+          newValue={AudioPlaybackExamples.good}
+          leftTitle="❌ 反面教材"
+          rightTitle="✅ 最佳实践"
+          type="error"
+          hideDiffMarkers={true}
+        />
       </Section>
 
       {/* 四、互动演示 (Live Demo) */}

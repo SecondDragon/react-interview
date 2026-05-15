@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Typography, Alert, Divider, List, Badge, Tag } from 'antd';
 import { IosFocusExamples } from './Examples';
-import CodeBlock from '../../../components/CodeBlock';
+import CodeDiff from '@/components/CodeDiff';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -49,7 +49,7 @@ const IosInputFocus: React.FC = () => {
         <Paragraph>
           最稳健的方法是利用 <Text strong>Fixed 动态锚定法</Text>：在弹窗开启时，将 Body 转化为 Fixed 状态，强行阻止其位移。
         </Paragraph>
-        <CodeBlock title="✅ 工业级 Body 锁定函数" code={IosFocusExamples.good} type="success" />
+        <CodeDiff code={IosFocusExamples.good} type="success" title="✅ 工业级 Body 锁定函数" />
       </Card>
 
       {/* 四、 为什么要这样解决 且现状模拟 */}

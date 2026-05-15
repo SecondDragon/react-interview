@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Typography, Alert, Divider, Row, Col, Tag, Input, Steps } from 'antd';
 import { AmountInputExamples } from './Examples';
-import CodeBlock from '../../../components/CodeBlock';
+import CodeDiff from '@/components/CodeDiff';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -100,10 +100,14 @@ const AmountInput: React.FC = () => {
 
       {/* 三、 Bug 如何解决 */}
       <Card title="三、 Bug 如何解决" style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '16px' }}>
-          <CodeBlock title="❌ 错误做法" code={AmountInputExamples.bad} type="error" />
-          <CodeBlock title="✅ 正确方案" code={AmountInputExamples.good} type="success" />
-        </div>
+        <CodeDiff
+          oldValue={AmountInputExamples.bad}
+          newValue={AmountInputExamples.good}
+          leftTitle="❌ 反面教材"
+          rightTitle="✅ 最佳实践"
+          type="error"
+          hideDiffMarkers={true}
+        />
       </Card>
 
       {/* 四、 为什么要这样解决 且互动演示 */}

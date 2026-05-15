@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Typography, Alert, Divider, Button, Space, message, Tag } from 'antd';
 import { DateParsingExamples } from './Examples';
-import CodeBlock from '../../../components/CodeBlock';
+import CodeDiff from '@/components/CodeDiff';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -75,10 +75,14 @@ const DateParsing: React.FC = () => {
 
       {/* 三、 Bug 如何解决 */}
       <Card title="三、 Bug 如何解决" style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '16px' }}>
-          <CodeBlock title="❌ 错误做法" code={DateParsingExamples.bad} type="error" language="javascript" />
-          <CodeBlock title="✅ 正确方案" code={DateParsingExamples.good} type="success" language="javascript" />
-        </div>
+        <CodeDiff
+          oldValue={DateParsingExamples.bad}
+          newValue={DateParsingExamples.good}
+          leftTitle="❌ 反面教材"
+          rightTitle="✅ 最佳实践"
+          type="error"
+          hideDiffMarkers={true}
+        />
       </Card>
 
       {/* 四、 为什么要这样解决 且互动演示 */}

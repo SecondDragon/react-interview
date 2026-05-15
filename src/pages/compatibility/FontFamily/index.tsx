@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Typography, Divider, Table, Radio, Space, Input, Tag, Alert } from 'antd';
 import { FontRenderingExamples } from './Examples';
-import CodeBlock from '../../../components/CodeBlock';
+import CodeDiff from '@/components/CodeDiff';
 
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
@@ -75,10 +75,14 @@ const FontFamily: React.FC = () => {
         <Paragraph>
           建立“阶梯式”回退机制，确保每一类设备都能用到其最优字体。
         </Paragraph>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '16px' }}>
-          <CodeBlock title="❌ 反面教材" code={FontRenderingExamples.bad} type="error" language="css" />
-          <CodeBlock title="✅ 最佳实践 (多端适配栈)" code={FontRenderingExamples.good} type="success" language="css" />
-        </div>
+        <CodeDiff
+          oldValue={FontRenderingExamples.bad}
+          newValue={FontRenderingExamples.good}
+          leftTitle="❌ 反面教材"
+          rightTitle="✅ 最佳实践"
+          type="error"
+          hideDiffMarkers={true}
+        />
       </Card>
 
       {/* 四、 为什么要这样解决 且互动演示 */}
