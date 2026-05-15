@@ -10,6 +10,7 @@ import {
   ApiOutlined,
   ToolOutlined,
   PhoneOutlined,
+  FullscreenOutlined,
 } from '@ant-design/icons';
 
 export interface RouteConfig {
@@ -71,6 +72,7 @@ const IosInputFocus = lazy(() => import('../pages/compatibility/IosInputFocus/in
 const ZIndexStacking = lazy(() => import('../pages/compatibility/ZIndexStacking/index'));
 const VerticalCentering = lazy(() => import('../pages/compatibility/VerticalCentering/index'));
 const AudioPlayback = lazy(() => import('../pages/compatibility/AudioPlayback/index'));
+const BrowserDimensions = lazy(() => import('../pages/browser-dimensions/index'));
 
 export const dashboardRoutes: RouteConfig[] = [
   {
@@ -343,6 +345,12 @@ export const dashboardRoutes: RouteConfig[] = [
     label: '用户权限管理',
     icon: <TeamOutlined />,
     element: <UserList />,
+  },
+  {
+    path: '/dashboard/browser-dimensions',
+    label: '浏览器的各种尺寸',
+    icon: <FullscreenOutlined />,
+    element: <BrowserDimensions />,
   },
   {
     path: '/dashboard/settings',
