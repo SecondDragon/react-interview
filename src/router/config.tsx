@@ -50,6 +50,7 @@ const ProDynamicFormPage = lazy(
 );
 
 // 兼容性问题组件
+const MobileViewport = lazy(() => import('../pages/compatibility/MobileViewport/index'));
 const OnePixel = lazy(() => import('../pages/compatibility/OnePixel/index'));
 const VhUnit = lazy(() => import('../pages/compatibility/VhUnit/index'));
 const SafeArea = lazy(() => import('../pages/compatibility/SafeArea/index'));
@@ -58,6 +59,7 @@ const ScrollbarStyle = lazy(() => import('../pages/compatibility/ScrollbarStyle/
 const FontFamily = lazy(() => import('../pages/compatibility/FontFamily/index'));
 const DateParsing = lazy(() => import('../pages/compatibility/DateParsing/index'));
 const KeyboardOverlap = lazy(() => import('../pages/compatibility/KeyboardOverlap/index'));
+const MobileAdaptation = lazy(() => import('../pages/compatibility/MobileAdaptation/index'));
 const AutoplayPolicy = lazy(() => import('../pages/compatibility/AutoplayPolicy/index'));
 const BankPrecision = lazy(() => import('../pages/compatibility/BankPrecision/index'));
 const AmountInput = lazy(() => import('../pages/compatibility/AmountInput/index'));
@@ -84,16 +86,41 @@ export const dashboardRoutes: RouteConfig[] = [
     icon: <ToolOutlined />,
     children: [
       {
-        path: '/dashboard/compatibility/1px',
-        icon: <ApiOutlined />,
-        label: '移动端 1px 边框',
-        element: <OnePixel />,
-      },
-      { path: '/dashboard/compatibility/vh-unit', label: 'iOS Safari vh高度', element: <VhUnit /> },
-      {
-        path: '/dashboard/compatibility/safe-area',
-        label: 'iOS 安全区域适配',
-        element: <SafeArea />,
+        path: '/dashboard/compatibility/mobile',
+        label: '移动端兼容问题',
+        icon: <PhoneOutlined />,
+        children: [
+          {
+            path: '/dashboard/compatibility/mobile/viewport',
+            label: '移动端 Viewport 与基础概念',
+            element: <MobileViewport />,
+          },
+          {
+            path: '/dashboard/compatibility/mobile/1px',
+            label: '移动端 1px 边框',
+            element: <OnePixel />,
+          },
+          {
+            path: '/dashboard/compatibility/mobile/vh-unit',
+            label: 'iOS Safari vh高度',
+            element: <VhUnit />,
+          },
+          {
+            path: '/dashboard/compatibility/mobile/safe-area',
+            label: 'iOS 安全区域适配',
+            element: <SafeArea />,
+          },
+          {
+            path: '/dashboard/compatibility/mobile/keyboard',
+            label: '移动端键盘遮挡',
+            element: <KeyboardOverlap />,
+          },
+          {
+            path: '/dashboard/compatibility/mobile/adaptation',
+            label: '移动端适配方案',
+            element: <MobileAdaptation />,
+          },
+        ],
       },
       {
         path: '/dashboard/compatibility/ime-input',
@@ -114,11 +141,6 @@ export const dashboardRoutes: RouteConfig[] = [
         path: '/dashboard/compatibility/date-parsing',
         label: 'Safari 日期解析',
         element: <DateParsing />,
-      },
-      {
-        path: '/dashboard/compatibility/keyboard',
-        label: '移动端键盘遮挡',
-        element: <KeyboardOverlap />,
       },
       {
         path: '/dashboard/compatibility/autoplay',
