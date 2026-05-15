@@ -1076,6 +1076,94 @@ const DprDemo = () => {
 };
 
 /**
+ * JavaScript 宽度 API 对比表
+ */
+const widthApiColumns = [
+  {
+    title: 'API',
+    dataIndex: 'api',
+    key: 'api',
+    render: (text: string) => <Text code>{text}</Text>,
+  },
+  {
+    title: '含义',
+    dataIndex: 'meaning',
+    key: 'meaning',
+  },
+  {
+    title: '未缩放（scale=1）',
+    dataIndex: 'normal',
+    key: 'normal',
+    render: (text: string) => <Tag color="blue">{text}</Tag>,
+  },
+  {
+    title: '缩放后（scale=1/3）',
+    dataIndex: 'scaled',
+    key: 'scaled',
+    render: (text: string) => <Tag color="orange">{text}</Tag>,
+  },
+];
+
+const widthApiData = [
+  {
+    key: '1',
+    api: 'window.innerWidth',
+    meaning: '窗口可视区域 CSS 像素宽度（含滚动条）',
+    normal: '390px',
+    scaled: '1170px',
+  },
+  {
+    key: '2',
+    api: 'document.documentElement.clientWidth',
+    meaning: '<html> 元素 CSS 像素宽度（不含滚动条）',
+    normal: '390px',
+    scaled: '1170px',
+  },
+  {
+    key: '3',
+    api: 'window.devicePixelRatio',
+    meaning: '物理像素 / CSS 像素比值（DPR）',
+    normal: '3',
+    scaled: '3（不变）',
+  },
+  {
+    key: '4',
+    api: 'screen.width',
+    meaning: '屏幕设备独立像素（DIP）宽度',
+    normal: '390px',
+    scaled: '390px（不变）',
+  },
+  {
+    key: '5',
+    api: 'element.offsetWidth',
+    meaning: '元素 CSS 像素宽度（含边框、内边距）',
+    normal: '按实际',
+    scaled: '按实际 × 3',
+  },
+  {
+    key: '6',
+    api: 'element.scrollWidth',
+    meaning: '元素内容 CSS 像素总宽度（含溢出）',
+    normal: '按实际',
+    scaled: '按实际 × 3',
+  },
+  {
+    key: '7',
+    api: 'element.getBoundingClientRect().width',
+    meaning: '元素 CSS 像素宽度和位置信息',
+    normal: '按实际',
+    scaled: '按实际 × 3',
+  },
+  {
+    key: '8',
+    api: 'window.visualViewport.width',
+    meaning: '视觉视口实时尺寸（用户缩放时动态变化）',
+    normal: '390px',
+    scaled: '390px（不变）',
+  },
+];
+
+/**
  * 像素概念对比表
  */
 const pixelConceptColumns = [
@@ -1298,6 +1386,27 @@ const MobileViewport: React.FC = () => {
         <Paragraph style={{ whiteSpace: 'pre-wrap' }}>
           {MobileViewportExamples.principle}
         </Paragraph>
+
+        <Divider orientation="left">JavaScript 宽度 API 对比（iPhone 14 Pro, DPR=3）</Divider>
+        <Table
+          columns={widthApiColumns}
+          dataSource={widthApiData}
+          pagination={false}
+          size="small"
+          bordered
+        />
+        <Alert
+          message="核心规律"
+          description={
+            <div>
+              <div>✅ 受 viewport 缩放影响：innerWidth / clientWidth / offsetWidth / scrollWidth / getBoundingClientRect</div>
+              <div>❌ 不受 viewport 缩放影响：devicePixelRatio / screen.width / visualViewport.width</div>
+            </div>
+          }
+          type="info"
+          showIcon
+          style={{ marginTop: '16px' }}
+        />
 
         <Divider />
 
