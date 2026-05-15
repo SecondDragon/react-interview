@@ -1,5 +1,6 @@
 import React from 'react';
-import ReactDiffViewer from 'react-diff-viewer';
+import ReactDiffViewerPkg from 'react-diff-viewer';
+const ReactDiffViewer = (ReactDiffViewerPkg as any).default || ReactDiffViewerPkg;
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Tag } from 'antd';
