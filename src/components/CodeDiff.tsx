@@ -141,13 +141,15 @@ const CodeDiff: React.FC<CodeDiffProps> = ({
       </div>
 
       {/* 双列代码对比 */}
-      <div style={{ display: 'flex', flexDirection: 'row' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch' }}>
         {/* 左侧：旧代码 */}
         <div
           style={{
             flex: 1,
             minWidth: 0,
             borderRight: '1px solid #333',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           {leftTitle && (
@@ -165,21 +167,23 @@ const CodeDiff: React.FC<CodeDiffProps> = ({
               {leftTitle}
             </div>
           )}
-          <SyntaxHighlighter
-            language={language}
-            style={vscDarkPlus}
-            showLineNumbers={showLineNumbers}
-            customStyle={{
-              ...highlighterCustomStyle,
-              background: hideDiffMarkers ? '#1e1e1e' : '#2b1d1d',
-            }}
-          >
-            {oldValue?.trim()}
-          </SyntaxHighlighter>
+          <div style={{ flex: 1, background: hideDiffMarkers ? '#1e1e1e' : '#2b1d1d' }}>
+            <SyntaxHighlighter
+              language={language}
+              style={vscDarkPlus}
+              showLineNumbers={showLineNumbers}
+              customStyle={{
+                ...highlighterCustomStyle,
+                background: 'transparent',
+              }}
+            >
+              {oldValue?.trim()}
+            </SyntaxHighlighter>
+          </div>
         </div>
 
         {/* 右侧：新代码 */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
           {rightTitle && (
             <div
               style={{
@@ -195,17 +199,19 @@ const CodeDiff: React.FC<CodeDiffProps> = ({
               {rightTitle}
             </div>
           )}
-          <SyntaxHighlighter
-            language={language}
-            style={vscDarkPlus}
-            showLineNumbers={showLineNumbers}
-            customStyle={{
-              ...highlighterCustomStyle,
-              background: hideDiffMarkers ? '#1e1e1e' : '#1d2b1d',
-            }}
-          >
-            {newValue?.trim()}
-          </SyntaxHighlighter>
+          <div style={{ flex: 1, background: hideDiffMarkers ? '#1e1e1e' : '#1d2b1d' }}>
+            <SyntaxHighlighter
+              language={language}
+              style={vscDarkPlus}
+              showLineNumbers={showLineNumbers}
+              customStyle={{
+                ...highlighterCustomStyle,
+                background: 'transparent',
+              }}
+            >
+              {newValue?.trim()}
+            </SyntaxHighlighter>
+          </div>
         </div>
       </div>
     </div>
