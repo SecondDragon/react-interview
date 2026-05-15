@@ -352,9 +352,11 @@ function setViewport() {
     meta.setAttribute('content', content);
   }
 
-  // 根字体需要按 DPR 反算！
+  // 根字体反算：viewport 缩放后 clientWidth 被放大了 DPR 倍
+  // 需要先除以 DPR 还原为设备独立像素，再计算 rem
   const docEl = document.documentElement;
-  const rem = docEl.clientWidth * dpr / 10;
+  const dipWidth = docEl.clientWidth / dpr;  // 设备独立像素（如 1170/3 = 390）
+  const rem = dipWidth / 10;                  // 与正常 rem 方案保持一致（39px）
   docEl.style.fontSize = rem + 'px';
   docEl.setAttribute('data-dpr', dpr.toString());
 }
@@ -419,11 +421,15 @@ setViewport();
    此时 1 CSS 像素 = 1 物理像素
 
 2. 为什么根字体需要反算？
-   缩放后，1rem = 设备宽度 × DPR / 10
-   如果不反算，在 DPR=3 设备上：
-   1rem = 390 × 3 / 10 = 117px（太大了！）
-   实际上应该保持：1rem = 设备宽度 / 10 = 39px
-   所以根字体公式：rem = 设备宽度 / 10（不是 clientWidth/10！）
+   viewport 缩放后，clientWidth 被放大了 DPR 倍：
+   - DPR=3 时 scale=1/3，clientWidth = 390 × 3 = 1170px
+   - 如果直接用 clientWidth/10 = 117px，根字体太大！
+   
+   正确做法：先除以 DPR 还原为设备独立像素
+   const dipWidth = docEl.clientWidth / dpr;  // 1170/3 = 390
+   const rem = dipWidth / 10;                  // 39px
+   
+   这样 1rem = 39px，与未缩放的 rem 方案完全一致。
 
 3. 与 rem/vw 的本质区别
    rem/vw 解决的是"尺寸比例"问题（不同设备上保持相同比例）

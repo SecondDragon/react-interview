@@ -187,9 +187,11 @@ function setViewport() {
     meta.setAttribute('content', content);
   }
 
-  // 根字体需要按 DPR 反算！
+  // 根字体反算：viewport 缩放后 clientWidth 被放大了 DPR 倍
+  // 需要先除以 DPR 还原为设备独立像素，再计算 rem
   const docEl = document.documentElement;
-  const rem = docEl.clientWidth * dpr / 10;
+  const dipWidth = docEl.clientWidth / dpr;  // 设备独立像素（如 1170/3 = 390）
+  const rem = dipWidth / 10;                  // 与正常 rem 方案保持一致（39px）
   docEl.style.fontSize = rem + 'px';
   docEl.setAttribute('data-dpr', dpr.toString());
 }
@@ -245,9 +247,13 @@ setViewport();
    此时 1 CSS 像素 = 1 物理像素
 
 2. 根字体反算
-   缩放后，如果不调整根字体，全局文字会变小。
-   正确公式：rem = 设备宽度 × DPR / 10
-   这样文字大小保持正常。
+   viewport 缩放后，clientWidth 被放大了 DPR 倍：
+   - DPR=3 时 scale=1/3，clientWidth = 390 × 3 = 1170px
+   
+   错误写法（直接乘 DPR）：rem = 1170 × 3 / 10 = 351px ❌
+   正确写法（先除 DPR）：rem = 1170 / 3 / 10 = 39px ✅
+   
+   核心：clientWidth 在缩放后不等于设备宽度，需要先除以 DPR 还原。
 
 3. 与 rem 方案的关系
    viewport 缩放通常与 rem 方案配合使用。
