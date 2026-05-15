@@ -14,7 +14,7 @@ const DimensionTable: React.FC = () => {
       title: '分类',
       dataIndex: 'category',
       key: 'category',
-      width: '10%',
+      width: '70px',
       render: (text: string) => {
         const colorMap: Record<string, string> = {
           Window: 'blue',
@@ -28,27 +28,27 @@ const DimensionTable: React.FC = () => {
       title: 'API',
       dataIndex: 'api',
       key: 'api',
-      width: '22%',
+      width: '220px',
       render: (text: string) => <Text code style={{ fontSize: '12px' }}>{text}</Text>,
     },
     {
       title: '含义',
       dataIndex: 'meaning',
       key: 'meaning',
-      width: '20%',
+      width: '180px',
     },
     {
       title: '包含内容',
       dataIndex: 'includes',
       key: 'includes',
-      width: '15%',
+      width: '160px',
       render: (text: string) => <Text type="secondary" style={{ fontSize: '12px' }}>{text}</Text>,
     },
     {
       title: '坐标系',
       dataIndex: 'coordinate',
       key: 'coordinate',
-      width: '8%',
+      width: '70px',
       render: (text: string) => {
         const color = text === 'CSS 像素' ? 'blue' : text === 'DIP' ? 'green' : 'orange';
         return <Tag color={color} style={{ fontSize: '11px' }}>{text}</Tag>;
@@ -58,7 +58,7 @@ const DimensionTable: React.FC = () => {
       title: '受缩放影响',
       dataIndex: 'affectedByZoom',
       key: 'affectedByZoom',
-      width: '8%',
+      width: '80px',
       render: (value: boolean) => (
         <Tag color={value ? 'red' : 'green'} style={{ fontSize: '11px' }}>
           {value ? '✅ 是' : '❌ 否'}
@@ -69,7 +69,7 @@ const DimensionTable: React.FC = () => {
       title: '受滚动影响',
       dataIndex: 'affectedByScroll',
       key: 'affectedByScroll',
-      width: '8%',
+      width: '80px',
       render: (value: boolean) => (
         <Tag color={value ? 'red' : 'green'} style={{ fontSize: '11px' }}>
           {value ? '✅ 是' : '❌ 否'}

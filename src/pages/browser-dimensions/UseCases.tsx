@@ -11,25 +11,7 @@ const { Panel } = Collapse;
  * 展示各种尺寸 API 在高级开发中的具体用法
  */
 const UseCases: React.FC = () => {
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [isBottom, setIsBottom] = useState(false);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
-
-  // 滚动监听演示
-  useEffect(() => {
-    const el = scrollContainerRef.current;
-    if (!el) return;
-
-    const handleScroll = () => {
-      const progress = (el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100;
-      setScrollProgress(Math.min(100, Math.max(0, progress)));
-      setIsBottom(el.scrollTop + el.clientHeight >= el.scrollHeight - 1);
-    };
-
-    el.addEventListener('scroll', handleScroll);
-    return () => el.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // 键盘检测演示（模拟）
   useEffect(() => {
@@ -57,66 +39,7 @@ const UseCases: React.FC = () => {
       />
 
       {/* 场景 1：滚动进度条 */}
-      <Card
-        size="small"
-        title={<span><Tag color="blue">场景 1</Tag> 滚动进度条</span>}
-        style={{ marginBottom: '16px' }}
-      >
-        <Text>
-          使用 <Text code>scrollTop</Text>、<Text code>clientHeight</Text>、<Text code>scrollHeight</Text> 计算滚动进度。
-        </Text>
-
-        <div
-          style={{
-            position: 'sticky',
-            top: 0,
-            height: '4px',
-            background: '#f0f0f0',
-            marginTop: '8px',
-            marginBottom: '8px',
-          }}
-        >
-          <div
-            style={{
-              width: `${scrollProgress}%`,
-              height: '100%',
-              background: '#1890ff',
-              transition: 'width 0.1s',
-            }}
-          />
-        </div>
-
-        <div
-          ref={scrollContainerRef}
-          style={{
-            height: '150px',
-            overflow: 'auto',
-            border: '1px solid #d9d9d9',
-            padding: '16px',
-            borderRadius: '4px',
-          }}
-        >
-          {Array.from({ length: 20 }).map((_, i) => (
-            <div key={i} style={{ padding: '8px', borderBottom: '1px solid #f0f0f0' }}>
-              列表项 {i + 1} - 向下滚动查看进度条变化
-            </div>
-          ))}
-        </div>
-
-        <div style={{ marginTop: '8px', fontSize: '12px', color: '#999' }}>
-          进度：{scrollProgress.toFixed(1)}% | {isBottom ? '✅ 已到底部' : '继续滚动'}
-        </div>
-
-        <CodeDiff
-          code={`// 滚动进度计算
-const progress = (el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100;
-
-// 是否滚动到底部（考虑舍入误差）
-const isBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;`}
-          type="info"
-          title="核心代码"
-        />
-      </Card>
+      <ScrollProgressDemo />
 
       {/* 场景 2：键盘弹出检测 */}
       <Card
@@ -229,6 +152,92 @@ const observer = new IntersectionObserver((entries) => {
           </Panel>
         ))}
       </Collapse>
+    </Card>
+  );
+};
+
+/**
+ * 滚动进度条演示组件（独立组件避免影响父级渲染）
+ */
+const ScrollProgressDemo: React.FC = () => {
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isBottom, setIsBottom] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+
+    const handleScroll = () => {
+      const progress = (el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100;
+      setScrollProgress(Math.min(100, Math.max(0, progress)));
+      setIsBottom(el.scrollTop + el.clientHeight >= el.scrollHeight - 1);
+    };
+
+    el.addEventListener('scroll', handleScroll);
+    return () => el.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <Card
+      size="small"
+      title={<span><Tag color="blue">场景 1</Tag> 滚动进度条</span>}
+      style={{ marginBottom: '16px' }}
+    >
+      <Text>
+        使用 <Text code>scrollTop</Text>、<Text code>clientHeight</Text>、<Text code>scrollHeight</Text> 计算滚动进度。
+      </Text>
+
+      <div
+        style={{
+          position: 'sticky',
+          top: 0,
+          height: '4px',
+          background: '#f0f0f0',
+          marginTop: '8px',
+          marginBottom: '8px',
+        }}
+      >
+        <div
+          style={{
+            width: `${scrollProgress}%`,
+            height: '100%',
+            background: '#1890ff',
+            transition: 'width 0.1s',
+          }}
+        />
+      </div>
+
+      <div
+        ref={scrollContainerRef}
+        style={{
+          height: '150px',
+          overflow: 'auto',
+          border: '1px solid #d9d9d9',
+          padding: '16px',
+          borderRadius: '4px',
+        }}
+      >
+        {Array.from({ length: 20 }).map((_, i) => (
+          <div key={i} style={{ padding: '8px', borderBottom: '1px solid #f0f0f0' }}>
+            列表项 {i + 1} - 向下滚动查看进度条变化
+          </div>
+        ))}
+      </div>
+
+      <div style={{ marginTop: '8px', fontSize: '12px', color: '#999' }}>
+        进度：{scrollProgress.toFixed(1)}% | {isBottom ? '✅ 已到底部' : '继续滚动'}
+      </div>
+
+      <CodeDiff
+        code={`// 滚动进度计算
+const progress = (el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100;
+
+// 是否滚动到底部（考虑舍入误差）
+const isBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;`}
+        type="info"
+        title="核心代码"
+      />
     </Card>
   );
 };
