@@ -50,16 +50,16 @@ const ProDynamicFormPage = lazy(
 );
 
 // 兼容性问题组件
-const MobileViewport = lazy(() => import('../pages/compatibility/MobileViewport/index'));
-const OnePixel = lazy(() => import('../pages/compatibility/OnePixel/index'));
-const VhUnit = lazy(() => import('../pages/compatibility/VhUnit/index'));
-const SafeArea = lazy(() => import('../pages/compatibility/SafeArea/index'));
+const MobileViewport = lazy(() => import('../pages/compatibility/mobile/MobileViewport/index'));
+const OnePixel = lazy(() => import('../pages/compatibility/mobile/OnePixel/index'));
+const VhUnit = lazy(() => import('../pages/compatibility/mobile/VhUnit/index'));
+const SafeArea = lazy(() => import('../pages/compatibility/mobile/SafeArea/index'));
 const IMEInput = lazy(() => import('../pages/compatibility/IMEInput/index'));
 const ScrollbarStyle = lazy(() => import('../pages/compatibility/ScrollbarStyle/index'));
 const FontFamily = lazy(() => import('../pages/compatibility/FontFamily/index'));
 const DateParsing = lazy(() => import('../pages/compatibility/DateParsing/index'));
-const KeyboardOverlap = lazy(() => import('../pages/compatibility/KeyboardOverlap/index'));
-const MobileAdaptation = lazy(() => import('../pages/compatibility/MobileAdaptation/index'));
+const KeyboardOverlap = lazy(() => import('../pages/compatibility/mobile/KeyboardOverlap/index'));
+const MobileAdaptation = lazy(() => import('../pages/compatibility/mobile/MobileAdaptation/index'));
 const AutoplayPolicy = lazy(() => import('../pages/compatibility/AutoplayPolicy/index'));
 const BankPrecision = lazy(() => import('../pages/compatibility/BankPrecision/index'));
 const AmountInput = lazy(() => import('../pages/compatibility/AmountInput/index'));
