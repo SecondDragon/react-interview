@@ -310,7 +310,7 @@ vw 值通常带有 5 位小数（如 2.66667vw），
 // 方案三：viewport 缩放方案
 // ============================================================
 export const ViewportScaleExamples = {
-  title: '方案三：viewport 缩放方案',
+  title: '方案四（历史方案）：viewport 缩放方案',
 
   phenomenon:
     '在 iPhone 14 Pro（DPR=3）上，1px 的 CSS 边框实际上占用了 3×3=9 个物理像素，视觉上明显变粗。传统的 rem/vw 方案只能解决"尺寸比例"问题，无法解决"像素精度"问题。viewport 缩放方案通过调整 initial-scale，让 1 CSS 像素精确对应 1 物理像素。',
@@ -376,34 +376,39 @@ setViewport();
   border: 1px solid #ccc;  /* 1 CSS 像素 = 1 物理像素 */
 }`,
 
-  whySolveThisWay: `为什么 viewport 缩放能解决 1px 边框问题？
+  whySolveThisWay: `为什么 viewport 缩放方案曾在 2015-2018 年广泛使用？
 
-1. 缩放改变的是 CSS 像素与物理像素的对应关系
-   不缩放时：1 CSS 像素 = DPR × DPR 物理像素
-   缩放后（scale=1/DPR）：1 CSS 像素 = 1 物理像素
-   因此 1px 边框在物理屏幕上只占 1 个像素，不再变粗。
+1. 时代背景：高清屏刚刚普及
+   2014 年 iPhone 6 Plus 首次引入 DPR=3 的屏幕，1px 边框变粗问题突然爆发。
+   当时社区还没有成熟的 1px 解决方案，viewport 缩放是唯一能"根治"这个问题的方法。
 
-2. 代价是什么？
-   整个页面被缩小了 DPR 倍，视觉上所有元素都变小了。
-   需要通过根字体反算来恢复正常的视觉大小。
-   例如：DPR=3 时，根字体 = 设备宽度 × 3 / 10
+2. 手淘 lib-flexible 的带动效应
+   阿里巴巴手淘团队开源的 lib-flexible 采用了 viewport 缩放方案。
+   作为国内移动端 H5 的标杆项目，大量公司直接照搬其方案，形成行业惯性。
+   当时流行的口号是"1rem = 1px = 1 物理像素"，听起来非常优雅。
 
-3. 为什么现在不常用了？
-   手淘的 lib-flexible 曾广泛使用此方案。
-   但 viewport 缩放会带来一系列副作用：
-   - 第三方组件库可能需要适配
-   - 部分浏览器对 fractional scale 支持不佳
-   - 全局缩放影响所有元素，牵一发而动全身
-   - SSR 场景难以处理
+3. 当时没有更好的替代方案
+   - postcss-px-to-viewport 等工具尚未成熟
+   - transform: scale() 的 1px hack 还未普及
+   - vw 单位在部分国产浏览器（尤其是 Android 4.x）上兼容性差
+   - 设计师习惯按物理像素标注，缩放方案让设计稿"直接可用"
 
-4. 现代替代方案
+4. 为什么现在被淘汰了？
+   viewport 缩放虽然解决了 1px 问题，但带来了更大的问题：
+   - 全局缩放影响所有元素，第三方组件库、地图、视频等都需要单独适配
+   - 部分浏览器对 fractional scale（如 0.333）渲染有偏差，导致模糊
+   - SSR 场景下服务端和客户端需要保持一致的缩放逻辑，复杂度爆炸
+   - 禁止用户缩放（user-scalable=no）影响无障碍体验
+   - 随着 vw 兼容性提升和 1px hack 普及，缩放方案的优势不再明显
+
+5. 现代替代方案
    1px 边框问题现在通常用伪元素 + transform: scale() 解决：
    .hairline::after {
      height: 1px;
      transform: scaleY(1/DPR);
      transform-origin: 0 100%;
    }
-   这种方式只影响边框，不影响全局布局。`,
+   这种方式只影响边框，不影响全局布局，副作用最小。`,
 
   principle: `viewport 缩放方案核心原理：
 
@@ -452,7 +457,7 @@ setViewport();
 // 方案四：现代 CSS 方案
 // ============================================================
 export const ModernCssExamples = {
-  title: '方案四：现代 CSS 方案',
+  title: '方案三：现代 CSS 方案',
 
   phenomenon:
     '随着 CSS 标准的演进，浏览器原生支持了越来越多强大的布局能力。能否不依赖构建工具转换（如 postcss-px-to-viewport），仅使用 CSS 原生能力实现移动端适配？现代 CSS 方案利用 clamp、min、max、容器查询等特性，实现声明式的流体布局。',
