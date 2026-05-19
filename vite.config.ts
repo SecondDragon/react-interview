@@ -17,6 +17,9 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    allowedHosts: true // 设为 true 表示允许任何 Host 域名访问
+  },
   css: {
     preprocessorOptions: {
       less: {

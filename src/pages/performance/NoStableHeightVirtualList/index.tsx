@@ -71,10 +71,10 @@ export const FeedCard: React.FC<{ item: FeedItem }> = ({ item }) => {
             <Space size="middle">
               {item.tags.map(tag => <Tag key={tag}>{tag}</Tag>)}
             </Space>
-            <Space size="large" style={{ color: '#8c8c8c' }}>
-              <span><LikeOutlined /> {Math.floor(Math.random() * 100)}</span>
-              <span><MessageOutlined /> {Math.floor(Math.random() * 20)}</span>
-            </Space>
+            {/*<Space size="large" style={{ color: '#8c8c8c' }}>*/}
+            {/*  <span><LikeOutlined /> {Math.floor(Math.random() * 100)}</span>*/}
+            {/*  <span><MessageOutlined /> {Math.floor(Math.random() * 20)}</span>*/}
+            {/*</Space>*/}
           </div>
         </div>
       </Space>
