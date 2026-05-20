@@ -1,5 +1,6 @@
 import React, { lazy, useState, Suspense } from 'react';
-import { Card, Button, Typography, Space, Tag, Spin, Row, Col, Tabs, Alert, Modal } from 'antd';
+import { Card, Button, Typography, Space, Tag, Spin, Row, Col, Tabs, Alert } from 'antd';
+import { useAppModal } from '../../../hooks/useAppModal';
 import CodeBlock from '../../../components/CodeBlock';
 import { HoverPreloadExamples } from './Examples';
 import { CheckCircleOutlined } from '@ant-design/icons';
@@ -16,12 +17,13 @@ const HeavyChart = lazy(HeavyChartLoader);
 const HeavyEditor = lazy(HeavyEditorLoader);
 
 const HoverPreloadPage: React.FC = () => {
+  const { openFormModal } = useAppModal();
+
   // 状态 1：图表演示
   const [showChart, setShowChart] = useState(false);
   const [chartPreloaded, setChartPreloaded] = useState(false);
 
-  // 状态 2：Modal 演示
-  const [modalVisible, setModalVisible] = useState(false);
+  // 状态 2：Modal 演示（已改用函数式弹窗，无需 useState 管理 visible）
   const [editorPreloaded, setEditorPreloaded] = useState(false);
 
   // 日志记录
@@ -40,7 +42,7 @@ const HoverPreloadPage: React.FC = () => {
   };
 
   const handleEditorHover = () => {
-    if (editorPreloaded || modalVisible) return;
+    if (editorPreloaded) return;
     setEditorPreloaded(true);
 
     addLog('【场景 B】触发深度预加载：开始下载壳组件 + Monaco 核心库 (4MB+)...');
@@ -98,7 +100,6 @@ const HoverPreloadPage: React.FC = () => {
   const reset = () => {
     setShowChart(false);
     setChartPreloaded(false);
-    setModalVisible(false);
     setEditorPreloaded(false);
     setLogs([]);
     addLog('已重置状态');
@@ -164,7 +165,18 @@ const HoverPreloadPage: React.FC = () => {
                 ghost
                 icon={<CheckCircleOutlined />}
                 onMouseEnter={handleEditorHover}
-                onClick={() => setModalVisible(true)}
+                onClick={() =>
+                  openFormModal({
+                    title: '高级业务配置编辑器',
+                    maskClosable: true,
+                    width: 800,
+                    content: (
+                      <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin tip="加载编辑器主逻辑中..." /></div>}>
+                        <HeavyEditor />
+                      </Suspense>
+                    ),
+                  })
+                }
               >
                 进入高级业务配置 (Modal)
               </Button>
@@ -172,18 +184,6 @@ const HoverPreloadPage: React.FC = () => {
                 <Paragraph type="secondary">点击后弹出的内容包含了 2MB+ 的业务编辑器资源</Paragraph>
                 {editorPreloaded && <Tag color="success" icon={<CheckCircleOutlined />}>后台已异步完成加载</Tag>}
               </div>
-
-              <Modal
-                title="高级业务配置编辑器"
-                open={modalVisible}
-                onCancel={() => setModalVisible(false)}
-                width={800}
-                footer={null}
-              >
-                <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin tip="加载编辑器主逻辑中..." /></div>}>
-                  <HeavyEditor />
-                </Suspense>
-              </Modal>
             </Space>
           </Card>
         </Col>

@@ -1,5 +1,6 @@
-﻿import React, { useState, useEffect } from 'react';
-import { Card, Typography, Alert, Divider, Radio, Button, Modal, Row, Col, Tag, Table, Space } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Card, Typography, Alert, Divider, Radio, Button, Row, Col, Tag, Table, Space } from 'antd';
+import { useAppModal } from '../../../hooks/useAppModal';
 import { ScrollbarExamples } from './Examples';
 import CodeDiff from '@/components/CodeDiff';
 
@@ -9,9 +10,9 @@ const { Title, Paragraph, Text } = Typography;
  * 跨平台滚动条样式重构页面
  */
 const ScrollbarStyle: React.FC = () => {
+  const { confirm } = useAppModal();
   const [demoMode, setDemoMode] = useState<'default' | 'gutter' | 'beautify' | 'overlay'>('default');
   const [showLargeContent, setShowLargeContent] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const toggleContent = () => setShowLargeContent(!showLargeContent);
 
@@ -144,7 +145,7 @@ const ScrollbarStyle: React.FC = () => {
               <Button block type="primary" onClick={toggleContent}>
                 {showLargeContent ? '减少内容' : '增加内容'}
               </Button>
-              <Button block onClick={() => setIsModalOpen(true)}>
+              <Button block onClick={() => confirm({ title: 'Body 锁定测试', content: '观察背景页面在 Modal 弹出（Body 锁死）时是否发生了位移。' })}>
                 弹出 Modal (触发锁定)
               </Button>
             </Space>
@@ -186,9 +187,7 @@ const ScrollbarStyle: React.FC = () => {
         </ul>
       </Card>
 
-      <Modal title="Body 锁定测试" open={isModalOpen} onOk={() => setIsModalOpen(false)} onCancel={() => setIsModalOpen(false)}>
-        <Paragraph>观察背景页面在 Modal 弹出（Body 锁死）时是否发生了位移。</Paragraph>
-      </Modal>
+
     </div>
   );
 };

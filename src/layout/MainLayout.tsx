@@ -113,6 +113,14 @@ const MainLayout: React.FC = () => {
     setOpenKeys(keys);
   }, [keys]);
 
+  // 切换路由时，将 Content 滚动区域重置到顶部
+  useEffect(() => {
+    const contentEl = document.querySelector('.ant-layout-content');
+    if (contentEl) {
+      contentEl.scrollTop = 0;
+    }
+  }, [location.pathname]);
+
   console.log('openKeys', openKeys);
 
   return (
