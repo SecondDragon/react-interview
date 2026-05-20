@@ -220,7 +220,7 @@ const WaterfallPage: React.FC = () => {
       */}
       <div
         ref={wrapperRef}
-        style={{ padding: '24px', boxSizing: 'border-box', overflowX: 'hidden' }}
+        style={{ boxSizing: 'border-box', overflowX: 'hidden' }}
       >
         {/*<h2 style={{ marginBottom: 24 }}>瀑布流布局示例页面 (固定 {columns} 列)</h2>*/}
         {/*<div style={{ marginBottom: 16, color: '#666' }}>*/}

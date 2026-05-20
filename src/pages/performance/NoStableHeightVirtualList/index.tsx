@@ -105,7 +105,7 @@ const NoStableHeightVirtualListPage: React.FC = () => {
   }, [loading, hasMore, data.length]);
 
   return (
-    <div style={{ padding: '24px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Typography style={{ marginBottom: 24 }}>
         <Title level={2}>不定高虚拟列表 (Dynamic Height Virtual List)</Title>
         <Paragraph>

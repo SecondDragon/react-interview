@@ -15,7 +15,7 @@ const ProDynamicFormPage: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div>
       <Typography>
         <Title level={2}>企业级动态表单 - 纯前端架构演进 (Registry + Pure Function)</Title>
         <Paragraph>

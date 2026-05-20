@@ -137,7 +137,7 @@ const WaterfallProfessional: React.FC = () => {
 
   return (
     <SimpleBar scrollableNodeProps={{ onScroll: handleScroll }} style={{ height: '100%', backgroundColor: '#f5f5f5' }}>
-      <div ref={wrapperRef} style={{ padding: '24px', boxSizing: 'border-box', overflowX: 'hidden' }}>
+      <div ref={wrapperRef} style={{ boxSizing: 'border-box', overflowX: 'hidden' }}>
         <h2 style={{ marginBottom: 16 }}>专业版瀑布流 (空间索引 + 增量计算)</h2>
 
         {/* 教学看板 */}

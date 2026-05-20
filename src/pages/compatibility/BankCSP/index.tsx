@@ -10,7 +10,7 @@ const { Title, Paragraph, Text } = Typography;
  */
 const BankCSP: React.FC = () => {
   return (
-    <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div>
       <Title level={2}>银行级内容安全策略 (CSP) 限制</Title>
       
       {/* 一、 Bug 出现的现象 */}

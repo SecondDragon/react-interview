@@ -10,7 +10,7 @@ const { Title, Paragraph, Text } = Typography;
  */
 const VerticalCentering: React.FC = () => {
   return (
-    <div style={{ padding: '24px', margin: '0 auto' }}>
+    <div>
       <Title level={2}>跨平台字体垂直居中偏差</Title>
 
       {/* 一、 Bug 出现的现象 */}

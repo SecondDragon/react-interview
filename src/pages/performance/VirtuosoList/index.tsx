@@ -27,7 +27,7 @@ const VirtuosoListPage: React.FC = () => {
   }, [loading, hasMore, data.length]);
 
   return (
-    <div style={{ padding: '24px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Typography style={{ marginBottom: 24 }}>
         <Title level={2}>专业级方案：React Virtuoso 演示</Title>
         <Paragraph>

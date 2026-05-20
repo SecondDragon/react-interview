@@ -40,7 +40,7 @@ const IdleLoadPage: React.FC = () => {
   }, []);
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div>
       <Title level={2}>性能优化专题：闲时加载 (Idle Load)</Title>
 
       <Row gutter={[24, 24]}>

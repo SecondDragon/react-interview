@@ -18,7 +18,7 @@ const DynamicFormPage: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div>
       <Typography>
         <Title level={2}>JSON 驱动的动态表单 (Dynamic Form Generator)</Title>
         <Paragraph>

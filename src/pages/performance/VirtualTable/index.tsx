@@ -168,7 +168,7 @@ const VirtualTablePage: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div>
       <Title level={2}>性能优化：超大数据量虚拟表格</Title>
 
       <Row gutter={[24, 24]}>

@@ -93,7 +93,7 @@ const comparisonData = [
 
 const OnePixel: React.FC = () => {
   return (
-    <div style={{ padding: '24px', margin: '0 auto' }}>
+    <div>
       {/* 页面标题 */}
       <Title level={2}>{OnePixelMeta.title}</Title>
       <Paragraph type="secondary">{OnePixelMeta.description}</Paragraph>

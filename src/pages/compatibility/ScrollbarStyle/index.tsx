@@ -25,7 +25,7 @@ const ScrollbarStyle: React.FC = () => {
       styleTag.id = styleId;
       document.head.appendChild(styleTag);
     }
-    
+
     styleTag.innerHTML = `
       .scrollbar-demo-container.mode-beautify::-webkit-scrollbar {
         width: 8px;
@@ -65,7 +65,7 @@ const ScrollbarStyle: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div>
       <Title level={2}>{ScrollbarExamples.title}</Title>
       <Paragraph type="secondary">
         解决 Windows 系统下滚动条出现/消失导致的页面整体水平跳动问题，以及跨平台视觉一致性美化。
@@ -81,10 +81,10 @@ const ScrollbarStyle: React.FC = () => {
             <li>固定定位的 Header 或返回顶部按钮在滚动条切换时会发生错位。</li>
           </ul>
         </Paragraph>
-        <Alert 
-          message="注意：如果你在 Mac 上开发且未连接外接鼠标，你可能永远无法察觉这个 bug，因为 macOS 默认隐藏不占位的滚动条。" 
-          type="warning" 
-          showIcon 
+        <Alert
+          message="注意：如果你在 Mac 上开发且未连接外接鼠标，你可能永远无法察觉这个 bug，因为 macOS 默认隐藏不占位的滚动条。"
+          type="warning"
+          showIcon
         />
       </Card>
 
@@ -96,12 +96,12 @@ const ScrollbarStyle: React.FC = () => {
         <Paragraph>
           Windows 系统的滚动条默认作为窗口的一部分存在，会“挤压”内容区（Classic Scrollbars）。而 macOS 和移动端默认使用“悬浮式”滚动条（Overlay Scrollbars），不占据物理空间。
         </Paragraph>
-        <Table 
-          dataSource={dataSource} 
-          columns={columns} 
-          pagination={false} 
-          size="small" 
-          bordered 
+        <Table
+          dataSource={dataSource}
+          columns={columns}
+          pagination={false}
+          size="small"
+          bordered
         />
       </Card>
 
@@ -123,15 +123,15 @@ const ScrollbarStyle: React.FC = () => {
       </Card>
 
       {/* 四、 为什么要这样解决 且互动演示 */}
-      <Card 
-        title={<span>四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag></span>} 
+      <Card
+        title={<span>四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag></span>}
         style={{ marginBottom: '24px', border: '2px solid #1890ff' }}
       >
         <Row gutter={24}>
           <Col span={8}>
             <Space direction="vertical" style={{ width: '100%' }}>
-              <Radio.Group 
-                value={demoMode} 
+              <Radio.Group
+                value={demoMode}
                 onChange={e => setDemoMode(e.target.value)}
                 buttonStyle="solid"
                 size="small"
@@ -151,11 +151,11 @@ const ScrollbarStyle: React.FC = () => {
             </Space>
           </Col>
           <Col span={16}>
-            <div 
+            <div
               className={`scrollbar-demo-container mode-${demoMode}`}
-              style={{ 
-                height: '200px', 
-                border: '2px dashed #d9d9d9', 
+              style={{
+                height: '200px',
+                border: '2px dashed #d9d9d9',
                 overflowY: 'auto',
                 padding: '20px',
                 scrollbarGutter: demoMode === 'gutter' ? 'stable' : 'auto'

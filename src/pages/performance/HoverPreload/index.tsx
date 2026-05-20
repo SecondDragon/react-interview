@@ -106,7 +106,7 @@ const HoverPreloadPage: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div>
       <Title level={2}>性能优化专题：意图预判 - Hover 预加载</Title>
 
       <Row gutter={[24, 24]}>

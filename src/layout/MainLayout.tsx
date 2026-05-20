@@ -1,4 +1,4 @@
-import React, {useEffect, Suspense, useMemo, useState} from 'react';
+import React, {useEffect, Suspense, useMemo, useState, useRef} from 'react';
 import './MainLayout.css';
 import {Layout, Menu, Tabs, Button, Spin} from 'antd';
 import {MenuUnfoldOutlined, MenuFoldOutlined} from '@ant-design/icons';
@@ -52,7 +52,7 @@ const MainLayout: React.FC = () => {
         prefetch: true,
       });
     }
-  }, []); 
+  }, []);
 
   const isSubAppRoute = location.pathname.startsWith('/dashboard/micro-vue');
 
@@ -106,6 +106,8 @@ const MainLayout: React.FC = () => {
   }, [location.pathname, addTab]);
 
   // const [openKeys,set ]
+  const contentRef = useRef<HTMLDivElement>(null);
+
   const [openKeys, setOpenKeys] = useState<string[]>([]);
 
   const keys = useOpenKeysByPath(dashboardRoutes, location.pathname);
@@ -115,9 +117,8 @@ const MainLayout: React.FC = () => {
 
   // 切换路由时，将 Content 滚动区域重置到顶部
   useEffect(() => {
-    const contentEl = document.querySelector('.ant-layout-content');
-    if (contentEl) {
-      contentEl.scrollTop = 0;
+    if (contentRef.current) {
+      contentRef.current.scrollTop = 0;
     }
   }, [location.pathname]);
 
@@ -218,8 +219,9 @@ const MainLayout: React.FC = () => {
         </TabsContainer>
 
         <Content
+          ref={contentRef}
           style={{
-            padding: '12px 12px 6px 12px',
+            padding: '16px 12px 18px 16px',
             margin: 0,
             flex: 1,
             overflowY: 'auto',

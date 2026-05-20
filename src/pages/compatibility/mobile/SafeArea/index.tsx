@@ -80,7 +80,7 @@ const SafeAreaDemo = () => {
  */
 const SafeArea: React.FC = () => {
   return (
-    <div style={{ padding: '24px',  margin: '0 auto' }}>
+    <div>
       <Title level={2}>iOS 安全区域 (Safe Area) 适配</Title>
 
       {/* 一、 Bug 出现的现象 */}

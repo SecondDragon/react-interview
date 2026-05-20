@@ -11,7 +11,7 @@ const { Title, Paragraph, Text } = Typography;
 
 const AudioPlaybackDemo: React.FC = () => {
   return (
-    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div>
       <Title level={2}>自定义音频播放控件 (AudioPlayer)</Title>
       <Paragraph>
         在话务工作台或 CRM 系统中，通话录音的实时预览与精确控制是核心需求。原生 `audio` 标签在不同浏览器下的 UI 表现差异巨大，且难以深度定制。

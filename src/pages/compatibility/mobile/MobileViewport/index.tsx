@@ -1296,7 +1296,7 @@ const viewportTypeData = [
  */
 const MobileViewport: React.FC = () => {
   return (
-    <div style={{ padding: '24px',  margin: '0 auto' }}>
+    <div>
       <Title level={2}>{MobileViewportExamples.title}</Title>
       <Paragraph type="secondary">
         {MobileViewportExamples.description}

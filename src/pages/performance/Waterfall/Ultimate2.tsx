@@ -156,7 +156,7 @@ const WaterfallUltimate: React.FC = () => {
     >
       <div
         ref={wrapperRef}
-        style={{ padding: '24px', boxSizing: 'border-box', overflowX: 'hidden' }}
+        style={{ boxSizing: 'border-box', overflowX: 'hidden' }}
       >
         <h2 style={{ marginBottom: 16 }}>Ultimate级瀑布流 (DOM 节点池复用)</h2>
 

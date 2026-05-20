@@ -13,19 +13,19 @@ const FontFamily: React.FC = () => {
   const [currentFontStack, setCurrentFontStack] = useState('best-practice');
 
   const fontOptions = [
-    { 
-      label: '🚫 错误示范', 
-      value: 'bad', 
+    {
+      label: '🚫 错误示范',
+      value: 'bad',
       stack: '"Microsoft YaHei", sans-serif',
     },
-    { 
-      label: '🍎 系统默认', 
-      value: 'apple', 
+    {
+      label: '🍎 系统默认',
+      value: 'apple',
       stack: '-apple-system, BlinkMacSystemFont, sans-serif',
     },
-    { 
-      label: '🚀 最佳实践', 
-      value: 'best-practice', 
+    {
+      label: '🚀 最佳实践',
+      value: 'best-practice',
       stack: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", "Source Han Sans CN", sans-serif',
     }
   ];
@@ -44,9 +44,9 @@ const FontFamily: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div>
       <Title level={2}>跨平台字体栈 (Font Family) 最佳实践</Title>
-      
+
       {/* 一、 Bug 出现的现象 */}
       <Card title="一、 Bug 出现的现象" style={{ marginBottom: '24px' }}>
         <Paragraph>
@@ -86,8 +86,8 @@ const FontFamily: React.FC = () => {
       </Card>
 
       {/* 四、 为什么要这样解决 且互动演示 */}
-      <Card 
-        title={<span>四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag></span>} 
+      <Card
+        title={<span>四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag></span>}
         style={{ marginBottom: '24px', border: '2px solid #1890ff' }}
       >
         <div style={{ marginBottom: '16px' }}>
@@ -95,18 +95,18 @@ const FontFamily: React.FC = () => {
             {fontOptions.map(opt => <Radio.Button key={opt.value} value={opt.value}>{opt.label}</Radio.Button>)}
           </Radio.Group>
         </div>
-        <div style={{ 
-          padding: '20px', 
-          background: '#fff', 
-          border: '1px solid #d9d9d9', 
+        <div style={{
+          padding: '20px',
+          background: '#fff',
+          border: '1px solid #d9d9d9',
           borderRadius: '4px',
           fontFamily: currentOption.stack,
         }}>
           <Title level={4}>中西文排版对比测试：Hello Font! 12345</Title>
-          <TextArea 
-            defaultValue="测试文字：微软雅黑 vs 平方 vs 思源黑体。你可以修改这段文字，观察不同字体栈下的渲染细节。" 
+          <TextArea
+            defaultValue="测试文字：微软雅黑 vs 平方 vs 思源黑体。你可以修改这段文字，观察不同字体栈下的渲染细节。"
             variant="borderless"
-            style={{ fontFamily: 'inherit', fontSize: '16px', color: '#1890ff' }} 
+            style={{ fontFamily: 'inherit', fontSize: '16px', color: '#1890ff' }}
           />
         </div>
       </Card>

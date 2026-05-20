@@ -10,7 +10,7 @@ const {Panel} = Collapse;
  */
 const ReactApiLearning: React.FC = () => {
   return (
-    <div style={{padding: '12px'}}>
+    <div>
       <Title level={2}>React API 学习专题</Title>
       <Paragraph type="secondary">
         系统性地学习 React 的各个 API 用法，并探索一些少见但实用的 "Hack" 级技巧。

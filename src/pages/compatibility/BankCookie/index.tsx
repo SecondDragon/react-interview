@@ -22,7 +22,7 @@ const BankCookie: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px', margin: '0 auto' }}>
+    <div>
       <Title level={2}>{BankCookieExamples.title}</Title>
 
       {/* 一、 Bug 出现的现象 */}

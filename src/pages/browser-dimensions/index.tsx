@@ -14,7 +14,7 @@ const { Title, Paragraph, Text } = Typography;
  */
 const BrowserDimensions: React.FC = () => {
   return (
-    <div style={{ padding: '24px', margin: '0 auto' }}>
+    <div>
       {/* 页面标题 */}
       <Title level={2}>{BrowserDimensionsMeta.title}</Title>
       <Paragraph type="secondary">{BrowserDimensionsMeta.description}</Paragraph>
