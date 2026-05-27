@@ -11,6 +11,8 @@ import {
   ToolOutlined,
   PhoneOutlined,
   FullscreenOutlined,
+  SafetyOutlined,
+  GlobalOutlined,
 } from '@ant-design/icons';
 
 export interface RouteConfig {
@@ -45,6 +47,7 @@ const NoStableHeightVirtualListPage = lazy(
 );
 const VirtuosoListPage = lazy(() => import('../pages/performance/VirtuosoList/index'));
 const ConcurrentRenderPage = lazy(() => import('../pages/performance/ConcurrentRender/index'));
+const BigJsonParsePage = lazy(() => import('../pages/performance/BigJsonParse/index'));
 const DynamicFormPage = lazy(() => import('../pages/components-encapsulation/DynamicForm/index'));
 const ProDynamicFormPage = lazy(
   () => import('../pages/components-encapsulation/ProDynamicForm/index')
@@ -73,6 +76,12 @@ const ZIndexStacking = lazy(() => import('../pages/compatibility/ZIndexStacking/
 const VerticalCentering = lazy(() => import('../pages/compatibility/VerticalCentering/index'));
 const AudioPlayback = lazy(() => import('../pages/compatibility/AudioPlayback/index'));
 const BrowserDimensions = lazy(() => import('../pages/browser-dimensions/index'));
+
+// 网络请求专题
+const SilentRefreshBasic = lazy(() => import('../pages/silent-refresh/basic'));
+const SilentRefreshProduction = lazy(() => import('../pages/silent-refresh/production'));
+const SilentRefreshExtended = lazy(() => import('../pages/silent-refresh/extended'));
+const SSEDemoPage = lazy(() => import('../pages/network/sse-demo'));
 
 export const dashboardRoutes: RouteConfig[] = [
   {
@@ -281,6 +290,11 @@ export const dashboardRoutes: RouteConfig[] = [
         label: '并发渲染(Task Slicing)',
         element: <ConcurrentRenderPage />,
       },
+      {
+        path: '/dashboard/performance/big-json-parse',
+        label: '大数据量 JSON 解析优化',
+        element: <BigJsonParsePage />,
+      },
     ],
   },
 
@@ -355,6 +369,40 @@ export const dashboardRoutes: RouteConfig[] = [
         path: '/dashboard/browser-dimensions/overview',
         label: '尺寸 API 概述',
         element: <BrowserDimensions />,
+      },
+    ],
+  },
+  {
+    path: '/dashboard/network',
+    label: '网络请求专题',
+    icon: <GlobalOutlined />,
+    children: [
+      {
+        path: '/dashboard/network/silent-refresh',
+        label: '无感刷新',
+        icon: <SafetyOutlined />,
+        children: [
+          {
+            path: '/dashboard/network/silent-refresh/basic',
+            label: '基础篇：Promise 链替换',
+            element: <SilentRefreshBasic />,
+          },
+          {
+            path: '/dashboard/network/silent-refresh/production',
+            label: '生产级：并发去重 + 三级防护',
+            element: <SilentRefreshProduction />,
+          },
+          {
+            path: '/dashboard/network/silent-refresh/extended',
+            label: '扩展应用：重试/降级/缓存/限流',
+            element: <SilentRefreshExtended />,
+          },
+        ],
+      },
+      {
+        path: '/dashboard/network/sse-demo',
+        label: 'SSE 流式推送 + 自定义卡片渲染',
+        element: <SSEDemoPage />,
       },
     ],
   },
