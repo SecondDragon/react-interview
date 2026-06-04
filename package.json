@@ -20,6 +20,7 @@
     "babel-plugin-react-compiler": "^1.0.0",
     "big.js": "^7.0.1",
     "echarts": "^6.0.0",
+    "kafkajs": "^2.2.4",
     "qiankun": "^2.10.16",
     "react": "^19.2.4",
     "react-diff-viewer": "^3.1.1",

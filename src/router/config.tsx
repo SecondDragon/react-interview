@@ -1,4 +1,4 @@
-/* eslint-disable react-refresh/only-export-components */
+﻿/* eslint-disable react-refresh/only-export-components */
 import React, { lazy } from 'react';
 import {
   DashboardOutlined,
@@ -82,6 +82,12 @@ const SilentRefreshBasic = lazy(() => import('../pages/silent-refresh/basic'));
 const SilentRefreshProduction = lazy(() => import('../pages/silent-refresh/production'));
 const SilentRefreshExtended = lazy(() => import('../pages/silent-refresh/extended'));
 const SSEDemoPage = lazy(() => import('../pages/network/sse-demo'));
+const SSEReconnectNative = lazy(() => import('../pages/network/sse-reconnect-native'));
+const SSEReconnectFetch = lazy(() => import('../pages/network/sse-reconnect-fetch'));
+const SSEReconnectEnhanced = lazy(() => import('../pages/network/sse-reconnect-enhanced'));
+const SSEReconnectHybrid = lazy(() => import('../pages/network/sse-reconnect-hybrid'));
+const SSEBackendStorage = lazy(() => import('../pages/network/sse-backend-storage'));
+const WebSocketDemo = lazy(() => import('../pages/network/websocket-demo'));
 
 export const dashboardRoutes: RouteConfig[] = [
   {
@@ -400,8 +406,53 @@ export const dashboardRoutes: RouteConfig[] = [
         ],
       },
       {
+        path: '/dashboard/network/sse',
+        label: 'SSE 专题',
+        icon: <SafetyOutlined />,
+        children: [
+          {
+            path: '/dashboard/network/sse/demo',
+            label: 'SSE 流式推送 + 自定义卡片渲染',
+            element: <SSEDemoPage />,
+          },
+          {
+            path: '/dashboard/network/sse/reconnect-native',
+            label: '方案一：原生 EventSource 自动重连',
+            element: <SSEReconnectNative />,
+          },
+          {
+            path: '/dashboard/network/sse/reconnect-fetch',
+            label: '方案二：Fetch + ReadableStream 重连',
+            element: <SSEReconnectFetch />,
+          },
+          {
+            path: '/dashboard/network/sse/reconnect-enhanced',
+            label: '方案三：EventSource 增强封装重连',
+            element: <SSEReconnectEnhanced />,
+          },
+          {
+            path: '/dashboard/network/sse/reconnect-hybrid',
+            label: '方案四：WebSocket + SSE 混合重连',
+            element: <SSEReconnectHybrid />,
+          },
+          {
+            path: '/dashboard/network/sse/backend-storage',
+            label: '后端数据存储与断点续传设计',
+            element: <SSEBackendStorage />,
+          },
+        ],
+      },
+      {
+        path: '/dashboard/network/websocket',
+        label: 'WebSocket 全双工通信',
+        icon: <GlobalOutlined />,
+        element: <WebSocketDemo />,
+      },
+      // 旧路由兼容重定向
+      {
         path: '/dashboard/network/sse-demo',
-        label: 'SSE 流式推送 + 自定义卡片渲染',
+        label: 'SSE 流式推送（旧）',
+        hideInMenu: true,
         element: <SSEDemoPage />,
       },
     ],

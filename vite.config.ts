@@ -1,4 +1,4 @@
-import { defineConfig, Plugin } from 'vite';
+﻿import { defineConfig, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
@@ -115,6 +115,11 @@ export default defineConfig({
             console.log('proxy error', err)
           })
         },
+      },
+      '/ws': {
+        target: 'http://localhost:8080',
+        ws: true,
+        changeOrigin: true,
       },
     },
   },
