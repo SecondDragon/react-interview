@@ -305,18 +305,12 @@ const MobileAdaptation: React.FC = () => {
       </Card>
 
       {/* 工程选型建议 */}
-      <Card
-        title="🛠️ 工程选型建议"
-        style={{ marginBottom: 32, borderLeft: '4px solid #eb2f96' }}
-      >
+      <Card title="🛠️ 工程选型建议" style={{ marginBottom: 32, borderLeft: '4px solid #eb2f96' }}>
         <CodeDiff code={MobileAdaptationMeta.recommendation} type="info" title="参考代码" />
       </Card>
 
       {/* 错误 vs 正确 */}
-      <Card
-        title="❌ vs ✅ 代码对比"
-        style={{ marginBottom: 32, borderLeft: '4px solid #f5222d' }}
-      >
+      <Card title="❌ vs ✅ 代码对比" style={{ marginBottom: 32, borderLeft: '4px solid #f5222d' }}>
         <CodeDiff
           oldValue={MobileAdaptationMeta.bad}
           newValue={MobileAdaptationMeta.good}
@@ -329,9 +323,7 @@ const MobileAdaptation: React.FC = () => {
 
       {/* 面试高频问题 */}
       <Card title="🎓 面试高频问题" style={{ borderLeft: '4px solid #2f54eb' }}>
-        <Paragraph style={{ whiteSpace: 'pre-line' }}>
-          {MobileAdaptationMeta.interviewQA}
-        </Paragraph>
+        <Paragraph style={{ whiteSpace: 'pre-line' }}>{MobileAdaptationMeta.interviewQA}</Paragraph>
       </Card>
     </div>
   );

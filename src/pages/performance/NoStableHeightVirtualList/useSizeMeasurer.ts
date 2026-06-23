@@ -11,10 +11,7 @@ export interface ItemPosition {
  * 动态高度测量 Hook
  * 核心职责：维护一个位置信息数组，处理高度突变，并提供纠偏能力
  */
-export function useSizeMeasurer<T>(
-  data: T[],
-  defaultItemHeight: number
-) {
+export function useSizeMeasurer<T>(data: T[], defaultItemHeight: number) {
   // 核心数据结构：存储每个 Item 的物理尺寸和位置
   const positionsRef = useRef<ItemPosition[]>([]);
   // 撑开容器的总高度，由于需要触发 React 渲染 Spacer，所以使用 State
@@ -84,13 +81,16 @@ export function useSizeMeasurer<T>(
   /**
    * ResizeObserver 回调处理函数
    */
-  const measureItem = useCallback((index: number, element: HTMLElement) => {
-    if (!element) return;
-    const rect = element.getBoundingClientRect();
-    if (rect.height > 0) {
-      updateItemHeight(index, rect.height);
-    }
-  }, [updateItemHeight]);
+  const measureItem = useCallback(
+    (index: number, element: HTMLElement) => {
+      if (!element) return;
+      const rect = element.getBoundingClientRect();
+      if (rect.height > 0) {
+        updateItemHeight(index, rect.height);
+      }
+    },
+    [updateItemHeight]
+  );
 
   return {
     positions: positionsRef.current,

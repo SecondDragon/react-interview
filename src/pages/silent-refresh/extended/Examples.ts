@@ -2,7 +2,7 @@
  * Promise 链替换：扩展模式
  */
 export const ExtendedExamples = {
-  title: "Promise 链替换扩展：重试 / 降级 / 缓存 / 限流",
+  title: 'Promise 链替换扩展：重试 / 降级 / 缓存 / 限流',
 
   retry: `/**
  * 模式 1：指数退避自动重试
@@ -122,10 +122,40 @@ axios.interceptors.response.use(null, async (error) => {
 })`,
 
   patternTable: [
-    { key: '1', pattern: 'Token 刷新', trigger: '401', action: '刷新 Token + 重试', code: 'return refreshAndRetry(config)' },
-    { key: '2', pattern: '请求重试', trigger: '5xx / 网络错误', action: '指数退避重试 N 次', code: 'return retryWithBackoff(config, 3)' },
-    { key: '3', pattern: '接口降级', trigger: '超时 / 5xx', action: '切换到备用 API', code: 'return fallbackApi(config)' },
-    { key: '4', pattern: '缓存回源', trigger: '网络断开', action: '返回缓存数据', code: 'return Promise.resolve(cached)' },
-    { key: '5', pattern: '限流等待', trigger: '429', action: '读 Retry-After 等待后重试', code: 'return delayThenRetry(config)' },
+    {
+      key: '1',
+      pattern: 'Token 刷新',
+      trigger: '401',
+      action: '刷新 Token + 重试',
+      code: 'return refreshAndRetry(config)',
+    },
+    {
+      key: '2',
+      pattern: '请求重试',
+      trigger: '5xx / 网络错误',
+      action: '指数退避重试 N 次',
+      code: 'return retryWithBackoff(config, 3)',
+    },
+    {
+      key: '3',
+      pattern: '接口降级',
+      trigger: '超时 / 5xx',
+      action: '切换到备用 API',
+      code: 'return fallbackApi(config)',
+    },
+    {
+      key: '4',
+      pattern: '缓存回源',
+      trigger: '网络断开',
+      action: '返回缓存数据',
+      code: 'return Promise.resolve(cached)',
+    },
+    {
+      key: '5',
+      pattern: '限流等待',
+      trigger: '429',
+      action: '读 Retry-After 等待后重试',
+      code: 'return delayThenRetry(config)',
+    },
   ],
 };

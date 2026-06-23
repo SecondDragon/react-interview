@@ -39,7 +39,11 @@ const SolutionSection: React.FC<SolutionSectionProps> = ({
 }) => {
   return (
     <Card
-      title={<Title level={4} style={{ margin: 0 }}>{examples.title}</Title>}
+      title={
+        <Title level={4} style={{ margin: 0 }}>
+          {examples.title}
+        </Title>
+      }
       style={{
         marginBottom: 32,
         borderLeft: `4px solid ${borderColor}`,
@@ -74,7 +78,9 @@ const SolutionSection: React.FC<SolutionSectionProps> = ({
         title={
           <span>
             四、为什么要这样解决 且互动演示
-            <Tag color="blue" style={{ marginLeft: 8 }}>Live Demo</Tag>
+            <Tag color="blue" style={{ marginLeft: 8 }}>
+              Live Demo
+            </Tag>
           </span>
         }
         size="small"
@@ -90,7 +96,13 @@ const SolutionSection: React.FC<SolutionSectionProps> = ({
         <Paragraph style={{ whiteSpace: 'pre-line' }}>{examples.principle}</Paragraph>
 
         <Divider orientation="left">优缺点总结</Divider>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: 16,
+          }}
+        >
           <Card size="small" title={<Tag color="green">优点</Tag>}>
             <List
               size="small"

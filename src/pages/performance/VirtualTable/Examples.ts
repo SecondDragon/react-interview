@@ -1,6 +1,6 @@
 /**
  * TanStack Table + TanStack Virtual 虚拟表格实现参考
- * 
+ *
  * 本示例演示了如何将表格逻辑库与虚拟滚动库结合。
  * 核心思路：
  * 1. TanStack Table (useReactTable) 负责数据的结构、列定义、行状态（如勾选）。
@@ -93,5 +93,5 @@ const onScroll = (e: UIEvent<HTMLDivElement>) => {
     fetchNextPage();
   }
 };
-`
+`,
 };

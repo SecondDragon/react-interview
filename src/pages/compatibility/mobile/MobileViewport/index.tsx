@@ -18,9 +18,9 @@ const ViewportDemo = () => {
 
   // 不同模式下的布局视口宽度
   const layoutWidths = {
-    default: 980,      // 默认 Layout Viewport
+    default: 980, // 默认 Layout Viewport
     'device-width': 375, // width=device-width
-    ideal: 375,        // Ideal Viewport（与 device-width 相同）
+    ideal: 375, // Ideal Viewport（与 device-width 相同）
   };
 
   const layoutWidth = layoutWidths[viewportMode];
@@ -48,83 +48,101 @@ const ViewportDemo = () => {
         </div>
 
         {/* 模拟手机 */}
-        <div style={{
-          position: 'relative',
-          width: `${phoneWidth}px`,
-          height: `${phoneHeight}px`,
-          border: '8px solid #333',
-          borderRadius: '20px',
-          margin: '16px auto',
-          overflow: 'hidden',
-          background: '#fff'
-        }}>
+        <div
+          style={{
+            position: 'relative',
+            width: `${phoneWidth}px`,
+            height: `${phoneHeight}px`,
+            border: '8px solid #333',
+            borderRadius: '20px',
+            margin: '16px auto',
+            overflow: 'hidden',
+            background: '#fff',
+          }}
+        >
           {/* 屏幕内容 */}
-          <div style={{
-            width: `${layoutWidth}px`,
-            height: `${phoneHeight / scale}px`,
-            transform: `scale(${scale})`,
-            transformOrigin: '0 0',
-            background: '#f5f5f5',
-            overflow: 'hidden'
-          }}>
+          <div
+            style={{
+              width: `${layoutWidth}px`,
+              height: `${phoneHeight / scale}px`,
+              transform: `scale(${scale})`,
+              transformOrigin: '0 0',
+              background: '#f5f5f5',
+              overflow: 'hidden',
+            }}
+          >
             {/* 模拟网页内容 */}
-            <div style={{
-              padding: '20px',
-              fontSize: viewportMode === 'default' ? '32px' : '16px',
-              lineHeight: '1.5'
-            }}>
-              <div style={{
-                fontSize: viewportMode === 'default' ? '48px' : '24px',
-                fontWeight: 'bold',
-                marginBottom: '12px',
-                color: '#1890ff'
-              }}>
+            <div
+              style={{
+                padding: '20px',
+                fontSize: viewportMode === 'default' ? '32px' : '16px',
+                lineHeight: '1.5',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: viewportMode === 'default' ? '48px' : '24px',
+                  fontWeight: 'bold',
+                  marginBottom: '12px',
+                  color: '#1890ff',
+                }}
+              >
                 页面标题
               </div>
-              <div style={{
-                width: '100%',
-                height: '8px',
-                background: '#ddd',
-                marginBottom: '8px',
-                borderRadius: '4px'
-              }} />
-              <div style={{
-                width: '80%',
-                height: '8px',
-                background: '#ddd',
-                marginBottom: '8px',
-                borderRadius: '4px'
-              }} />
-              <div style={{
-                width: '60%',
-                height: '8px',
-                background: '#ddd',
-                marginBottom: '16px',
-                borderRadius: '4px'
-              }} />
-              <div style={{
-                display: 'inline-block',
-                padding: '8px 24px',
-                background: '#1890ff',
-                color: '#fff',
-                borderRadius: '4px',
-                fontSize: viewportMode === 'default' ? '28px' : '14px'
-              }}>
+              <div
+                style={{
+                  width: '100%',
+                  height: '8px',
+                  background: '#ddd',
+                  marginBottom: '8px',
+                  borderRadius: '4px',
+                }}
+              />
+              <div
+                style={{
+                  width: '80%',
+                  height: '8px',
+                  background: '#ddd',
+                  marginBottom: '8px',
+                  borderRadius: '4px',
+                }}
+              />
+              <div
+                style={{
+                  width: '60%',
+                  height: '8px',
+                  background: '#ddd',
+                  marginBottom: '16px',
+                  borderRadius: '4px',
+                }}
+              />
+              <div
+                style={{
+                  display: 'inline-block',
+                  padding: '8px 24px',
+                  background: '#1890ff',
+                  color: '#fff',
+                  borderRadius: '4px',
+                  fontSize: viewportMode === 'default' ? '28px' : '14px',
+                }}
+              >
                 按钮
               </div>
             </div>
           </div>
 
           {/* 标注信息 */}
-          <div style={{
-            position: 'absolute',
-            bottom: '4px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            fontSize: '10px',
-            color: '#999',
-            whiteSpace: 'nowrap'
-          }}>
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '4px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              fontSize: '10px',
+              color: '#999',
+              whiteSpace: 'nowrap',
+            }}
+          >
             Layout Viewport: {layoutWidth}px | Scale: {scale.toFixed(3)}
           </div>
         </div>
@@ -164,154 +182,189 @@ const VisualViewportDemo = () => {
           </Button>
         </div>
 
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'flex-start',
-          gap: '40px',
-          marginTop: '20px',
-          flexWrap: 'wrap'
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'flex-start',
+            gap: '40px',
+            marginTop: '20px',
+            flexWrap: 'wrap',
+          }}
+        >
           {/* 左侧：Layout Viewport（画布） */}
           <div style={{ textAlign: 'center' }}>
-            <Text strong type="primary">Layout Viewport（画布）</Text>
+            <Text strong type="primary">
+              Layout Viewport（画布）
+            </Text>
             <Paragraph type="secondary" style={{ fontSize: '12px' }}>
               浏览器用于 CSS 布局的虚拟画布
             </Paragraph>
-            <div style={{
-              position: 'relative',
-              width: `${layoutWidth}px`,
-              height: `${layoutHeight}px`,
-              border: '3px solid #1890ff',
-              background: '#e6f7ff',
-              margin: '12px auto',
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                position: 'absolute',
-                top: '10px',
-                left: '10px',
-                fontSize: '14px',
-                color: '#1890ff',
-                fontWeight: 'bold'
-              }}>
+            <div
+              style={{
+                position: 'relative',
+                width: `${layoutWidth}px`,
+                height: `${layoutHeight}px`,
+                border: '3px solid #1890ff',
+                background: '#e6f7ff',
+                margin: '12px auto',
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '10px',
+                  left: '10px',
+                  fontSize: '14px',
+                  color: '#1890ff',
+                  fontWeight: 'bold',
+                }}
+              >
                 画布大小: {layoutWidth}×{layoutHeight}px
               </div>
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                fontSize: '24px',
-                color: '#1890ff',
-                opacity: 0.3
-              }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  fontSize: '24px',
+                  color: '#1890ff',
+                  opacity: 0.3,
+                }}
+              >
                 网页内容在这里布局
               </div>
 
               {/* Visual Viewport 覆盖层 */}
-              <div style={{
-                position: 'absolute',
-                top: `${(layoutHeight - visualHeight) / 2}px`,
-                left: `${(layoutWidth - visualWidth) / 2}px`,
-                width: `${visualWidth}px`,
-                height: `${visualHeight}px`,
-                border: '3px dashed #ff4d4f',
-                background: 'rgba(255, 77, 79, 0.1)',
-                boxSizing: 'border-box'
-              }}>
-                <div style={{
+              <div
+                style={{
                   position: 'absolute',
-                  top: '4px',
-                  right: '4px',
-                  fontSize: '11px',
-                  color: '#ff4d4f',
-                  fontWeight: 'bold',
-                  whiteSpace: 'nowrap'
-                }}>
+                  top: `${(layoutHeight - visualHeight) / 2}px`,
+                  left: `${(layoutWidth - visualWidth) / 2}px`,
+                  width: `${visualWidth}px`,
+                  height: `${visualHeight}px`,
+                  border: '3px dashed #ff4d4f',
+                  background: 'rgba(255, 77, 79, 0.1)',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '4px',
+                    right: '4px',
+                    fontSize: '11px',
+                    color: '#ff4d4f',
+                    fontWeight: 'bold',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
                   Visual Viewport
                 </div>
               </div>
             </div>
-            <Tag color="blue">大小不变: {layoutWidth}×{layoutHeight}px</Tag>
+            <Tag color="blue">
+              大小不变: {layoutWidth}×{layoutHeight}px
+            </Tag>
           </div>
 
           {/* 右侧：Visual Viewport（看到的区域） */}
           <div style={{ textAlign: 'center' }}>
-            <Text strong type="danger">Visual Viewport（看到的）</Text>
+            <Text strong type="danger">
+              Visual Viewport（看到的）
+            </Text>
             <Paragraph type="secondary" style={{ fontSize: '12px' }}>
               用户当前实际能看到的区域
             </Paragraph>
-            <div style={{
-              position: 'relative',
-              width: `${layoutWidth}px`,
-              height: `${layoutHeight}px`,
-              border: '3px solid #ff4d4f',
-              background: '#fff2f0',
-              margin: '12px auto',
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                position: 'absolute',
-                top: '10px',
-                left: '10px',
-                fontSize: '14px',
-                color: '#ff4d4f',
-                fontWeight: 'bold'
-              }}>
+            <div
+              style={{
+                position: 'relative',
+                width: `${layoutWidth}px`,
+                height: `${layoutHeight}px`,
+                border: '3px solid #ff4d4f',
+                background: '#fff2f0',
+                margin: '12px auto',
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '10px',
+                  left: '10px',
+                  fontSize: '14px',
+                  color: '#ff4d4f',
+                  fontWeight: 'bold',
+                }}
+              >
                 可见区域: {Math.round(visualWidth)}×{Math.round(visualHeight)}px
               </div>
 
               {/* 模拟被放大的内容 */}
-              <div style={{
-                width: `${layoutWidth * zoomLevel}px`,
-                height: `${layoutHeight * zoomLevel}px`,
-                transform: `scale(${1 / zoomLevel})`,
-                transformOrigin: '0 0',
-                position: 'absolute',
-                top: '40px',
-                left: '0'
-              }}>
-                <div style={{
-                  padding: '20px',
-                  fontSize: `${16 * zoomLevel}px`
-                }}>
-                  <div style={{
-                    fontSize: `${24 * zoomLevel}px`,
-                    fontWeight: 'bold',
-                    marginBottom: '12px',
-                    color: '#1890ff'
-                  }}>
+              <div
+                style={{
+                  width: `${layoutWidth * zoomLevel}px`,
+                  height: `${layoutHeight * zoomLevel}px`,
+                  transform: `scale(${1 / zoomLevel})`,
+                  transformOrigin: '0 0',
+                  position: 'absolute',
+                  top: '40px',
+                  left: '0',
+                }}
+              >
+                <div
+                  style={{
+                    padding: '20px',
+                    fontSize: `${16 * zoomLevel}px`,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: `${24 * zoomLevel}px`,
+                      fontWeight: 'bold',
+                      marginBottom: '12px',
+                      color: '#1890ff',
+                    }}
+                  >
                     页面标题
                   </div>
-                  <div style={{
-                    width: '100%',
-                    height: `${8 * zoomLevel}px`,
-                    background: '#ddd',
-                    marginBottom: '8px',
-                    borderRadius: '4px'
-                  }} />
-                  <div style={{
-                    display: 'inline-block',
-                    padding: `${8 * zoomLevel}px ${24 * zoomLevel}px`,
-                    background: '#1890ff',
-                    color: '#fff',
-                    borderRadius: '4px',
-                    fontSize: `${14 * zoomLevel}px`
-                  }}>
+                  <div
+                    style={{
+                      width: '100%',
+                      height: `${8 * zoomLevel}px`,
+                      background: '#ddd',
+                      marginBottom: '8px',
+                      borderRadius: '4px',
+                    }}
+                  />
+                  <div
+                    style={{
+                      display: 'inline-block',
+                      padding: `${8 * zoomLevel}px ${24 * zoomLevel}px`,
+                      background: '#1890ff',
+                      color: '#fff',
+                      borderRadius: '4px',
+                      fontSize: `${14 * zoomLevel}px`,
+                    }}
+                  >
                     按钮
                   </div>
                 </div>
               </div>
             </div>
-            <Tag color="red">缩放后变化: {Math.round(visualWidth)}×{Math.round(visualHeight)}px</Tag>
+            <Tag color="red">
+              缩放后变化: {Math.round(visualWidth)}×{Math.round(visualHeight)}px
+            </Tag>
           </div>
         </div>
 
         <Alert
-          message={zoomLevel === 1
-            ? '未缩放：Layout Viewport = Visual Viewport，用户看到全部内容'
-            : `放大 ${zoomLevel}×：Layout Viewport 不变（${layoutWidth}×${layoutHeight}），Visual Viewport 缩小为 ${Math.round(visualWidth)}×${Math.round(visualHeight)}，只能看到部分内容`
+          message={
+            zoomLevel === 1
+              ? '未缩放：Layout Viewport = Visual Viewport，用户看到全部内容'
+              : `放大 ${zoomLevel}×：Layout Viewport 不变（${layoutWidth}×${layoutHeight}），Visual Viewport 缩小为 ${Math.round(visualWidth)}×${Math.round(visualHeight)}，只能看到部分内容`
           }
           type={zoomLevel === 1 ? 'success' : 'warning'}
           showIcon
@@ -335,7 +388,7 @@ const ViewportCollaborationDemo = () => {
       layoutW: 980,
       visualW: 375,
       scale: 0.38,
-      showIdeal: false
+      showIdeal: false,
     },
     {
       title: '步骤 2：设置 width=device-width',
@@ -343,7 +396,7 @@ const ViewportCollaborationDemo = () => {
       layoutW: 375,
       visualW: 375,
       scale: 1.0,
-      showIdeal: true
+      showIdeal: true,
     },
     {
       title: '步骤 3：用户放大页面 2×',
@@ -351,8 +404,8 @@ const ViewportCollaborationDemo = () => {
       layoutW: 375,
       visualW: 187,
       scale: 2.0,
-      showIdeal: true
-    }
+      showIdeal: true,
+    },
   ];
 
   const current = steps[step];
@@ -364,11 +417,7 @@ const ViewportCollaborationDemo = () => {
       <Space direction="vertical" style={{ width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
           {steps.map((s, i) => (
-            <Button
-              key={i}
-              type={step === i ? 'primary' : 'default'}
-              onClick={() => setStep(i)}
-            >
+            <Button key={i} type={step === i ? 'primary' : 'default'} onClick={() => setStep(i)}>
               步骤 {i + 1}
             </Button>
           ))}
@@ -380,34 +429,42 @@ const ViewportCollaborationDemo = () => {
         </div>
 
         {/* 流程图 */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: '20px',
-          marginTop: '16px',
-          flexWrap: 'wrap'
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '20px',
+            marginTop: '16px',
+            flexWrap: 'wrap',
+          }}
+        >
           {/* Ideal Viewport */}
           {current.showIdeal && (
             <div style={{ textAlign: 'center' }}>
-              <Text strong style={{ color: '#52c41a' }}>Ideal Viewport</Text>
-              <div style={{
-                width: '80px',
-                height: '120px',
-                border: '2px solid #52c41a',
-                borderRadius: '8px',
-                background: '#f6ffed',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '8px auto',
-                fontSize: '12px',
-                color: '#52c41a'
-              }}>
+              <Text strong style={{ color: '#52c41a' }}>
+                Ideal Viewport
+              </Text>
+              <div
+                style={{
+                  width: '80px',
+                  height: '120px',
+                  border: '2px solid #52c41a',
+                  borderRadius: '8px',
+                  background: '#f6ffed',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '8px auto',
+                  fontSize: '12px',
+                  color: '#52c41a',
+                }}
+              >
                 375px
               </div>
-              <Text type="secondary" style={{ fontSize: '11px' }}>设备最佳尺寸</Text>
+              <Text type="secondary" style={{ fontSize: '11px' }}>
+                设备最佳尺寸
+              </Text>
             </div>
           )}
 
@@ -415,23 +472,29 @@ const ViewportCollaborationDemo = () => {
 
           {/* Layout Viewport */}
           <div style={{ textAlign: 'center' }}>
-            <Text strong style={{ color: '#1890ff' }}>Layout Viewport</Text>
-            <div style={{
-              width: `${current.layoutW > 400 ? 120 : 80}px`,
-              height: '120px',
-              border: '2px solid #1890ff',
-              borderRadius: '8px',
-              background: '#e6f7ff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '8px auto',
-              fontSize: '12px',
-              color: '#1890ff'
-            }}>
+            <Text strong style={{ color: '#1890ff' }}>
+              Layout Viewport
+            </Text>
+            <div
+              style={{
+                width: `${current.layoutW > 400 ? 120 : 80}px`,
+                height: '120px',
+                border: '2px solid #1890ff',
+                borderRadius: '8px',
+                background: '#e6f7ff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '8px auto',
+                fontSize: '12px',
+                color: '#1890ff',
+              }}
+            >
               {current.layoutW}px
             </div>
-            <Text type="secondary" style={{ fontSize: '11px' }}>CSS 布局画布</Text>
+            <Text type="secondary" style={{ fontSize: '11px' }}>
+              CSS 布局画布
+            </Text>
           </div>
 
           <div style={{ fontSize: '20px', color: '#999' }}>→</div>
@@ -439,61 +502,80 @@ const ViewportCollaborationDemo = () => {
           {/* 手机屏幕 */}
           <div style={{ textAlign: 'center' }}>
             <Text strong>手机屏幕</Text>
-            <div style={{
-              width: `${phoneWidth}px`,
-              height: '140px',
-              border: '4px solid #333',
-              borderRadius: '12px',
-              background: '#fff',
-              position: 'relative',
-              overflow: 'hidden',
-              margin: '8px auto'
-            }}>
+            <div
+              style={{
+                width: `${phoneWidth}px`,
+                height: '140px',
+                border: '4px solid #333',
+                borderRadius: '12px',
+                background: '#fff',
+                position: 'relative',
+                overflow: 'hidden',
+                margin: '8px auto',
+              }}
+            >
               {/* Layout Viewport 内容 */}
-              <div style={{
-                width: `${current.layoutW}px`,
-                height: '200px',
-                transform: `scale(${layoutScale})`,
-                transformOrigin: '0 0',
-                position: 'absolute',
-                top: 0,
-                left: 0
-              }}>
-                <div style={{
-                  padding: '16px',
-                  fontSize: '14px'
-                }}>
-                  <div style={{
-                    fontSize: '18px',
-                    fontWeight: 'bold',
-                    color: '#1890ff',
-                    marginBottom: '8px'
-                  }}>
+              <div
+                style={{
+                  width: `${current.layoutW}px`,
+                  height: '200px',
+                  transform: `scale(${layoutScale})`,
+                  transformOrigin: '0 0',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                }}
+              >
+                <div
+                  style={{
+                    padding: '16px',
+                    fontSize: '14px',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: '18px',
+                      fontWeight: 'bold',
+                      color: '#1890ff',
+                      marginBottom: '8px',
+                    }}
+                  >
                     网页内容
                   </div>
-                  <div style={{ width: '100%', height: '6px', background: '#ddd', marginBottom: '6px' }} />
+                  <div
+                    style={{
+                      width: '100%',
+                      height: '6px',
+                      background: '#ddd',
+                      marginBottom: '6px',
+                    }}
+                  />
                   <div style={{ width: '60%', height: '6px', background: '#ddd' }} />
                 </div>
               </div>
 
               {/* Visual Viewport 指示框 */}
-              <div style={{
-                position: 'absolute',
-                top: '20px',
-                left: '20px',
-                right: '20px',
-                bottom: '20px',
-                border: '2px dashed #ff4d4f',
-                borderRadius: '4px',
-                background: 'rgba(255, 77, 79, 0.05)'
-              }}>
-                <div style={{
+              <div
+                style={{
                   position: 'absolute',
-                  bottom: '2px',
-                  right: '2px',
-                  fontSize: '10px',
-                  color: '#ff4d4f'
-                }}>
+                  top: '20px',
+                  left: '20px',
+                  right: '20px',
+                  bottom: '20px',
+                  border: '2px dashed #ff4d4f',
+                  borderRadius: '4px',
+                  background: 'rgba(255, 77, 79, 0.05)',
+                }}
+              >
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: '2px',
+                    right: '2px',
+                    fontSize: '10px',
+                    color: '#ff4d4f',
+                  }}
+                >
                   Visual: {current.visualW}px
                 </div>
               </div>
@@ -537,7 +619,7 @@ const DipDemo = () => {
   const current = devices[device];
   const cssWidth = 187.5; // CSS 像素宽度（占屏幕一半）
   const withoutDipWidth = cssWidth; // 如果没有 DIP，直接用物理像素
-  const withDipWidth = device === 'old' ? cssWidth : (cssWidth * 390 / 375); // 有 DIP 时
+  const withDipWidth = device === 'old' ? cssWidth : (cssWidth * 390) / 375; // 有 DIP 时
 
   return (
     <Card title="🎯 互动演示：为什么需要设备独立像素（DIP）？" size="small">
@@ -556,84 +638,99 @@ const DipDemo = () => {
           <Radio.Button value="new">新手机 B（1170px，460 PPI）</Radio.Button>
         </Radio.Group>
 
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '40px',
-          marginTop: '20px',
-          flexWrap: 'wrap'
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '40px',
+            marginTop: '20px',
+            flexWrap: 'wrap',
+          }}
+        >
           {/* 方案一：没有 DIP */}
           <div style={{ textAlign: 'center', maxWidth: '300px' }}>
-            <Text strong type="danger">❌ 没有 DIP（物理像素 = CSS 像素）</Text>
-            <div style={{
-              width: '280px',
-              height: '160px',
-              border: '3px solid #ff4d4f',
-              background: '#fff2f0',
-              margin: '12px auto',
-              position: 'relative',
-              overflow: 'hidden',
-              borderRadius: '8px'
-            }}>
+            <Text strong type="danger">
+              ❌ 没有 DIP（物理像素 = CSS 像素）
+            </Text>
+            <div
+              style={{
+                width: '280px',
+                height: '160px',
+                border: '3px solid #ff4d4f',
+                background: '#fff2f0',
+                margin: '12px auto',
+                position: 'relative',
+                overflow: 'hidden',
+                borderRadius: '8px',
+              }}
+            >
               {/* 模拟屏幕 */}
-              <div style={{
-                position: 'absolute',
-                top: '8px',
-                left: '8px',
-                fontSize: '11px',
-                color: '#ff4d4f'
-              }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '8px',
+                  left: '8px',
+                  fontSize: '11px',
+                  color: '#ff4d4f',
+                }}
+              >
                 {current.name}：{current.physical}px 宽
               </div>
 
               {/* 按钮：width: 187.5px */}
-              <div style={{
-                position: 'absolute',
-                top: '40px',
-                left: '20px',
-                width: `${withoutDipWidth * (280 / current.physical)}px`,
-                height: '36px',
-                background: '#ff4d4f',
-                color: '#fff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '4px',
-                fontSize: '12px',
-                fontWeight: 'bold',
-                transition: 'all 0.3s'
-              }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '40px',
+                  left: '20px',
+                  width: `${withoutDipWidth * (280 / current.physical)}px`,
+                  height: '36px',
+                  background: '#ff4d4f',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s',
+                }}
+              >
                 width: 187.5px
               </div>
 
               {/* 文字 */}
-              <div style={{
-                position: 'absolute',
-                top: '90px',
-                left: '20px',
-                fontSize: `${16 * (280 / current.physical)}px`,
-                color: '#333',
-                transition: 'all 0.3s'
-              }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '90px',
+                  left: '20px',
+                  fontSize: `${16 * (280 / current.physical)}px`,
+                  color: '#333',
+                  transition: 'all 0.3s',
+                }}
+              >
                 这是一段文字
               </div>
 
               {/* 占比标注 */}
-              <div style={{
-                position: 'absolute',
-                bottom: '8px',
-                right: '8px',
-                fontSize: '11px',
-                color: '#999'
-              }}>
-                按钮占屏幕 {(withoutDipWidth / current.physical * 100).toFixed(1)}%
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '8px',
+                  right: '8px',
+                  fontSize: '11px',
+                  color: '#999',
+                }}
+              >
+                按钮占屏幕 {((withoutDipWidth / current.physical) * 100).toFixed(1)}%
               </div>
             </div>
             <Alert
-              message={device === 'old'
-                ? '旧手机：187.5px 占屏幕 25%，按钮大小正常'
-                : '新手机：187.5px 只占屏幕 16%，按钮变得很小！'
+              message={
+                device === 'old'
+                  ? '旧手机：187.5px 占屏幕 25%，按钮大小正常'
+                  : '新手机：187.5px 只占屏幕 16%，按钮变得很小！'
               }
               type={device === 'old' ? 'success' : 'error'}
               showIcon
@@ -643,73 +740,86 @@ const DipDemo = () => {
 
           {/* 方案二：有 DIP */}
           <div style={{ textAlign: 'center', maxWidth: '300px' }}>
-            <Text strong type="success">✅ 引入 DIP（CSS 像素 = DIP）</Text>
-            <div style={{
-              width: '280px',
-              height: '160px',
-              border: '3px solid #52c41a',
-              background: '#f6ffed',
-              margin: '12px auto',
-              position: 'relative',
-              overflow: 'hidden',
-              borderRadius: '8px'
-            }}>
+            <Text strong type="success">
+              ✅ 引入 DIP（CSS 像素 = DIP）
+            </Text>
+            <div
+              style={{
+                width: '280px',
+                height: '160px',
+                border: '3px solid #52c41a',
+                background: '#f6ffed',
+                margin: '12px auto',
+                position: 'relative',
+                overflow: 'hidden',
+                borderRadius: '8px',
+              }}
+            >
               {/* 模拟屏幕 */}
-              <div style={{
-                position: 'absolute',
-                top: '8px',
-                left: '8px',
-                fontSize: '11px',
-                color: '#52c41a'
-              }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '8px',
+                  left: '8px',
+                  fontSize: '11px',
+                  color: '#52c41a',
+                }}
+              >
                 {current.name}：{current.dip} DIP（DPR={current.dpr}）
               </div>
 
               {/* 按钮：width: 50% → 对应 DIP 的一半 */}
-              <div style={{
-                position: 'absolute',
-                top: '40px',
-                left: '20px',
-                width: `${140}px`,
-                height: '36px',
-                background: '#52c41a',
-                color: '#fff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '4px',
-                fontSize: '12px',
-                fontWeight: 'bold'
-              }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '40px',
+                  left: '20px',
+                  width: `${140}px`,
+                  height: '36px',
+                  background: '#52c41a',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                }}
+              >
                 width: 50%
               </div>
 
               {/* 文字 */}
-              <div style={{
-                position: 'absolute',
-                top: '90px',
-                left: '20px',
-                fontSize: '16px',
-                color: '#333'
-              }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '90px',
+                  left: '20px',
+                  fontSize: '16px',
+                  color: '#333',
+                }}
+              >
                 这是一段文字
               </div>
 
               {/* 占比标注 */}
-              <div style={{
-                position: 'absolute',
-                bottom: '8px',
-                right: '8px',
-                fontSize: '11px',
-                color: '#999'
-              }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '8px',
+                  right: '8px',
+                  fontSize: '11px',
+                  color: '#999',
+                }}
+              >
                 按钮占屏幕 50%
               </div>
             </div>
             <Alert
-              message={device === 'old'
-                ? '旧手机：50% 宽度 = 187.5 DIP = 375 物理像素'
-                : '新手机：50% 宽度 = 195 DIP = 585 物理像素，按钮大小一致！'
+              message={
+                device === 'old'
+                  ? '旧手机：50% 宽度 = 187.5 DIP = 375 物理像素'
+                  : '新手机：50% 宽度 = 195 DIP = 585 物理像素，按钮大小一致！'
               }
               type="success"
               showIcon
@@ -720,11 +830,13 @@ const DipDemo = () => {
 
         <Divider />
 
-        <div style={{
-          background: '#f5f5f5',
-          padding: '16px',
-          borderRadius: '8px'
-        }}>
+        <div
+          style={{
+            background: '#f5f5f5',
+            padding: '16px',
+            borderRadius: '8px',
+          }}
+        >
           <Text strong>核心结论：</Text>
           <ul style={{ marginTop: '8px', paddingLeft: '20px' }}>
             <li>
@@ -795,66 +907,78 @@ const Baseline375Demo = () => {
           <Radio.Button value="android">Android (360)</Radio.Button>
         </Radio.Group>
 
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '40px',
-          marginTop: '20px',
-          flexWrap: 'wrap'
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '40px',
+            marginTop: '20px',
+            flexWrap: 'wrap',
+          }}
+        >
           {/* 设计稿 */}
           <div style={{ textAlign: 'center' }}>
-            <Text strong type="primary">设计稿（375px 基准）</Text>
-            <div style={{
-              width: '280px',
-              height: '180px',
-              border: '3px solid #1890ff',
-              background: '#e6f7ff',
-              margin: '12px auto',
-              position: 'relative',
-              overflow: 'hidden',
-              borderRadius: '8px',
-              padding: '12px',
-              boxSizing: 'border-box'
-            }}>
-              <div style={{
-                fontSize: '18px',
-                fontWeight: 'bold',
-                color: '#1890ff',
-                marginBottom: '12px'
-              }}>
+            <Text strong type="primary">
+              设计稿（375px 基准）
+            </Text>
+            <div
+              style={{
+                width: '280px',
+                height: '180px',
+                border: '3px solid #1890ff',
+                background: '#e6f7ff',
+                margin: '12px auto',
+                position: 'relative',
+                overflow: 'hidden',
+                borderRadius: '8px',
+                padding: '12px',
+                boxSizing: 'border-box',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  color: '#1890ff',
+                  marginBottom: '12px',
+                }}
+              >
                 页面标题
               </div>
 
               {/* 卡片：50% 宽度 */}
-              <div style={{
-                width: `${cardWidthPercent}%`,
-                height: '50px',
-                background: '#1890ff',
-                borderRadius: '4px',
-                marginBottom: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#fff',
-                fontSize: '12px'
-              }}>
+              <div
+                style={{
+                  width: `${cardWidthPercent}%`,
+                  height: '50px',
+                  background: '#1890ff',
+                  borderRadius: '4px',
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  fontSize: '12px',
+                }}
+              >
                 卡片 50%
               </div>
 
               {/* 按钮：92% 宽度 */}
-              <div style={{
-                width: `${buttonWidthPercent}%`,
-                height: '36px',
-                background: '#52c41a',
-                borderRadius: '4px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#fff',
-                fontSize: '12px',
-                margin: '0 auto'
-              }}>
+              <div
+                style={{
+                  width: `${buttonWidthPercent}%`,
+                  height: '36px',
+                  background: '#52c41a',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  fontSize: '12px',
+                  margin: '0 auto',
+                }}
+              >
                 按钮 92%
               </div>
             </div>
@@ -868,88 +992,101 @@ const Baseline375Demo = () => {
             <Text strong type="success">
               实际渲染：{current.name}
             </Text>
-            <div style={{
-              width: `${280 * scale}px`,
-              height: '180px',
-              border: '3px solid #52c41a',
-              background: '#f6ffed',
-              margin: '12px auto',
-              position: 'relative',
-              overflow: 'hidden',
-              borderRadius: '8px',
-              padding: `${12 * scale}px`,
-              boxSizing: 'border-box',
-              transition: 'all 0.3s'
-            }}>
-              <div style={{
-                fontSize: `${18 * scale}px`,
-                fontWeight: 'bold',
-                color: '#52c41a',
-                marginBottom: `${12 * scale}px`,
-                transition: 'all 0.3s'
-              }}>
+            <div
+              style={{
+                width: `${280 * scale}px`,
+                height: '180px',
+                border: '3px solid #52c41a',
+                background: '#f6ffed',
+                margin: '12px auto',
+                position: 'relative',
+                overflow: 'hidden',
+                borderRadius: '8px',
+                padding: `${12 * scale}px`,
+                boxSizing: 'border-box',
+                transition: 'all 0.3s',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: `${18 * scale}px`,
+                  fontWeight: 'bold',
+                  color: '#52c41a',
+                  marginBottom: `${12 * scale}px`,
+                  transition: 'all 0.3s',
+                }}
+              >
                 页面标题
               </div>
 
               {/* 卡片：50% 宽度 */}
-              <div style={{
-                width: `${cardWidthPercent}%`,
-                height: `${50 * scale}px`,
-                background: '#52c41a',
-                borderRadius: '4px',
-                marginBottom: `${12 * scale}px`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#fff',
-                fontSize: `${12 * scale}px`,
-                transition: 'all 0.3s'
-              }}>
+              <div
+                style={{
+                  width: `${cardWidthPercent}%`,
+                  height: `${50 * scale}px`,
+                  background: '#52c41a',
+                  borderRadius: '4px',
+                  marginBottom: `${12 * scale}px`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  fontSize: `${12 * scale}px`,
+                  transition: 'all 0.3s',
+                }}
+              >
                 卡片 50%
               </div>
 
               {/* 按钮：92% 宽度 */}
-              <div style={{
-                width: `${buttonWidthPercent}%`,
-                height: `${36 * scale}px`,
-                background: '#1890ff',
-                borderRadius: '4px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#fff',
-                fontSize: `${12 * scale}px`,
-                margin: '0 auto',
-                transition: 'all 0.3s'
-              }}>
+              <div
+                style={{
+                  width: `${buttonWidthPercent}%`,
+                  height: `${36 * scale}px`,
+                  background: '#1890ff',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  fontSize: `${12 * scale}px`,
+                  margin: '0 auto',
+                  transition: 'all 0.3s',
+                }}
+              >
                 按钮 92%
               </div>
             </div>
             <Text type="secondary" style={{ fontSize: '12px' }}>
-              DIP: {current.dip}px | 缩放: {scale.toFixed(2)}× |
-              卡片: {Math.round(187 * scale)}px | 按钮: {Math.round(345 * scale)}px
+              DIP: {current.dip}px | 缩放: {scale.toFixed(2)}× | 卡片: {Math.round(187 * scale)}px |
+              按钮: {Math.round(345 * scale)}px
             </Text>
           </div>
         </div>
 
         <Alert
           message={
-            device === 'se' ? 'iPhone SE：1:1 完美匹配 375 基准' :
-            device === 'standard' ? 'iPhone 12/13：放大 4%，视觉差异几乎不可感知' :
-            device === 'pro' ? 'iPhone Pro Max：放大 15%，大屏上元素更大，符合预期' :
-            'Android：缩小 4%，视觉差异几乎不可感知'
+            device === 'se'
+              ? 'iPhone SE：1:1 完美匹配 375 基准'
+              : device === 'standard'
+                ? 'iPhone 12/13：放大 4%，视觉差异几乎不可感知'
+                : device === 'pro'
+                  ? 'iPhone Pro Max：放大 15%，大屏上元素更大，符合预期'
+                  : 'Android：缩小 4%，视觉差异几乎不可感知'
           }
           type="success"
           showIcon
           style={{ marginTop: '16px' }}
         />
 
-        <div style={{
-          background: '#f5f5f5',
-          padding: '16px',
-          borderRadius: '8px',
-          marginTop: '8px'
-        }}>
+        <div
+          style={{
+            background: '#f5f5f5',
+            padding: '16px',
+            borderRadius: '8px',
+            marginTop: '8px',
+          }}
+        >
           <Text strong>核心结论：</Text>
           <ul style={{ marginTop: '8px', paddingLeft: '20px' }}>
             <li>
@@ -991,44 +1128,46 @@ const DprDemo = () => {
   return (
     <Card title="🔍 互动演示：DPR 与物理像素映射" size="small">
       <Space direction="vertical" style={{ width: '100%' }}>
-        <Radio.Group
-          value={dpr}
-          onChange={(e) => setDpr(e.target.value)}
-          buttonStyle="solid"
-        >
+        <Radio.Group value={dpr} onChange={(e) => setDpr(e.target.value)} buttonStyle="solid">
           <Radio.Button value={1}>DPR = 1 (普通屏)</Radio.Button>
           <Radio.Button value={2}>DPR = 2 (Retina)</Radio.Button>
           <Radio.Button value={3}>DPR = 3 (Super Retina)</Radio.Button>
         </Radio.Group>
 
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: '40px',
-          marginTop: '20px',
-          padding: '20px',
-          background: '#f5f5f5',
-          borderRadius: '8px'
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '40px',
+            marginTop: '20px',
+            padding: '20px',
+            background: '#f5f5f5',
+            borderRadius: '8px',
+          }}
+        >
           {/* CSS 像素示意 */}
           <div style={{ textAlign: 'center' }}>
             <Text type="secondary">CSS 像素 (逻辑)</Text>
-            <div style={{
-              width: `${pixelSize}px`,
-              height: `${pixelSize}px`,
-              border: '2px solid #1890ff',
-              margin: '12px auto',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              color: '#1890ff',
-              fontWeight: 'bold'
-            }}>
+            <div
+              style={{
+                width: `${pixelSize}px`,
+                height: `${pixelSize}px`,
+                border: '2px solid #1890ff',
+                margin: '12px auto',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '12px',
+                color: '#1890ff',
+                fontWeight: 'bold',
+              }}
+            >
               1px
             </div>
-            <Text type="secondary" style={{ fontSize: '12px' }}>{pixelSize}×{pixelSize} CSS px</Text>
+            <Text type="secondary" style={{ fontSize: '12px' }}>
+              {pixelSize}×{pixelSize} CSS px
+            </Text>
           </div>
 
           <div style={{ fontSize: '24px', color: '#999' }}>→</div>
@@ -1036,23 +1175,25 @@ const DprDemo = () => {
           {/* 物理像素示意 */}
           <div style={{ textAlign: 'center' }}>
             <Text type="secondary">物理像素 (实际发光点)</Text>
-            <div style={{
-              width: `${physicalSize}px`,
-              height: `${physicalSize}px`,
-              border: '2px solid #ff4d4f',
-              margin: '12px auto',
-              backgroundImage: `
+            <div
+              style={{
+                width: `${physicalSize}px`,
+                height: `${physicalSize}px`,
+                border: '2px solid #ff4d4f',
+                margin: '12px auto',
+                backgroundImage: `
                 linear-gradient(to right, rgba(255,77,79,0.1) 1px, transparent 1px),
                 linear-gradient(to bottom, rgba(255,77,79,0.1) 1px, transparent 1px)
               `,
-              backgroundSize: `${pixelSize}px ${pixelSize}px`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              color: '#ff4d4f',
-              fontWeight: 'bold'
-            }}>
+                backgroundSize: `${pixelSize}px ${pixelSize}px`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '12px',
+                color: '#ff4d4f',
+                fontWeight: 'bold',
+              }}
+            >
               {dpr}×{dpr} = {dpr * dpr} 点
             </div>
             <Text type="secondary" style={{ fontSize: '12px' }}>
@@ -1062,9 +1203,10 @@ const DprDemo = () => {
         </div>
 
         <Alert
-          message={dpr === 1
-            ? 'DPR=1：1 个 CSS 像素 = 1 个物理像素，显示正常'
-            : `DPR=${dpr}：1 个 CSS 像素 = ${dpr}×${dpr}=${dpr * dpr} 个物理像素，边框会变粗 ${dpr} 倍`
+          message={
+            dpr === 1
+              ? 'DPR=1：1 个 CSS 像素 = 1 个物理像素，显示正常'
+              : `DPR=${dpr}：1 个 CSS 像素 = ${dpr}×${dpr}=${dpr * dpr} 个物理像素，边框会变粗 ${dpr} 倍`
           }
           type={dpr === 1 ? 'success' : 'warning'}
           showIcon
@@ -1204,7 +1346,8 @@ const pixelConceptData = [
     key: '2',
     concept: '设备独立像素',
     english: 'DIP / Device Independent Pixel',
-    definition: '操作系统抽象的逻辑单位，与硬件无关。同样数量的 DIP 在不同设备上显示的实际尺寸大致相同',
+    definition:
+      '操作系统抽象的逻辑单位，与硬件无关。同样数量的 DIP 在不同设备上显示的实际尺寸大致相同',
     example: 'iPhone 14: 390×844',
   },
   {
@@ -1298,15 +1441,15 @@ const MobileViewport: React.FC = () => {
   return (
     <div>
       <Title level={2}>{MobileViewportExamples.title}</Title>
-      <Paragraph type="secondary">
-        {MobileViewportExamples.description}
-      </Paragraph>
+      <Paragraph type="secondary">{MobileViewportExamples.description}</Paragraph>
 
       {/* 一、现象描述 */}
       <Card title="一、Bug 出现的现象" style={{ marginBottom: '24px' }}>
         <Alert
           message="页面显示异常"
-          description={<div style={{ whiteSpace: 'pre-wrap' }}>{MobileViewportExamples.phenomenon}</div>}
+          description={
+            <div style={{ whiteSpace: 'pre-wrap' }}>{MobileViewportExamples.phenomenon}</div>
+          }
           type="warning"
           showIcon
         />
@@ -1317,9 +1460,7 @@ const MobileViewport: React.FC = () => {
         <Paragraph>
           <Text strong>核心原因：浏览器的历史包袱与多层级像素映射。</Text>
         </Paragraph>
-        <Paragraph style={{ whiteSpace: 'pre-wrap' }}>
-          {MobileViewportExamples.reason}
-        </Paragraph>
+        <Paragraph style={{ whiteSpace: 'pre-wrap' }}>{MobileViewportExamples.reason}</Paragraph>
 
         <Divider orientation="left">三种 Viewport 对比</Divider>
         <Table
@@ -1342,9 +1483,7 @@ const MobileViewport: React.FC = () => {
 
       {/* 三、解决方案 */}
       <Card title="三、Bug 如何解决" style={{ marginBottom: '24px' }}>
-        <Paragraph>
-          正确的 viewport 设置是移动端适配的第一步，也是最重要的一步。
-        </Paragraph>
+        <Paragraph>正确的 viewport 设置是移动端适配的第一步，也是最重要的一步。</Paragraph>
 
         <CodeDiff
           oldValue={MobileViewportExamples.bad}
@@ -1358,7 +1497,11 @@ const MobileViewport: React.FC = () => {
 
       {/* 四、权衡与互动演示 */}
       <Card
-        title={<span>四、为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag></span>}
+        title={
+          <span>
+            四、为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag>
+          </span>
+        }
         style={{ marginBottom: '24px' }}
       >
         <Paragraph style={{ whiteSpace: 'pre-wrap' }}>
@@ -1383,9 +1526,7 @@ const MobileViewport: React.FC = () => {
 
       {/* 五、核心原理 */}
       <Card title="五、Bug 能解决的核心原理" style={{ background: '#f0f5ff' }}>
-        <Paragraph style={{ whiteSpace: 'pre-wrap' }}>
-          {MobileViewportExamples.principle}
-        </Paragraph>
+        <Paragraph style={{ whiteSpace: 'pre-wrap' }}>{MobileViewportExamples.principle}</Paragraph>
 
         <Divider orientation="left">JavaScript 宽度 API 对比（iPhone 14 Pro, DPR=3）</Divider>
         <Table
@@ -1399,8 +1540,13 @@ const MobileViewport: React.FC = () => {
           message="核心规律"
           description={
             <div>
-              <div>✅ 受 viewport 缩放影响：innerWidth / clientWidth / offsetWidth / scrollWidth / getBoundingClientRect</div>
-              <div>❌ 不受 viewport 缩放影响：devicePixelRatio / screen.width / visualViewport.width</div>
+              <div>
+                ✅ 受 viewport 缩放影响：innerWidth / clientWidth / offsetWidth / scrollWidth /
+                getBoundingClientRect
+              </div>
+              <div>
+                ❌ 不受 viewport 缩放影响：devicePixelRatio / screen.width / visualViewport.width
+              </div>
             </div>
           }
           type="info"
@@ -1421,25 +1567,29 @@ const MobileViewport: React.FC = () => {
           <li>
             <Text strong>设计稿 750px，代码为什么写 375px？</Text>
             <Paragraph type="secondary">
-              因为 iPhone 6/7/8 的宽度是 375 CSS 像素，而设计稿按 DPR=2 的物理像素绘制（375×2=750）。代码中使用相对单位（rem/vw）或百分比，由构建工具自动转换。
+              因为 iPhone 6/7/8 的宽度是 375 CSS 像素，而设计稿按 DPR=2
+              的物理像素绘制（375×2=750）。代码中使用相对单位（rem/vw）或百分比，由构建工具自动转换。
             </Paragraph>
           </li>
           <li>
             <Text strong>window.innerWidth 获取的是哪种像素？</Text>
             <Paragraph type="secondary">
-              获取的是 CSS 像素（即设备独立像素）。在 iPhone 14 上，window.innerWidth = 390，而不是 1170。
+              获取的是 CSS 像素（即设备独立像素）。在 iPhone 14 上，window.innerWidth = 390，而不是
+              1170。
             </Paragraph>
           </li>
           <li>
             <Text strong>Visual Viewport 和 Layout Viewport 何时会不一致？</Text>
             <Paragraph type="secondary">
-              当用户缩放页面时，Visual Viewport 会变化（用户看到的区域变大或变小），但 Layout Viewport 保持不变。可以通过 window.visualViewport API 获取 Visual Viewport 的尺寸。
+              当用户缩放页面时，Visual Viewport 会变化（用户看到的区域变大或变小），但 Layout
+              Viewport 保持不变。可以通过 window.visualViewport API 获取 Visual Viewport 的尺寸。
             </Paragraph>
           </li>
           <li>
             <Text strong>viewport-fit=cover 和 env() 的协作原理？</Text>
             <Paragraph type="secondary">
-              viewport-fit=cover 允许页面内容延伸到刘海/圆角区域，env(safe-area-inset-*) 则提供这些不可显示区域的具体尺寸，两者配合实现全面屏适配。
+              viewport-fit=cover 允许页面内容延伸到刘海/圆角区域，env(safe-area-inset-*)
+              则提供这些不可显示区域的具体尺寸，两者配合实现全面屏适配。
             </Paragraph>
           </li>
         </ul>

@@ -5,6 +5,7 @@
 在许多开源的大型表单引擎（如 Formily、Amis）中，他们通常采用字符串表达式（例如 `{{ $values.age > 18 }}`）来处理表单的联动逻辑。这种设计的根本原因是他们需要支持**“后端动态下发”**或**“低代码平台的数据库持久化”**，因为函数是无法被序列化为 JSON 进行网络传输和存储的。
 
 然而，在绝大多数**纯前端维护、不涉及后端下发布局**的企业级项目中，强行引入“字符串表达式”是一种过度设计（Over-engineering），会带来以下严重的负面影响：
+
 1. **丢失类型安全**：TypeScript 无法推导字符串里的内容，开发者写错变量名只有在运行时才会报错。
 2. **极难调试**：如果联动逻辑非常复杂，字符串沙箱解析失败时的报错堆栈往往难以定位，更别提设置断点（Breakpoint）了。
 3. **性能与安全损耗**：解析字符串要么依赖沉重的 AST（抽象语法树），要么依赖存在安全隐患的 `new Function()`。
@@ -14,36 +15,40 @@
 ## 2. 演进后的核心架构模型 (Registry + Pure Function)
 
 ### 2.1 坚如磐石的组件注册中心 (Widget Registry)
+
 这是我们继续沿用的架构精髓。所有的 UI 控件（即使是非常复杂的业务组件）仍然是被当作“插件”注册到引擎中。
 \`\`\`typescript
 export const widgetRegistry = {
-  Input,
-  Select,
-  MyCustomUpload,
+Input,
+Select,
+MyCustomUpload,
 };
 \`\`\`
 无论业务组件如何激增，底层的遍历渲染引擎依旧遵循开闭原则（OCP），一行代码都不用改。
 
 ### 2.2 极致舒适的纯函数联动逻辑
+
 由于我们放弃了序列化需求，Schema 的描述能力被彻底解放。我们不再被困在字符串的牢笼里，可以使用原生的 JS 闭包：
 \`\`\`javascript
 {
-  widget: "Input",
-  name: "taxId",
-  // 直接编写原生函数，享受 IDE 高亮、TS 提示与 debugger 断点！
-  hidden: (values) => values.userType !== 'enterprise' && values.region === 'CN'
+widget: "Input",
+name: "taxId",
+// 直接编写原生函数，享受 IDE 高亮、TS 提示与 debugger 断点！
+hidden: (values) => values.userType !== 'enterprise' && values.region === 'CN'
 }
 \`\`\`
 
 ### 2.3 精细化的高性能渲染 (Dependencies Tracking)
+
 即使换成了函数调用，如果在每一次输入时，全表单的所有函数都要被执行一遍，依然不合理。
 因此我们保留了依赖追踪机制：
 \`\`\`javascript
 {
-  dependencies: ["userType", "region"]
+dependencies: ["userType", "region"]
 }
 \`\`\`
 底层的 `shouldUpdate` 会对比当前值与过去值，只有在这两个特定字段发生变更时，才会重新调用 `hidden()` 函数并触发当前 `Form.Item` 的独立重绘，将性能压榨到极限。
 
 ## 3. 总结
+
 本模块展示的 `ProFormGenerator` 将企业级表单引擎的精髓（注册中心 + 依赖分析）与极佳的开发者体验（原生 JS 函数联动）完美结合。对于不需要“可视化拖拽保存”的普通企业级 B 端项目来说，这就是维护成本最低、性能最高、TypeScript 结合最完美的**终极解法**。

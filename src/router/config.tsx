@@ -13,6 +13,7 @@ import {
   FullscreenOutlined,
   SafetyOutlined,
   GlobalOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 
 export interface RouteConfig {
@@ -76,6 +77,7 @@ const ZIndexStacking = lazy(() => import('../pages/compatibility/ZIndexStacking/
 const VerticalCentering = lazy(() => import('../pages/compatibility/VerticalCentering/index'));
 const AudioPlayback = lazy(() => import('../pages/compatibility/AudioPlayback/index'));
 const BrowserDimensions = lazy(() => import('../pages/browser-dimensions/index'));
+const UndefinedVsNull = lazy(() => import('../pages/js-basics/undefined-vs-null/index'));
 
 // 网络请求专题
 const SilentRefreshBasic = lazy(() => import('../pages/silent-refresh/basic'));
@@ -375,6 +377,18 @@ export const dashboardRoutes: RouteConfig[] = [
         path: '/dashboard/browser-dimensions/overview',
         label: '尺寸 API 概述',
         element: <BrowserDimensions />,
+      },
+    ],
+  },
+  {
+    path: '/dashboard/js-basics',
+    label: 'JavaScript 基础',
+    icon: <FileTextOutlined />,
+    children: [
+      {
+        path: '/dashboard/js-basics/undefined-vs-null',
+        label: 'undefined 与 null 的区别',
+        element: <UndefinedVsNull />,
       },
     ],
   },

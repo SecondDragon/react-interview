@@ -43,36 +43,23 @@ export interface UseAppModalReturn {
   /** 打开弹窗并返回 Promise<boolean>，点击确定 resolve(true)，点击取消 resolve(false) */
   confirmAsync: (config: Omit<AppModalConfig, 'onOk' | 'onCancel'>) => Promise<boolean>;
   /** 打开一个可承载复杂表单/自定义内容的弹窗，自动处理 footer 和状态 */
-  openFormModal: (config: AppModalConfig & { onSubmit?: () => void | Promise<void> }) => ReturnType<ModalStaticFunctions['confirm']>;
+  openFormModal: (
+    config: AppModalConfig & { onSubmit?: () => void | Promise<void> }
+  ) => ReturnType<ModalStaticFunctions['confirm']>;
 }
 
 export const useAppModal = (): UseAppModalReturn => {
   const { modal } = App.useApp();
 
-  const info = useCallback(
-    (config: AppModalConfig) => modal.info(config),
-    [modal]
-  );
+  const info = useCallback((config: AppModalConfig) => modal.info(config), [modal]);
 
-  const success = useCallback(
-    (config: AppModalConfig) => modal.success(config),
-    [modal]
-  );
+  const success = useCallback((config: AppModalConfig) => modal.success(config), [modal]);
 
-  const error = useCallback(
-    (config: AppModalConfig) => modal.error(config),
-    [modal]
-  );
+  const error = useCallback((config: AppModalConfig) => modal.error(config), [modal]);
 
-  const warning = useCallback(
-    (config: AppModalConfig) => modal.warning(config),
-    [modal]
-  );
+  const warning = useCallback((config: AppModalConfig) => modal.warning(config), [modal]);
 
-  const confirm = useCallback(
-    (config: AppModalConfig) => modal.confirm(config),
-    [modal]
-  );
+  const confirm = useCallback((config: AppModalConfig) => modal.confirm(config), [modal]);
 
   /**
    * confirmAsync - 将确认弹窗 Promise 化

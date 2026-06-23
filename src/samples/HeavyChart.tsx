@@ -19,7 +19,7 @@ const HeavyChart: React.FC = () => {
       tooltip: {},
       xAxis: { data: ['A', 'B', 'C', 'D', 'E'] },
       yAxis: {},
-      series: [{ name: '销量', type: 'bar', data: [5, 20, 36, 10, 10] }]
+      series: [{ name: '销量', type: 'bar', data: [5, 20, 36, 10, 10] }],
     };
     myChart.setOption(option);
     return () => myChart.dispose();

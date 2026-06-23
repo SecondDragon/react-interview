@@ -3,7 +3,7 @@ import { Card, Typography, Tag, List, Collapse, Alert, Button, Input } from 'ant
 import { useCaseData } from './Examples';
 import CodeDiff from '@/components/CodeDiff';
 
-const { Text, Title,Paragraph } = Typography;
+const { Text, Title, Paragraph } = Typography;
 const { Panel } = Collapse;
 
 /**
@@ -26,10 +26,7 @@ const UseCases: React.FC = () => {
   }, []);
 
   return (
-    <Card
-      title="🚀 实际应用场景"
-      style={{ marginBottom: '24px', borderLeft: '4px solid #eb2f96' }}
-    >
+    <Card title="🚀 实际应用场景" style={{ marginBottom: '24px', borderLeft: '4px solid #eb2f96' }}>
       <Alert
         message="以下场景展示了尺寸 API 在实际开发中的高级用法"
         description="每个场景都包含：问题描述、使用的 API、核心代码和交互演示"
@@ -44,7 +41,11 @@ const UseCases: React.FC = () => {
       {/* 场景 2：键盘弹出检测 */}
       <Card
         size="small"
-        title={<span><Tag color="green">场景 2</Tag> 移动端键盘弹出检测</span>}
+        title={
+          <span>
+            <Tag color="green">场景 2</Tag> 移动端键盘弹出检测
+          </span>
+        }
         style={{ marginBottom: '16px' }}
       >
         <Text>
@@ -58,8 +59,11 @@ const UseCases: React.FC = () => {
             style={{ marginBottom: '8px' }}
           />
           <div style={{ fontSize: '12px', color: '#999' }}>
-            键盘高度：<Text strong style={{ color: keyboardHeight > 0 ? '#ff4d4f' : '#52c41a' }}>
-              {keyboardHeight > 0 ? `${Math.round(keyboardHeight)}px（键盘弹出）` : '0px（键盘收起）'}
+            键盘高度：
+            <Text strong style={{ color: keyboardHeight > 0 ? '#ff4d4f' : '#52c41a' }}>
+              {keyboardHeight > 0
+                ? `${Math.round(keyboardHeight)}px（键盘弹出）`
+                : '0px（键盘收起）'}
             </Text>
           </div>
         </div>
@@ -82,7 +86,11 @@ const UseCases: React.FC = () => {
       {/* 场景 3：元素视口检测 */}
       <Card
         size="small"
-        title={<span><Tag color="orange">场景 3</Tag> 元素是否进入视口（懒加载）</span>}
+        title={
+          <span>
+            <Tag color="orange">场景 3</Tag> 元素是否进入视口（懒加载）
+          </span>
+        }
         style={{ marginBottom: '16px' }}
       >
         <Text>
@@ -115,7 +123,11 @@ const observer = new IntersectionObserver((entries) => {
       {/* 场景 4：虚拟滚动 */}
       <Card
         size="small"
-        title={<span><Tag color="purple">场景 4</Tag> 虚拟滚动可视区域计算</span>}
+        title={
+          <span>
+            <Tag color="purple">场景 4</Tag> 虚拟滚动可视区域计算
+          </span>
+        }
         style={{ marginBottom: '16px' }}
       >
         <Text>
@@ -143,7 +155,14 @@ const observer = new IntersectionObserver((entries) => {
             <Text strong>场景：</Text>
             <Paragraph>{item.scenario}</Paragraph>
             <Text strong>公式：</Text>
-            <div style={{ padding: '8px', background: '#f5f5f5', borderRadius: '4px', margin: '8px 0' }}>
+            <div
+              style={{
+                padding: '8px',
+                background: '#f5f5f5',
+                borderRadius: '4px',
+                margin: '8px 0',
+              }}
+            >
               <Text code>{item.formula}</Text>
             </div>
             <Text strong>解释：</Text>
@@ -181,11 +200,16 @@ const ScrollProgressDemo: React.FC = () => {
   return (
     <Card
       size="small"
-      title={<span><Tag color="blue">场景 1</Tag> 滚动进度条</span>}
+      title={
+        <span>
+          <Tag color="blue">场景 1</Tag> 滚动进度条
+        </span>
+      }
       style={{ marginBottom: '16px' }}
     >
       <Text>
-        使用 <Text code>scrollTop</Text>、<Text code>clientHeight</Text>、<Text code>scrollHeight</Text> 计算滚动进度。
+        使用 <Text code>scrollTop</Text>、<Text code>clientHeight</Text>、
+        <Text code>scrollHeight</Text> 计算滚动进度。
       </Text>
 
       <div
@@ -266,10 +290,10 @@ const ViewportDetectionDemo: React.FC = () => {
 
   return (
     <div style={{ marginTop: '8px' }}>
-      <div style={{ height: '100px', overflow: 'auto', border: '1px solid #d9d9d9', padding: '8px' }}>
-        <div style={{ height: '200px', padding: '8px' }}>
-          向下滚动，观察下方元素状态变化
-        </div>
+      <div
+        style={{ height: '100px', overflow: 'auto', border: '1px solid #d9d9d9', padding: '8px' }}
+      >
+        <div style={{ height: '200px', padding: '8px' }}>向下滚动，观察下方元素状态变化</div>
         <div
           ref={targetRef}
           style={{
@@ -325,8 +349,8 @@ const VirtualScrollDemo: React.FC = () => {
   return (
     <div style={{ marginTop: '8px' }}>
       <div style={{ fontSize: '12px', color: '#999', marginBottom: '8px' }}>
-        总数据：{totalCount} 条 | 可视区域：{visibleRange.start} - {visibleRange.end} |
-        实际渲染：{visibleItems.length} 条
+        总数据：{totalCount} 条 | 可视区域：{visibleRange.start} - {visibleRange.end} | 实际渲染：
+        {visibleItems.length} 条
       </div>
       <div
         ref={containerRef}

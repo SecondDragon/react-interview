@@ -82,12 +82,22 @@ const PostcssPluginDemo = () => {
               <div style={{ marginTop: 8 }}>
                 <Text strong>开发者写的代码：</Text>
                 <div>
-                  <Text code>.card {'{'} border: 1px solid #ddd; {'}'}</Text>
+                  <Text code>
+                    .card {'{'} border: 1px solid #ddd; {'}'}
+                  </Text>
                 </div>
               </div>
               <div style={{ marginTop: 8 }}>
                 <Text strong>PostCSS 自动转换为：</Text>
-                <pre style={{ margin: 0, fontSize: 12, background: '#f5f5f5', padding: 8, borderRadius: 4 }}>
+                <pre
+                  style={{
+                    margin: 0,
+                    fontSize: 12,
+                    background: '#f5f5f5',
+                    padding: 8,
+                    borderRadius: 4,
+                  }}
+                >
                   {getCompiledCode(strategy)}
                 </pre>
               </div>
@@ -141,7 +151,7 @@ const PostcssPluginDemo = () => {
                   padding: 16,
                   background: '#fff',
                   backgroundImage:
-                    'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\'%3E%3Crect width=\'100%25\' height=\'100%25\' fill=\'none\' stroke=\'%23ddd\' stroke-width=\'1\' vector-effect=\'non-scaling-stroke\'/%3E%3C/svg%3E")',
+                    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='none' stroke='%23ddd' stroke-width='1' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E\")",
                   backgroundSize: '100% 100%',
                   textAlign: 'center',
                 }}

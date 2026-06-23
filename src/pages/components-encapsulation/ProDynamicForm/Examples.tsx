@@ -120,7 +120,7 @@ export const bestPracticeSchema: ProSchemaItem[] = [
     widget: 'StarRating',
     name: 'satisfaction',
     label: '服务满意度体验 (演示 Props 透传)',
-    props: { max: 10},
+    props: { max: 10 },
     hidden: (values) => values.userType !== 'enterprise',
     rules: [{ required: true, message: '请打分' }],
   },

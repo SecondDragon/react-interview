@@ -14,7 +14,8 @@ const AutoplayDemo = () => {
 
   const handlePlay = () => {
     if (!audioRef.current) return;
-    audioRef.current.play()
+    audioRef.current
+      .play()
       .then(() => setStatus('playing'))
       .catch(() => setStatus('blocked'));
   };
@@ -22,7 +23,8 @@ const AutoplayDemo = () => {
   const handleMutedPlay = () => {
     if (!audioRef.current) return;
     audioRef.current.muted = true;
-    audioRef.current.play()
+    audioRef.current
+      .play()
       .then(() => setStatus('playing'))
       .catch(() => setStatus('blocked'));
   };
@@ -31,9 +33,18 @@ const AutoplayDemo = () => {
     <Card title="🎵 互动演示：自动播放测试" size="small">
       <audio ref={audioRef} src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" />
       <Space>
-        <Button onClick={handlePlay} type="primary">直接播放 (有声)</Button>
+        <Button onClick={handlePlay} type="primary">
+          直接播放 (有声)
+        </Button>
         <Button onClick={handleMutedPlay}>静音播放 (Muted)</Button>
-        <Button onClick={() => { if(audioRef.current) audioRef.current.pause(); setStatus('idle'); }}>重置</Button>
+        <Button
+          onClick={() => {
+            if (audioRef.current) audioRef.current.pause();
+            setStatus('idle');
+          }}
+        >
+          重置
+        </Button>
       </Space>
       <div style={{ marginTop: '16px' }}>
         状态:
@@ -63,10 +74,13 @@ const AutoplayPolicy: React.FC = () => {
 
       {/* 一、 Bug 出现的现象 */}
       <Card title="一、 Bug 出现的现象" style={{ marginBottom: '24px' }}>
-        <Paragraph>
-          在移动端或刷新页面后，背景音乐（BGM）或视频无法自动播放。
-        </Paragraph>
-        <Alert message="典型报错" description="Uncaught (in promise) DOMException: play() failed because the user didn't interact with the document first." type="error" showIcon />
+        <Paragraph>在移动端或刷新页面后，背景音乐（BGM）或视频无法自动播放。</Paragraph>
+        <Alert
+          message="典型报错"
+          description="Uncaught (in promise) DOMException: play() failed because the user didn't interact with the document first."
+          type="error"
+          showIcon
+        />
       </Card>
 
       {/* 二、 Bug 出现的底层原因 */}
@@ -74,11 +88,10 @@ const AutoplayPolicy: React.FC = () => {
         <Paragraph>
           <Text strong>现代浏览器的“防骚扰”机制：</Text>
         </Paragraph>
+        <Paragraph>{AutoplayExamples.reason}</Paragraph>
         <Paragraph>
-          {AutoplayExamples.reason}
-        </Paragraph>
-        <Paragraph>
-          浏览器通过“用户激活门槛（User Activation Gate）”来保护用户体验，防止消耗流量和突如其来的噪音。
+          浏览器通过“用户激活门槛（User Activation
+          Gate）”来保护用户体验，防止消耗流量和突如其来的噪音。
         </Paragraph>
       </Card>
 
@@ -96,11 +109,16 @@ const AutoplayPolicy: React.FC = () => {
 
       {/* 四、 为什么要这样解决 且互动演示 */}
       <Card
-        title={<span>四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag></span>}
+        title={
+          <span>
+            四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag>
+          </span>
+        }
         style={{ marginBottom: '24px' }}
       >
         <Paragraph>
-          方案的核心是“优雅降级”。通过捕获 Reject 异常，我们可以给用户一个明确的交互提示（如静音按钮），通过用户的一次真实点击来解锁整个页面的音频权限。
+          方案的核心是“优雅降级”。通过捕获 Reject
+          异常，我们可以给用户一个明确的交互提示（如静音按钮），通过用户的一次真实点击来解锁整个页面的音频权限。
         </Paragraph>
         <Divider />
         <AutoplayDemo />
@@ -119,7 +137,9 @@ const AutoplayPolicy: React.FC = () => {
           </li>
           <li>
             <Text strong>AudioContext 解锁：</Text>
-            Web Audio API 允许在未解锁状态下创建 Context，但其 <Text code>state</Text> 为 <Text code>suspended</Text>。只需在第一次用户交互时调用 <Text code>resume()</Text>，即可解锁后续所有音频。
+            Web Audio API 允许在未解锁状态下创建 Context，但其 <Text code>state</Text> 为{' '}
+            <Text code>suspended</Text>。只需在第一次用户交互时调用 <Text code>resume()</Text>
+            ，即可解锁后续所有音频。
           </li>
         </ul>
       </Card>

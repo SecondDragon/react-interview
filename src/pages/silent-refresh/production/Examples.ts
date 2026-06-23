@@ -2,7 +2,7 @@
  * 生产级 Token 无感刷新 - 案例元数据
  */
 export const ProductionExamples = {
-  title: "生产级 Token 无感刷新：并发去重 + 提前刷新 + 自动续签",
+  title: '生产级 Token 无感刷新：并发去重 + 提前刷新 + 自动续签',
 
   concurrencyProblem: `// ❌ 问题：3 个请求同时触发，会刷新 3 次 Token
 // 场景：页面加载时同时请求用户、订单、统计
@@ -120,8 +120,20 @@ api.interceptors.response.use(
 └─────────────────────────────────────────────────────────┘`,
 
   compareTable: {
-    naive: { refreshes: '3 次', userExperience: '3 个请求都失败，需要手动重试', networkWaste: '高' },
-    basic: { refreshes: '3 次 (各管各)', userExperience: '修复后重试，但刷新了 3 次', networkWaste: '中' },
-    production: { refreshes: '1 次', userExperience: '完全无感知，只刷新 1 次', networkWaste: '无' },
+    naive: {
+      refreshes: '3 次',
+      userExperience: '3 个请求都失败，需要手动重试',
+      networkWaste: '高',
+    },
+    basic: {
+      refreshes: '3 次 (各管各)',
+      userExperience: '修复后重试，但刷新了 3 次',
+      networkWaste: '中',
+    },
+    production: {
+      refreshes: '1 次',
+      userExperience: '完全无感知，只刷新 1 次',
+      networkWaste: '无',
+    },
   },
 };

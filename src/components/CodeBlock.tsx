@@ -21,37 +21,41 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
   language = 'typescript',
   title,
   type = 'info',
-  showLineNumbers = true
+  showLineNumbers = true,
 }) => {
   // 定义颜色映射
   const colorMap = {
     error: { border: '#ffa39e', bg: '#fff1f0', label: 'Bad Practice', tagColor: 'red' },
     success: { border: '#b7eb8f', bg: '#f6ffed', label: 'Best Practice', tagColor: 'green' },
     warning: { border: '#ffe58f', bg: '#fffbe6', label: 'Alternative', tagColor: 'orange' },
-    info: { border: '#d9d9d9', bg: '#fafafa', label: 'Reference', tagColor: 'blue' }
+    info: { border: '#d9d9d9', bg: '#fafafa', label: 'Reference', tagColor: 'blue' },
   };
 
   const currentTheme = colorMap[type];
 
   return (
-    <div style={{
-      margin: '16px 0',
-      border: `1px solid ${currentTheme.border}`,
-      borderRadius: '8px',
-      overflow: 'hidden',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
-    }}>
+    <div
+      style={{
+        margin: '16px 0',
+        border: `1px solid ${currentTheme.border}`,
+        borderRadius: '8px',
+        overflow: 'hidden',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+      }}
+    >
       {/* 顶部标题栏 */}
       {title && (
-        <div style={{
-          padding: '10px 16px',
-          background: currentTheme.bg,
-          borderBottom: `1px solid ${currentTheme.border}`,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          fontWeight: 'bold'
-        }}>
+        <div
+          style={{
+            padding: '10px 16px',
+            background: currentTheme.bg,
+            borderBottom: `1px solid ${currentTheme.border}`,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontWeight: 'bold',
+          }}
+        >
           <span>{title}</span>
           <Tag color={currentTheme.tagColor}>{currentTheme.label}</Tag>
         </div>
@@ -67,7 +71,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
           padding: '16px',
           fontSize: '13px',
           lineHeight: '1.6',
-          borderRadius: 0 // 覆盖默认圆角，使用外层 Card 的圆角
+          borderRadius: 0, // 覆盖默认圆角，使用外层 Card 的圆角
         }}
       >
         {code?.trim()}

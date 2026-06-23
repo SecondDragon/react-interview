@@ -29,7 +29,11 @@ const DimensionTable: React.FC = () => {
       dataIndex: 'api',
       key: 'api',
       width: '220px',
-      render: (text: string) => <Text code style={{ fontSize: '12px' }}>{text}</Text>,
+      render: (text: string) => (
+        <Text code style={{ fontSize: '12px' }}>
+          {text}
+        </Text>
+      ),
     },
     {
       title: '含义',
@@ -42,7 +46,11 @@ const DimensionTable: React.FC = () => {
       dataIndex: 'includes',
       key: 'includes',
       width: '160px',
-      render: (text: string) => <Text type="secondary" style={{ fontSize: '12px' }}>{text}</Text>,
+      render: (text: string) => (
+        <Text type="secondary" style={{ fontSize: '12px' }}>
+          {text}
+        </Text>
+      ),
     },
     {
       title: '坐标系',
@@ -51,7 +59,11 @@ const DimensionTable: React.FC = () => {
       width: '70px',
       render: (text: string) => {
         const color = text === 'CSS 像素' ? 'blue' : text === 'DIP' ? 'green' : 'orange';
-        return <Tag color={color} style={{ fontSize: '11px' }}>{text}</Tag>;
+        return (
+          <Tag color={color} style={{ fontSize: '11px' }}>
+            {text}
+          </Tag>
+        );
       },
     },
     {
@@ -99,8 +111,12 @@ const DimensionTable: React.FC = () => {
         scroll={{ x: 'max-content' }}
       />
 
-      <div style={{ marginTop: '16px', padding: '12px', background: '#f6ffed', borderRadius: '4px' }}>
-        <Text strong style={{ color: '#52c41a' }}>💡 记忆口诀：</Text>
+      <div
+        style={{ marginTop: '16px', padding: '12px', background: '#f6ffed', borderRadius: '4px' }}
+      >
+        <Text strong style={{ color: '#52c41a' }}>
+          💡 记忆口诀：
+        </Text>
         <ul style={{ marginTop: '8px', paddingLeft: '20px', fontSize: '13px' }}>
           <li>
             <Text code>clientWidth</Text> = 内容区 + 内边距（不含边框、滚动条）

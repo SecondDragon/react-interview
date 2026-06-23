@@ -11,7 +11,9 @@ const { Title, Paragraph, Text } = Typography;
  */
 const ScrollbarStyle: React.FC = () => {
   const { confirm } = useAppModal();
-  const [demoMode, setDemoMode] = useState<'default' | 'gutter' | 'beautify' | 'overlay'>('default');
+  const [demoMode, setDemoMode] = useState<'default' | 'gutter' | 'beautify' | 'overlay'>(
+    'default'
+  );
   const [showLargeContent, setShowLargeContent] = useState(false);
 
   const toggleContent = () => setShowLargeContent(!showLargeContent);
@@ -50,8 +52,20 @@ const ScrollbarStyle: React.FC = () => {
   }, []);
 
   const dataSource = [
-    { key: '1', os: 'Windows / Linux', type: '独占式 (Classic)', width: '12px ~ 17px', impact: '高 (导致 Layout Shift)' },
-    { key: '2', os: 'macOS (默认)', type: '悬浮式 (Overlay)', width: '0px (不占位)', impact: '极低' },
+    {
+      key: '1',
+      os: 'Windows / Linux',
+      type: '独占式 (Classic)',
+      width: '12px ~ 17px',
+      impact: '高 (导致 Layout Shift)',
+    },
+    {
+      key: '2',
+      os: 'macOS (默认)',
+      type: '悬浮式 (Overlay)',
+      width: '0px (不占位)',
+      impact: '极低',
+    },
     { key: '3', os: 'Android / iOS', type: '悬浮式', width: '0px', impact: '无' },
   ];
 
@@ -59,9 +73,12 @@ const ScrollbarStyle: React.FC = () => {
     { title: '操作系统', dataIndex: 'os', key: 'os' },
     { title: '滚动条类型', dataIndex: 'type', key: 'type' },
     { title: '占据宽度', dataIndex: 'width', key: 'width' },
-    { title: '布局影响', dataIndex: 'impact', key: 'impact', render: (text: string) => (
-      <Tag color={text.includes('高') ? 'red' : 'green'}>{text}</Tag>
-    )},
+    {
+      title: '布局影响',
+      dataIndex: 'impact',
+      key: 'impact',
+      render: (text: string) => <Tag color={text.includes('高') ? 'red' : 'green'}>{text}</Tag>,
+    },
   ];
 
   return (
@@ -76,8 +93,13 @@ const ScrollbarStyle: React.FC = () => {
         <Paragraph>
           <Text strong>典型表现：</Text>
           <ul>
-            <li>在 Windows 系统中，当页面内容从不足一屏变为超过一屏时，滚动条会突然出现并挤压内容区。</li>
-            <li>打开 Modal 弹窗时，UI 库通常会给 <Text code>body</Text> 加上 <Text code>overflow: hidden</Text>，导致滚动条瞬间消失，页面内容向右猛然平移 17px。</li>
+            <li>
+              在 Windows 系统中，当页面内容从不足一屏变为超过一屏时，滚动条会突然出现并挤压内容区。
+            </li>
+            <li>
+              打开 Modal 弹窗时，UI 库通常会给 <Text code>body</Text> 加上{' '}
+              <Text code>overflow: hidden</Text>，导致滚动条瞬间消失，页面内容向右猛然平移 17px。
+            </li>
             <li>固定定位的 Header 或返回顶部按钮在滚动条切换时会发生错位。</li>
           </ul>
         </Paragraph>
@@ -94,20 +116,21 @@ const ScrollbarStyle: React.FC = () => {
           <Text strong>操作系统视口机制差异：</Text>
         </Paragraph>
         <Paragraph>
-          Windows 系统的滚动条默认作为窗口的一部分存在，会“挤压”内容区（Classic Scrollbars）。而 macOS 和移动端默认使用“悬浮式”滚动条（Overlay Scrollbars），不占据物理空间。
+          Windows 系统的滚动条默认作为窗口的一部分存在，会“挤压”内容区（Classic Scrollbars）。而
+          macOS 和移动端默认使用“悬浮式”滚动条（Overlay Scrollbars），不占据物理空间。
         </Paragraph>
-        <Table
-          dataSource={dataSource}
-          columns={columns}
-          pagination={false}
-          size="small"
-          bordered
-        />
+        <Table dataSource={dataSource} columns={columns} pagination={false} size="small" bordered />
       </Card>
 
       {/* 三、 Bug 如何解决 */}
       <Card title="三、 Bug 如何解决" style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '16px' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+            gap: '16px',
+          }}
+        >
           <div>
             <Title level={5}>✅ 方案 A：现代 CSS (解决抖动)</Title>
             <CodeDiff code={ScrollbarExamples.solutionA} type="success" title="scrollbar-gutter" />
@@ -124,7 +147,11 @@ const ScrollbarStyle: React.FC = () => {
 
       {/* 四、 为什么要这样解决 且互动演示 */}
       <Card
-        title={<span>四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag></span>}
+        title={
+          <span>
+            四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag>
+          </span>
+        }
         style={{ marginBottom: '24px', border: '2px solid #1890ff' }}
       >
         <Row gutter={24}>
@@ -132,7 +159,7 @@ const ScrollbarStyle: React.FC = () => {
             <Space direction="vertical" style={{ width: '100%' }}>
               <Radio.Group
                 value={demoMode}
-                onChange={e => setDemoMode(e.target.value)}
+                onChange={(e) => setDemoMode(e.target.value)}
                 buttonStyle="solid"
                 size="small"
               >
@@ -145,7 +172,15 @@ const ScrollbarStyle: React.FC = () => {
               <Button block type="primary" onClick={toggleContent}>
                 {showLargeContent ? '减少内容' : '增加内容'}
               </Button>
-              <Button block onClick={() => confirm({ title: 'Body 锁定测试', content: '观察背景页面在 Modal 弹出（Body 锁死）时是否发生了位移。' })}>
+              <Button
+                block
+                onClick={() =>
+                  confirm({
+                    title: 'Body 锁定测试',
+                    content: '观察背景页面在 Modal 弹出（Body 锁死）时是否发生了位移。',
+                  })
+                }
+              >
                 弹出 Modal (触发锁定)
               </Button>
             </Space>
@@ -158,12 +193,23 @@ const ScrollbarStyle: React.FC = () => {
                 border: '2px dashed #d9d9d9',
                 overflowY: 'auto',
                 padding: '20px',
-                scrollbarGutter: demoMode === 'gutter' ? 'stable' : 'auto'
+                scrollbarGutter: demoMode === 'gutter' ? 'stable' : 'auto',
               }}
             >
               <Title level={4}>内容容器</Title>
-              <div style={{ background: '#1890ff', color: '#fff', padding: '10px', width: '80%', margin: '0 auto' }}>居中元素</div>
-              {showLargeContent && [...Array(10)].map((_, i) => <Paragraph key={i}>填充内容 {i+1}...</Paragraph>)}
+              <div
+                style={{
+                  background: '#1890ff',
+                  color: '#fff',
+                  padding: '10px',
+                  width: '80%',
+                  margin: '0 auto',
+                }}
+              >
+                居中元素
+              </div>
+              {showLargeContent &&
+                [...Array(10)].map((_, i) => <Paragraph key={i}>填充内容 {i + 1}...</Paragraph>)}
             </div>
           </Col>
         </Row>
@@ -174,20 +220,25 @@ const ScrollbarStyle: React.FC = () => {
         <ul>
           <li>
             <Text strong>scrollbar-gutter: stable：</Text>
-            这是 W3C 专门为解决此问题设计的属性。它强制浏览器在盒模型计算阶段就为滚动条预留出固定的宽度空间，无论内容是否溢出，容器的可用宽度始终保持一致，从而消除了 Layout Shift。
+            这是 W3C
+            专门为解决此问题设计的属性。它强制浏览器在盒模型计算阶段就为滚动条预留出固定的宽度空间，无论内容是否溢出，容器的可用宽度始终保持一致，从而消除了
+            Layout Shift。
           </li>
           <li>
             <Text strong>亚像素抗锯齿与伪元素渲染：</Text>
-            通过 <Text code>::-webkit-scrollbar</Text> 系列伪元素，我们可以改写浏览器默认的滚动条渲染树。通过 <Text code>background-clip: content-box</Text> 配合透明边框，可以在视觉上实现滚动条的“内边距”效果，使其更具高级感。
+            通过 <Text code>::-webkit-scrollbar</Text>{' '}
+            系列伪元素，我们可以改写浏览器默认的滚动条渲染树。通过{' '}
+            <Text code>background-clip: content-box</Text>{' '}
+            配合透明边框，可以在视觉上实现滚动条的“内边距”效果，使其更具高级感。
           </li>
           <li>
             <Text strong>JS 模拟滚动 (Overlay)：</Text>
-            JS 库通过监听 <Text code>wheel</Text> 事件并手动修改 <Text code>scrollTop</Text>，并配合一个完全 <Text code>absolute</Text> 定位的自定义 DOM 节点作为滚动条。这样它完全脱离了文档流，不会引起任何重排抖动。
+            JS 库通过监听 <Text code>wheel</Text> 事件并手动修改 <Text code>scrollTop</Text>
+            ，并配合一个完全 <Text code>absolute</Text> 定位的自定义 DOM
+            节点作为滚动条。这样它完全脱离了文档流，不会引起任何重排抖动。
           </li>
         </ul>
       </Card>
-
-
     </div>
   );
 };

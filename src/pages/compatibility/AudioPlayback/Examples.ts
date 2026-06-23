@@ -16,5 +16,5 @@ import { AudioPlayer } from '../phone-work-bench/call-center/AudioPlayer';
 
 const Demo = () => (
   <AudioPlayer src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" />
-);`
+);`,
 };

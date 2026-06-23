@@ -43,9 +43,7 @@ const BoxShadowDemo = () => {
             <div>
               <div>
                 <Text strong>CSS：</Text>
-                <Text code>
-                  box-shadow: 0 0 0 {shadowWidth}px #ddd inset;
-                </Text>
+                <Text code>box-shadow: 0 0 0 {shadowWidth}px #ddd inset;</Text>
               </div>
               <div style={{ marginTop: 8 }}>
                 <Text strong>渲染效果：</Text>
@@ -53,8 +51,8 @@ const BoxShadowDemo = () => {
                   {shadowWidth < 0.5
                     ? '亚像素渲染，可能较淡'
                     : shadowWidth === 0.5
-                    ? 'DPR=2 设备上约 1 物理像素 ✅'
-                    : '较粗的边框效果'}
+                      ? 'DPR=2 设备上约 1 物理像素 ✅'
+                      : '较粗的边框效果'}
                 </Text>
               </div>
             </div>

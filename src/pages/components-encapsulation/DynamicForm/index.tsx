@@ -3,8 +3,8 @@ import { Card, Button, Form, Typography, Space, Alert } from 'antd';
 import DynamicFormGenerator from './DynamicFormGenerator';
 import { defaultSchema, defaultCode } from './Examples';
 import CodeBlock from '@/components/CodeBlock';
-import PerformanceContrast from "./PerformanceContrast.tsx";
-import MiniFormTheory from "./MiniFormTheory.tsx";
+import PerformanceContrast from './PerformanceContrast.tsx';
+import MiniFormTheory from './MiniFormTheory.tsx';
 
 const { Title, Paragraph } = Typography;
 /* eslint-disable react-hooks/exhaustive-deps */
@@ -22,7 +22,10 @@ const DynamicFormPage: React.FC = () => {
       <Typography>
         <Title level={2}>JSON 驱动的动态表单 (Dynamic Form Generator)</Title>
         <Paragraph>
-          通过传入一套 JSON Schema 自动渲染对应的表单结构。内置表单项联动（如根据用户类型显示税号输入框），并采用局部渲染机制（借助 Antd rc-field-form 的发布订阅模式），保证大表单时在输入单个字符也不会引起整个外层表单的重渲染。
+          通过传入一套 JSON Schema
+          自动渲染对应的表单结构。内置表单项联动（如根据用户类型显示税号输入框），并采用局部渲染机制（借助
+          Antd rc-field-form
+          的发布订阅模式），保证大表单时在输入单个字符也不会引起整个外层表单的重渲染。
         </Paragraph>
         <Alert
           message={`当前外层组件渲染次数：${renderCount.current}`}
@@ -36,7 +39,9 @@ const DynamicFormPage: React.FC = () => {
       <Card title="互动演示 (Live Demo) - 动态联动与高性能渲染" style={{ marginBottom: '24px' }}>
         <DynamicFormGenerator schema={defaultSchema} form={form} onFinish={onFinish} />
         <Space style={{ marginTop: 16 }}>
-          <Button type="primary" onClick={() => form.submit()}>提交验证</Button>
+          <Button type="primary" onClick={() => form.submit()}>
+            提交验证
+          </Button>
           <Button onClick={() => form.resetFields()}>重置表单</Button>
         </Space>
       </Card>

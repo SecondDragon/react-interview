@@ -51,7 +51,7 @@ const WsChatDemo: React.FC = () => {
   }, [messages]);
 
   const addMessage = useCallback((msg: ChatMessage) => {
-    setMessages(prev => [...prev, msg]);
+    setMessages((prev) => [...prev, msg]);
   }, []);
 
   const connectWs = useCallback(() => {
@@ -124,7 +124,8 @@ const WsChatDemo: React.FC = () => {
         const delay = Math.min(1000 * Math.pow(2, attempt), 30000);
         addMessage({
           type: 'system',
-          content: '🔌 连接断开 (code: ' + event.code + ')，' + Math.round(delay / 1000) + 's 后重连...',
+          content:
+            '🔌 连接断开 (code: ' + event.code + ')，' + Math.round(delay / 1000) + 's 后重连...',
           timestamp: new Date().toLocaleTimeString(),
           direction: 'received',
         });
@@ -185,17 +186,23 @@ const WsChatDemo: React.FC = () => {
   return (
     <div>
       <Space style={{ marginBottom: 16 }} wrap>
-        <Button type="primary" icon={<PlayCircleOutlined />} onClick={connectWs} disabled={connected}>
+        <Button
+          type="primary"
+          icon={<PlayCircleOutlined />}
+          onClick={connectWs}
+          disabled={connected}
+        >
           连接 WebSocket
         </Button>
         <Button danger icon={<StopOutlined />} onClick={disconnectWs} disabled={!connected}>
           断开连接
         </Button>
-        <Badge
-          status={connected ? 'success' : 'default'}
-          text={connected ? '已连接' : '未连接'}
-        />
-        {userNick && <Tag icon={<TeamOutlined />} color="blue">{userNick}</Tag>}
+        <Badge status={connected ? 'success' : 'default'} text={connected ? '已连接' : '未连接'} />
+        {userNick && (
+          <Tag icon={<TeamOutlined />} color="blue">
+            {userNick}
+          </Tag>
+        )}
         {onlineCount > 0 && <Tag color="green">在线: {onlineCount} 人</Tag>}
         {reconnectCount > 0 && <Tag color="orange">重连: {reconnectCount} 次</Tag>}
       </Space>
@@ -248,12 +255,7 @@ const WsChatDemo: React.FC = () => {
                   : msg.type === 'system'
                     ? '#f0f0f0'
                     : '#f6f8fa',
-              color:
-                msg.direction === 'sent'
-                  ? '#fff'
-                  : msg.type === 'system'
-                    ? '#666'
-                    : '#333',
+              color: msg.direction === 'sent' ? '#fff' : msg.type === 'system' ? '#666' : '#333',
               alignSelf:
                 msg.direction === 'sent'
                   ? 'flex-end'
@@ -417,9 +419,9 @@ const WebSocketDemoPage: React.FC = () => {
     <div>
       <Title level={2}>{WsDemoExamples.title}</Title>
       <Paragraph>
-        WebSocket 是 HTML5 引入的<strong>全双工通信协议</strong>，在单个 TCP 连接上提供双向实时通信能力。
-        本页面通过与后端的实时聊天演示，直观展示 WebSocket 的<strong>全双工特性</strong>：
-        客户端和服务端可随时主动发送消息。
+        WebSocket 是 HTML5 引入的<strong>全双工通信协议</strong>，在单个 TCP
+        连接上提供双向实时通信能力。 本页面通过与后端的实时聊天演示，直观展示 WebSocket 的
+        <strong>全双工特性</strong>： 客户端和服务端可随时主动发送消息。
       </Paragraph>
 
       {/* 一、现象描述 */}

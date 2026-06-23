@@ -157,18 +157,13 @@ const OnePixel: React.FC = () => {
       </Card>
 
       {/* 工程选型建议 */}
-      <Card
-        title="🛠️ 工程选型建议"
-        style={{ marginBottom: 32, borderLeft: '4px solid #eb2f96' }}
-      >
+      <Card title="🛠️ 工程选型建议" style={{ marginBottom: 32, borderLeft: '4px solid #eb2f96' }}>
         <CodeDiff code={OnePixelMeta.recommendation} type="info" title="工程选型建议" />
       </Card>
 
       {/* 面试高频问题 */}
       <Card title="🎓 面试高频问题" style={{ borderLeft: '4px solid #2f54eb' }}>
-        <Paragraph style={{ whiteSpace: 'pre-line' }}>
-          {OnePixelMeta.interviewQA}
-        </Paragraph>
+        <Paragraph style={{ whiteSpace: 'pre-line' }}>{OnePixelMeta.interviewQA}</Paragraph>
       </Card>
     </div>
   );

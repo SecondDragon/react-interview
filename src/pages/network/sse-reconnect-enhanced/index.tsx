@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, Typography, Alert, Tag, Button, Space, Badge, Divider, Radio, Input } from 'antd';
-import { PlayCircleOutlined, ReloadOutlined, DisconnectOutlined, InfoCircleOutlined, FireOutlined, ThunderboltOutlined, DatabaseOutlined, ApartmentOutlined } from '@ant-design/icons';
+import {
+  PlayCircleOutlined,
+  ReloadOutlined,
+  DisconnectOutlined,
+  InfoCircleOutlined,
+  FireOutlined,
+  ThunderboltOutlined,
+  DatabaseOutlined,
+  ApartmentOutlined,
+} from '@ant-design/icons';
 import CodeBlock from '@/components/CodeBlock';
 import { SSEReconnectEnhancedExamples } from './Examples';
 
@@ -141,7 +150,7 @@ class EnhancedEventSource {
   }
 
   _emit(event: string, data?: any) {
-    this.listeners.get(event)?.forEach(h => h(data));
+    this.listeners.get(event)?.forEach((h) => h(data));
   }
 
   close() {
@@ -178,71 +187,77 @@ const EnhancedReconnectDemo: React.FC = () => {
     { label: 'Kafka', value: 'kafka', icon: <ApartmentOutlined /> },
   ];
 
-  const connect = useCallback((withReconnect = false, useManualId = false) => {
-    sourceRef.current?.close();
+  const connect = useCallback(
+    (withReconnect = false, useManualId = false) => {
+      sourceRef.current?.close();
 
-    const streamId = `enhanced-${endpoint}`;
-    const effectiveLastId = useManualId && manualLastId ? manualLastId : (withReconnect ? lastEventId : null);
+      const streamId = `enhanced-${endpoint}`;
+      const effectiveLastId =
+        useManualId && manualLastId ? manualLastId : withReconnect ? lastEventId : null;
 
-    let url = `${BASE_URL}/sse/${endpoint}?streamId=${streamId}`;
-    if (effectiveLastId) {
-      url += `&lastEventId=${encodeURIComponent(effectiveLastId)}`;
-    }
+      let url = `${BASE_URL}/sse/${endpoint}?streamId=${streamId}`;
+      if (effectiveLastId) {
+        url += `&lastEventId=${encodeURIComponent(effectiveLastId)}`;
+      }
 
-    const source = new EnhancedEventSource(url, {
-      maxRetries: 5,
-      baseDelay: 1000,
-      heartbeatInterval: 15000,
-    });
-    sourceRef.current = source;
-
-    if (withReconnect || useManualId) {
-      setRetryCount(c => c + 1);
-    }
-
-    setState('connecting');
-
-    source
-      .on('open', () => {
-        setState('open');
-        setRetryCount(0);
-      })
-      .on('message', (e: MessageEvent) => {
-        try {
-          const data = JSON.parse(e.data);
-          if (data.type === 'final') {
-            setState('closed');
-            source.close();
-          } else {
-            const msg: MessageItem = {
-              id: e.lastEventId || '',
-              content: `[${data.table}] ${data.content}`,
-              isHistory: effectiveLastId ? true : false,
-            };
-            setMessages(prev => [...prev, msg]);
-            if (e.lastEventId) {
-              setLastEventId(e.lastEventId);
-            }
-          }
-        } catch { /* ignore */ }
-      })
-      .on('reconnecting', (info: any) => {
-        setState('reconnecting');
-        setRetryCount(info.attempt);
-      })
-      .on('heartbeatTimeout', () => {
-        setHeartbeatStatus('超时！触发重连');
-        setTimeout(() => setHeartbeatStatus('正常'), 2000);
-      })
-      .on('visibilityChange', (v: string) => {
-        setIsHidden(v === 'hidden');
-      })
-      .on('fatal', (err: Error) => {
-        setState('closed');
+      const source = new EnhancedEventSource(url, {
+        maxRetries: 5,
+        baseDelay: 1000,
+        heartbeatInterval: 15000,
       });
+      sourceRef.current = source;
 
-    source.connect();
-  }, [endpoint, lastEventId, manualLastId]);
+      if (withReconnect || useManualId) {
+        setRetryCount((c) => c + 1);
+      }
+
+      setState('connecting');
+
+      source
+        .on('open', () => {
+          setState('open');
+          setRetryCount(0);
+        })
+        .on('message', (e: MessageEvent) => {
+          try {
+            const data = JSON.parse(e.data);
+            if (data.type === 'final') {
+              setState('closed');
+              source.close();
+            } else {
+              const msg: MessageItem = {
+                id: e.lastEventId || '',
+                content: `[${data.table}] ${data.content}`,
+                isHistory: effectiveLastId ? true : false,
+              };
+              setMessages((prev) => [...prev, msg]);
+              if (e.lastEventId) {
+                setLastEventId(e.lastEventId);
+              }
+            }
+          } catch {
+            /* ignore */
+          }
+        })
+        .on('reconnecting', (info: any) => {
+          setState('reconnecting');
+          setRetryCount(info.attempt);
+        })
+        .on('heartbeatTimeout', () => {
+          setHeartbeatStatus('超时！触发重连');
+          setTimeout(() => setHeartbeatStatus('正常'), 2000);
+        })
+        .on('visibilityChange', (v: string) => {
+          setIsHidden(v === 'hidden');
+        })
+        .on('fatal', (err: Error) => {
+          setState('closed');
+        });
+
+      source.connect();
+    },
+    [endpoint, lastEventId, manualLastId]
+  );
 
   const disconnect = useCallback(() => {
     sourceRef.current?.close();
@@ -268,7 +283,12 @@ const EnhancedReconnectDemo: React.FC = () => {
     setManualLastId('');
   }, []);
 
-  useEffect(() => () => { sourceRef.current?.close() }, []);
+  useEffect(
+    () => () => {
+      sourceRef.current?.close();
+    },
+    []
+  );
 
   const stateConfig: Record<string, { color: string; text: string }> = {
     closed: { color: 'default', text: '已关闭' },
@@ -285,7 +305,14 @@ const EnhancedReconnectDemo: React.FC = () => {
         <div>
           <Text strong>选择后端方案：</Text>
           <Radio.Group
-            options={endpointOptions.map(o => ({ label: <span>{o.icon} {o.label}</span>, value: o.value }))}
+            options={endpointOptions.map((o) => ({
+              label: (
+                <span>
+                  {o.icon} {o.label}
+                </span>
+              ),
+              value: o.value,
+            }))}
             value={endpoint}
             onChange={(e) => {
               setEndpoint(e.target.value);
@@ -298,13 +325,28 @@ const EnhancedReconnectDemo: React.FC = () => {
         </div>
 
         <Space>
-          <Button type="primary" icon={<PlayCircleOutlined />} onClick={() => connect(false, false)} disabled={state === 'connecting' || state === 'open'}>
+          <Button
+            type="primary"
+            icon={<PlayCircleOutlined />}
+            onClick={() => connect(false, false)}
+            disabled={state === 'connecting' || state === 'open'}
+          >
             连接 SSE
           </Button>
-          <Button danger icon={<DisconnectOutlined />} onClick={disconnect} disabled={state === 'closed'}>
+          <Button
+            danger
+            icon={<DisconnectOutlined />}
+            onClick={disconnect}
+            disabled={state === 'closed'}
+          >
             断开
           </Button>
-          <Button icon={<ReloadOutlined />} onClick={reconnect} disabled={state !== 'closed' || !lastEventId} type="dashed">
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={reconnect}
+            disabled={state !== 'closed' || !lastEventId}
+            type="dashed"
+          >
             断点续传
           </Button>
           <Button onClick={reset}>重置</Button>
@@ -315,12 +357,8 @@ const EnhancedReconnectDemo: React.FC = () => {
           <Tag>{messages.length} 条消息</Tag>
           {lastEventId && <Tag color="blue">Last-ID: {lastEventId.slice(-12)}</Tag>}
           {retryCount > 0 && <Tag color="orange">重连: {retryCount}</Tag>}
-          <Tag color={isHidden ? 'orange' : 'green'}>
-            页面{isHidden ? '隐藏' : '可见'}
-          </Tag>
-          <Tag color={heartbeatStatus === '正常' ? 'green' : 'red'}>
-            心跳: {heartbeatStatus}
-          </Tag>
+          <Tag color={isHidden ? 'orange' : 'green'}>页面{isHidden ? '隐藏' : '可见'}</Tag>
+          <Tag color={heartbeatStatus === '正常' ? 'green' : 'red'}>心跳: {heartbeatStatus}</Tag>
         </Space>
 
         <Space>
@@ -331,7 +369,12 @@ const EnhancedReconnectDemo: React.FC = () => {
             style={{ width: 220 }}
             disabled={state === 'connecting' || state === 'open'}
           />
-          <Button onClick={reconnectWithManualId} disabled={state !== 'closed' || !manualLastId} type="primary" ghost>
+          <Button
+            onClick={reconnectWithManualId}
+            disabled={state !== 'closed' || !manualLastId}
+            type="primary"
+            ghost
+          >
             按手动ID续传
           </Button>
         </Space>
@@ -358,9 +401,7 @@ const EnhancedReconnectDemo: React.FC = () => {
             </div>
           ))}
           {(state === 'open' || state === 'connecting') && (
-            <div style={{ color: '#fbbf24', padding: '2px 0' }}>
-              ▌ 接收中...
-            </div>
+            <div style={{ color: '#fbbf24', padding: '2px 0' }}>▌ 接收中...</div>
           )}
         </div>
       </Card>
@@ -375,13 +416,15 @@ const SSEReconnectEnhancedPage: React.FC = () => {
     <div>
       <Title level={2}>{SSEReconnectEnhancedExamples.title}</Title>
       <Paragraph>
-        在原生 <Text code>EventSource</Text> 基础上封装一层，保留自动重连能力的同时，
-        补充<strong>页面生命周期感知、心跳检测、状态机</strong>等生产级功能。
+        在原生 <Text code>EventSource</Text> 基础上封装一层，保留自动重连能力的同时， 补充
+        <strong>页面生命周期感知、心跳检测、状态机</strong>等生产级功能。
       </Paragraph>
 
       {/* 一、是什么 */}
       <Card title="一、是什么" style={{ marginBottom: 24 }}>
-        <Paragraph style={{ whiteSpace: 'pre-line' }}>{SSEReconnectEnhancedExamples.what}</Paragraph>
+        <Paragraph style={{ whiteSpace: 'pre-line' }}>
+          {SSEReconnectEnhancedExamples.what}
+        </Paragraph>
       </Card>
 
       {/* 二、为什么 */}
@@ -395,12 +438,21 @@ const SSEReconnectEnhancedPage: React.FC = () => {
           <Text strong>核心思路：</Text>包装原生 EventSource，添加心跳检测、页面可见性感知、
           最大重试限制，但<strong>让原生自动重连机制继续工作</strong>。
         </Paragraph>
-        <CodeBlock code={SSEReconnectEnhancedExamples.how} title="增强封装实现" type="success" language="typescript" />
+        <CodeBlock
+          code={SSEReconnectEnhancedExamples.how}
+          title="增强封装实现"
+          type="success"
+          language="typescript"
+        />
       </Card>
 
       {/* 四、互动演示 */}
       <Card
-        title={<span>四、互动演示 <Tag color="blue">Live Demo</Tag></span>}
+        title={
+          <span>
+            四、互动演示 <Tag color="blue">Live Demo</Tag>
+          </span>
+        }
         style={{ marginBottom: 24 }}
       >
         <Alert
@@ -414,22 +466,37 @@ const SSEReconnectEnhancedPage: React.FC = () => {
 
       {/* 五、优缺点 */}
       <Card title="五、优缺点" style={{ marginBottom: 24 }}>
-        <Paragraph style={{ whiteSpace: 'pre-line' }}>{SSEReconnectEnhancedExamples.prosCons}</Paragraph>
+        <Paragraph style={{ whiteSpace: 'pre-line' }}>
+          {SSEReconnectEnhancedExamples.prosCons}
+        </Paragraph>
       </Card>
 
       {/* 六、适用场景 */}
       <Card title="六、适用场景" style={{ marginBottom: 24 }}>
-        <Paragraph style={{ whiteSpace: 'pre-line' }}>{SSEReconnectEnhancedExamples.whenToUse}</Paragraph>
+        <Paragraph style={{ whiteSpace: 'pre-line' }}>
+          {SSEReconnectEnhancedExamples.whenToUse}
+        </Paragraph>
       </Card>
 
       {/* 七、注意事项 */}
       <Card title="七、注意事项" style={{ background: '#fffbe6', marginBottom: 24 }}>
-        <Paragraph style={{ whiteSpace: 'pre-line' }}>{SSEReconnectEnhancedExamples.caveats}</Paragraph>
+        <Paragraph style={{ whiteSpace: 'pre-line' }}>
+          {SSEReconnectEnhancedExamples.caveats}
+        </Paragraph>
       </Card>
 
       {/* 八、状态机 */}
       <Card title="八、状态机流转" style={{ background: '#f0f5ff' }}>
-        <pre style={{ background: '#1e1e1e', color: '#d4d4d4', padding: 16, borderRadius: 6, fontSize: 13, lineHeight: 1.6 }}>
+        <pre
+          style={{
+            background: '#1e1e1e',
+            color: '#d4d4d4',
+            padding: 16,
+            borderRadius: 6,
+            fontSize: 13,
+            lineHeight: 1.6,
+          }}
+        >
           {SSEReconnectEnhancedExamples.stateMachine}
         </pre>
       </Card>

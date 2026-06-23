@@ -6,7 +6,7 @@
  */
 
 export const WsDemoExamples = {
-  title: "WebSocket 全双工通信：实时聊天室 + 服务端主动推送",
+  title: 'WebSocket 全双工通信：实时聊天室 + 服务端主动推送',
 
   /** 一、现象描述 */
   phenomenon: `传统的 HTTP 请求-响应模型是"一问一答"：

@@ -106,7 +106,7 @@ const ComplexChart: React.FC = () => {
         borderRadius: '8px',
         marginTop: '20px',
         padding: '20px',
-        background: '#fff'
+        background: '#fff',
       }}
     />
   );

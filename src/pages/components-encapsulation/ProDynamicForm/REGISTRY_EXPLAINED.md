@@ -14,13 +14,17 @@
 // 早期写死的渲染引擎
 const renderComponent = (type: string, props: any) => {
   switch (type) {
-    case 'Input': return <Input {...props} />;
-    case 'Select': return <Select {...props} />;
-    case 'DatePicker': return <DatePicker {...props} />;
+    case 'Input':
+      return <Input {...props} />;
+    case 'Select':
+      return <Select {...props} />;
+    case 'DatePicker':
+      return <DatePicker {...props} />;
     // 如果业务线突然说：“我们需要一个富文本编辑器！”
     // 你就必须打开这个底层核心文件，加一行：
     // case 'RichText': return <RichTextEditor {...props} />;
-    default: return null;
+    default:
+      return null;
   }
 };
 ```
@@ -44,8 +48,9 @@ export const widgetRegistry: Record<string, React.FC<any>> = {};
 ```
 
 **此时内存中的数据结构：**
+
 ```javascript
-widgetRegistry = {} // 空空如也
+widgetRegistry = {}; // 空空如也
 ```
 
 ---
@@ -68,14 +73,24 @@ widgetRegistry['TextArea'] = Input.TextArea;
 ```
 
 **此时内存中的数据结构发生了改变：**
+
 ```javascript
 widgetRegistry = {
-  "Input": function Input(props) { /* antd 源码 */ },
-  "Select": function Select(props) { /* antd 源码 */ },
-  "DatePicker": function DatePicker(props) { /* antd 源码 */ },
-  "TextArea": function TextArea(props) { /* antd 源码 */ }
-}
+  Input: function Input(props) {
+    /* antd 源码 */
+  },
+  Select: function Select(props) {
+    /* antd 源码 */
+  },
+  DatePicker: function DatePicker(props) {
+    /* antd 源码 */
+  },
+  TextArea: function TextArea(props) {
+    /* antd 源码 */
+  },
+};
 ```
+
 > **注意看：** 这个对象里存储的是真实的**函数引用（React 组件本质上就是函数）**，而不是字符串。
 
 ---
@@ -87,12 +102,12 @@ widgetRegistry = {
 ```json
 [
   {
-    "widget": "Input",    // 注意这里：只是一个普普通通的字符串！
+    "widget": "Input", // 注意这里：只是一个普普通通的字符串！
     "name": "username",
     "label": "用户名"
   },
   {
-    "widget": "Select",   // 这也是一个字符串
+    "widget": "Select", // 这也是一个字符串
     "name": "userType",
     "label": "用户类型"
   }
@@ -113,11 +128,11 @@ widgetRegistry = {
 // 引擎内部的渲染逻辑
 const FormItemRender = ({ item }) => {
   // item 的值是: { widget: "Input", name: "username", label: "用户名" }
-  
+
   // 【最核心的一行代码】：去户口本里查人！
   // 我们拿着字符串 "Input"，去 widgetRegistry 对象里找对应的函数
-  const Widget = widgetRegistry[item.widget]; 
-  
+  const Widget = widgetRegistry[item.widget];
+
   // 执行到这里时：
   // item.widget 的值是字符串 "Input"
   // widgetRegistry["Input"] 获取到了内存中 Antd 的真实 Input 组件函数
@@ -131,13 +146,14 @@ const FormItemRender = ({ item }) => {
   // 如果找到了，就像普通组件一样把它渲染出来，并把属性传给它
   return (
     <Form.Item name={item.name} label={item.label}>
-      <Widget {...item.props} />  {/* 此时这行代码相当于 <Input /> */}
+      <Widget {...item.props} /> {/* 此时这行代码相当于 <Input /> */}
     </Form.Item>
   );
 };
 ```
 
 ### 让我们再慢动作回放一下数据流：
+
 1. **JSON 数据** 传入：`item.widget = "Select"` (类型：String)
 2. **查表操作**：执行 `widgetRegistry["Select"]`
 3. **查表结果**：从内存对象中提取到了真正的 `<Select />` React 组件 (类型：Function)
@@ -165,10 +181,10 @@ widgetRegistry['MapPicker'] = MapPicker;
 // 2. 后端直接下发字符串 "MapPicker"
 const schema = [
   {
-    widget: "MapPicker", // 引擎遇到这个字符串，去字典里一查，发现刚才已经登记过了！
-    name: "address",
-    label: "公司地址"
-  }
+    widget: 'MapPicker', // 引擎遇到这个字符串，去字典里一查，发现刚才已经登记过了！
+    name: 'address',
+    label: '公司地址',
+  },
 ];
 
 const MyBusinessPage = () => {

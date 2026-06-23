@@ -1,6 +1,6 @@
 import React from 'react';
-import {Result, Button} from 'antd';
-import {useNavigate} from 'react-router-dom';
+import { Result, Button } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
 const Forbidden: React.FC = () => {
   const navigate = useNavigate();
@@ -9,7 +9,11 @@ const Forbidden: React.FC = () => {
       status="403"
       title="403"
       subTitle="对不起，您没有权限访问此页面。"
-      extra={<Button type="primary" onClick={() => navigate('/dashboard/overview')}>返回首页</Button>}
+      extra={
+        <Button type="primary" onClick={() => navigate('/dashboard/overview')}>
+          返回首页
+        </Button>
+      }
     />
   );
 };

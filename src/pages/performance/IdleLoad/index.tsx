@@ -67,7 +67,8 @@ const IdleLoadPage: React.FC = () => {
                   </p>
                   <p>
                     <b>方案二（TransitionIdleLoad）：</b>基于 React 18 <code>useTransition</code>，
-                    利用 React 内部 Scheduler 调度。可被用户交互中断，提供 <code>isPending</code> 过渡状态反馈。
+                    利用 React 内部 Scheduler 调度。可被用户交互中断，提供 <code>isPending</code>{' '}
+                    过渡状态反馈。
                   </p>
                 </div>
               }
@@ -81,19 +82,17 @@ const IdleLoadPage: React.FC = () => {
             </Paragraph>
             <ul>
               <li>
-                <Text strong>数据可视化大屏</Text>：首屏只需展示核心 KPI 卡片，
-                下方的 ECharts / D3 复杂图表可在用户浏览完关键数据后再闲时渲染，
-                避免图表初始化阻塞页面滚动和点击。
+                <Text strong>数据可视化大屏</Text>：首屏只需展示核心 KPI 卡片， 下方的 ECharts / D3
+                复杂图表可在用户浏览完关键数据后再闲时渲染， 避免图表初始化阻塞页面滚动和点击。
               </li>
               <li>
-                <Text strong>后台管理系统的富文本编辑器</Text>：Monaco Editor、
-                CodeMirror 等编辑器体积大、初始化慢。用户进入页面时通常先浏览列表，
+                <Text strong>后台管理系统的富文本编辑器</Text>：Monaco Editor、 CodeMirror
+                等编辑器体积大、初始化慢。用户进入页面时通常先浏览列表，
                 点击编辑按钮后才需要编辑器，完全可以用闲时加载预初始化。
               </li>
               <li>
-                <Text strong>长页面的非首屏模块</Text>：如商品详情页的评论区域、
-                推荐商品列表、FAQ 折叠面板等，用户需要滚动才能看到，
-                没必要在页面加载时就抢占主线程资源。
+                <Text strong>长页面的非首屏模块</Text>：如商品详情页的评论区域、 推荐商品列表、FAQ
+                折叠面板等，用户需要滚动才能看到， 没必要在页面加载时就抢占主线程资源。
               </li>
               <li>
                 <Text strong>日志埋点与数据上报</Text>：非实时的用户行为数据，
@@ -167,7 +166,9 @@ const IdleLoadPage: React.FC = () => {
         <Col span={24}>
           <Divider>
             <Tag color="blue">方案一</Tag>
-            <Text strong style={{ marginLeft: 8 }}>requestIdleCallback（SmartIdleLoad）</Text>
+            <Text strong style={{ marginLeft: 8 }}>
+              requestIdleCallback（SmartIdleLoad）
+            </Text>
           </Divider>
         </Col>
 
@@ -252,7 +253,9 @@ const IdleLoadPage: React.FC = () => {
         <Col span={24}>
           <Divider>
             <Tag color="purple">方案二</Tag>
-            <Text strong style={{ marginLeft: 8 }}>React 18 useTransition（TransitionIdleLoad）</Text>
+            <Text strong style={{ marginLeft: 8 }}>
+              React 18 useTransition（TransitionIdleLoad）
+            </Text>
           </Divider>
         </Col>
 
@@ -273,13 +276,13 @@ const IdleLoadPage: React.FC = () => {
         <Col span={24}>
           <Card title="二、Bug 出现的底层原因" bordered={false}>
             <Paragraph>
-              React 18 之前使用 Stack Reconciler，渲染过程是同步且不可中断的。
-              一旦开始渲染，React 会一口气把所有组件更新完才交还控制权给浏览器。
+              React 18 之前使用 Stack Reconciler，渲染过程是同步且不可中断的。 一旦开始渲染，React
+              会一口气把所有组件更新完才交还控制权给浏览器。
               这意味着：即使浏览器正在处理用户的输入事件，React 也会霸占主线程直到渲染结束。
             </Paragraph>
             <Paragraph>
-              React 18 引入了 Fiber 架构和并发模式（Concurrent Mode），
-              配合 <code>useTransition</code> Hook，可以将某些更新标记为过渡更新（Transition Update）。
+              React 18 引入了 Fiber 架构和并发模式（Concurrent Mode）， 配合{' '}
+              <code>useTransition</code> Hook，可以将某些更新标记为过渡更新（Transition Update）。
               这类更新被 React Scheduler 视为低优先级，可以被更高优先级的任务（如用户输入）中断。
             </Paragraph>
           </Card>
@@ -301,8 +304,8 @@ const IdleLoadPage: React.FC = () => {
         <Col span={24}>
           <Card title="四、为什么要这样解决 & 互动演示">
             <Paragraph>
-              <code>useTransition</code> 将组件挂载标记为低优先级过渡更新。
-              React Scheduler 会在处理完所有紧急更新后执行它，且期间如有用户交互可立即中断当前渲染。
+              <code>useTransition</code> 将组件挂载标记为低优先级过渡更新。 React Scheduler
+              会在处理完所有紧急更新后执行它，且期间如有用户交互可立即中断当前渲染。
               下方的图表会以过渡方式挂载，过程中会显示 <code>isPending</code> 状态指示器。
             </Paragraph>
             <Alert

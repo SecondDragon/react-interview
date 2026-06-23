@@ -91,7 +91,7 @@ const HoverPreloadPage: React.FC = () => {
      */
     Promise.all([
       HeavyEditorLoader(), // 加载壳组件 (20KB)
-      loader.init()       // 手动触发 Monaco 核心库下载 (几MB)
+      loader.init(), // 手动触发 Monaco 核心库下载 (几MB)
     ]).then(() => {
       addLog('【场景 B】深度预加载完成！壳组件与 Monaco 核心库均已就绪。');
     });
@@ -114,15 +114,22 @@ const HoverPreloadPage: React.FC = () => {
           <Card title="优化核心：按需加载与提前预判" bordered={false}>
             <Paragraph>
               重型业务组件（如大型图表库、富文本编辑器）如果直接放入主包，会导致首屏下载时间剧增。
-              <Text strong>Hover 预加载</Text> 既保证了组件在不被查看时不加载，又能在用户即将点击的那几百毫秒内“偷跑”加载。
+              <Text strong>Hover 预加载</Text>{' '}
+              既保证了组件在不被查看时不加载，又能在用户即将点击的那几百毫秒内“偷跑”加载。
             </Paragraph>
             <Alert
               message="为什么需要 Hover 预加载？"
               description={
                 <ul>
-                  <li><Text strong>避免浪费：</Text> 用户如果不点开，JS 资源永远不会被下载。</li>
-                  <li><Text strong>无感体验：</Text> 抵消掉动态 import() 的网络开销，实现秒开。</li>
-                  <li><Text strong>减少主包体积：</Text> 将重型库彻底从主包剥离。</li>
+                  <li>
+                    <Text strong>避免浪费：</Text> 用户如果不点开，JS 资源永远不会被下载。
+                  </li>
+                  <li>
+                    <Text strong>无感体验：</Text> 抵消掉动态 import() 的网络开销，实现秒开。
+                  </li>
+                  <li>
+                    <Text strong>减少主包体积：</Text> 将重型库彻底从主包剥离。
+                  </li>
                 </ul>
               }
               type="info"
@@ -133,7 +140,14 @@ const HoverPreloadPage: React.FC = () => {
 
         {/* 场景 A */}
         <Col span={12}>
-          <Card title="场景 A：业务报表图表" extra={<Tag color={chartPreloaded ? "green" : "default"}>{chartPreloaded ? "已预加载" : "未加载"}</Tag>}>
+          <Card
+            title="场景 A：业务报表图表"
+            extra={
+              <Tag color={chartPreloaded ? 'green' : 'default'}>
+                {chartPreloaded ? '已预加载' : '未加载'}
+              </Tag>
+            }
+          >
             <Space direction="vertical" style={{ width: '100%' }}>
               <Button
                 type="primary"
@@ -143,13 +157,28 @@ const HoverPreloadPage: React.FC = () => {
               >
                 点击查看业务详情报表
               </Button>
-              <div style={{ height: '350px', border: '1px dashed #d9d9d9', borderRadius: '8px', padding: '10px' }}>
+              <div
+                style={{
+                  height: '350px',
+                  border: '1px dashed #d9d9d9',
+                  borderRadius: '8px',
+                  padding: '10px',
+                }}
+              >
                 {showChart ? (
-                  <Suspense fallback={<div style={{ textAlign: 'center', marginTop: '100px' }}><Spin tip="如果预判成功，你看不到我" /></div>}>
+                  <Suspense
+                    fallback={
+                      <div style={{ textAlign: 'center', marginTop: '100px' }}>
+                        <Spin tip="如果预判成功，你看不到我" />
+                      </div>
+                    }
+                  >
                     <HeavyChart />
                   </Suspense>
                 ) : (
-                  <div style={{ textAlign: 'center', color: '#bfbfbf', marginTop: '150px' }}>鼠标悬停在上方按钮开始预加载，点击展示图表</div>
+                  <div style={{ textAlign: 'center', color: '#bfbfbf', marginTop: '150px' }}>
+                    鼠标悬停在上方按钮开始预加载，点击展示图表
+                  </div>
                 )}
               </div>
             </Space>
@@ -158,7 +187,14 @@ const HoverPreloadPage: React.FC = () => {
 
         {/* 场景 B */}
         <Col span={12}>
-          <Card title="场景 B：配置编辑器弹窗" extra={<Tag color={editorPreloaded ? "blue" : "default"}>{editorPreloaded ? "已预判" : "待命中"}</Tag>}>
+          <Card
+            title="场景 B：配置编辑器弹窗"
+            extra={
+              <Tag color={editorPreloaded ? 'blue' : 'default'}>
+                {editorPreloaded ? '已预判' : '待命中'}
+              </Tag>
+            }
+          >
             <Space direction="vertical" style={{ width: '100%' }}>
               <Button
                 type="primary"
@@ -171,7 +207,13 @@ const HoverPreloadPage: React.FC = () => {
                     maskClosable: true,
                     width: 800,
                     content: (
-                      <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin tip="加载编辑器主逻辑中..." /></div>}>
+                      <Suspense
+                        fallback={
+                          <div style={{ textAlign: 'center', padding: '50px' }}>
+                            <Spin tip="加载编辑器主逻辑中..." />
+                          </div>
+                        }
+                      >
                         <HeavyEditor />
                       </Suspense>
                     ),
@@ -180,9 +222,23 @@ const HoverPreloadPage: React.FC = () => {
               >
                 进入高级业务配置 (Modal)
               </Button>
-              <div style={{ height: '350px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: '#fafafa', borderRadius: '8px' }}>
+              <div
+                style={{
+                  height: '350px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  background: '#fafafa',
+                  borderRadius: '8px',
+                }}
+              >
                 <Paragraph type="secondary">点击后弹出的内容包含了 2MB+ 的业务编辑器资源</Paragraph>
-                {editorPreloaded && <Tag color="success" icon={<CheckCircleOutlined />}>后台已异步完成加载</Tag>}
+                {editorPreloaded && (
+                  <Tag color="success" icon={<CheckCircleOutlined />}>
+                    后台已异步完成加载
+                  </Tag>
+                )}
               </div>
             </Space>
           </Card>
@@ -190,32 +246,55 @@ const HoverPreloadPage: React.FC = () => {
 
         <Col span={24}>
           <Card title="网络与性能监控模拟">
-            <div style={{ background: '#001529', padding: '15px', borderRadius: '4px', color: '#fff', minHeight: '120px' }}>
-              {logs.length === 0 && <div style={{ color: '#555' }}>等待用户交互 (移动鼠标到上方按钮看看)...</div>}
+            <div
+              style={{
+                background: '#001529',
+                padding: '15px',
+                borderRadius: '4px',
+                color: '#fff',
+                minHeight: '120px',
+              }}
+            >
+              {logs.length === 0 && (
+                <div style={{ color: '#555' }}>等待用户交互 (移动鼠标到上方按钮看看)...</div>
+              )}
               {logs.map((log, index) => (
-                <div key={index} style={{ fontFamily: 'monospace', fontSize: '12px', marginBottom: '4px' }}>
-                  <Text style={{ color: log.includes('缓存') || log.includes('就绪') ? '#52c41a' : '#1677ff' }}>{log}</Text>
+                <div
+                  key={index}
+                  style={{ fontFamily: 'monospace', fontSize: '12px', marginBottom: '4px' }}
+                >
+                  <Text
+                    style={{
+                      color: log.includes('缓存') || log.includes('就绪') ? '#52c41a' : '#1677ff',
+                    }}
+                  >
+                    {log}
+                  </Text>
                 </div>
               ))}
             </div>
-            <Button size="small" style={{ marginTop: '10px' }} onClick={reset}>重置演示</Button>
+            <Button size="small" style={{ marginTop: '10px' }} onClick={reset}>
+              重置演示
+            </Button>
           </Card>
         </Col>
 
         <Col span={24}>
           <Card title="代码示例 (规范写法)">
-            <Tabs items={[
-              {
-                key: '1',
-                label: '场景 A：图表预加载实现',
-                children: <CodeBlock code={HoverPreloadExamples.chartOptimized} language="tsx" />
-              },
-              {
-                key: '2',
-                label: '场景 B：弹窗编辑器实现',
-                children: <CodeBlock code={HoverPreloadExamples.modalOptimized} language="tsx" />
-              }
-            ]} />
+            <Tabs
+              items={[
+                {
+                  key: '1',
+                  label: '场景 A：图表预加载实现',
+                  children: <CodeBlock code={HoverPreloadExamples.chartOptimized} language="tsx" />,
+                },
+                {
+                  key: '2',
+                  label: '场景 B：弹窗编辑器实现',
+                  children: <CodeBlock code={HoverPreloadExamples.modalOptimized} language="tsx" />,
+                },
+              ]}
+            />
           </Card>
         </Col>
       </Row>

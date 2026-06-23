@@ -11,7 +11,7 @@ const HeavyComponent: React.FC = () => {
   const mockData = Array.from({ length: 1000 }).map((_, i) => ({
     id: i,
     title: `重型组件内部数据项目 #${i + 1}`,
-    status: Math.random() > 0.5 ? 'active' : 'idle'
+    status: Math.random() > 0.5 ? 'active' : 'idle',
   }));
 
   return (
@@ -20,9 +20,10 @@ const HeavyComponent: React.FC = () => {
         <List
           size="small"
           dataSource={mockData}
-          renderItem={item => (
+          renderItem={(item) => (
             <List.Item>
-              {item.title} - <Tag color={item.status === 'active' ? 'blue' : 'default'}>{item.status}</Tag>
+              {item.title} -{' '}
+              <Tag color={item.status === 'active' ? 'blue' : 'default'}>{item.status}</Tag>
             </List.Item>
           )}
         />

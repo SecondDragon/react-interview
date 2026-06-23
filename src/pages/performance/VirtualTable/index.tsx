@@ -1,16 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import {
-  Card,
-  Typography,
-  Checkbox,
-  Tag,
-  Spin,
-  Alert,
-  Row,
-  Col,
-  Tabs,
-  Empty,
-} from 'antd';
+import { Card, Typography, Checkbox, Tag, Spin, Alert, Row, Col, Tabs, Empty } from 'antd';
 import {
   useReactTable,
   getCoreRowModel,

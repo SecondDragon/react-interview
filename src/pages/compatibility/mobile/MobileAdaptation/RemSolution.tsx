@@ -32,7 +32,9 @@ const RemDemo = () => {
         <div>
           <Text strong>设计稿宽度：</Text>
           <Tag color="blue">{designWidth}px</Tag>
-          <Text strong style={{ marginLeft: 16 }}>1rem 基准：</Text>
+          <Text strong style={{ marginLeft: 16 }}>
+            1rem 基准：
+          </Text>
           <Tag color="blue">{remBase}px</Tag>
         </div>
 
@@ -65,20 +67,28 @@ const RemDemo = () => {
             <div>
               <div>
                 <Text strong>根字体：</Text>
-                <Text code>html {'{'} font-size: {rootFontSize}px; {'}'}</Text>
+                <Text code>
+                  html {'{'} font-size: {rootFontSize}px; {'}'}
+                </Text>
               </div>
               <div style={{ marginTop: 8 }}>
                 <Text strong>设计稿元素：</Text>
-                <Text code>{designPx}px = {remValue.toFixed(3)}rem</Text>
+                <Text code>
+                  {designPx}px = {remValue.toFixed(3)}rem
+                </Text>
               </div>
               <div style={{ marginTop: 8 }}>
                 <Text strong>实际渲染：</Text>
-                <Text code>{remValue.toFixed(3)}rem × {rootFontSize}px = {actualPx.toFixed(1)}px</Text>
+                <Text code>
+                  {remValue.toFixed(3)}rem × {rootFontSize}px = {actualPx.toFixed(1)}px
+                </Text>
               </div>
               <div style={{ marginTop: 8 }}>
                 <Text strong>占屏幕比例：</Text>
                 <Text code>{((actualPx / deviceWidth) * 100).toFixed(1)}%</Text>
-                <Text type="secondary">（设计意图：{(designPx / designWidth * 100).toFixed(1)}%）</Text>
+                <Text type="secondary">
+                  （设计意图：{((designPx / designWidth) * 100).toFixed(1)}%）
+                </Text>
               </div>
             </div>
           }

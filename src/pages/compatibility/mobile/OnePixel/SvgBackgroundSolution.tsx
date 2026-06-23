@@ -23,7 +23,7 @@ const SvgBackgroundDemo = () => {
       return `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='0%25'%3E%3Cstop offset='0%25' stop-color='%231890ff'/%3E%3Cstop offset='100%25' stop-color='%2352c41a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='none' stroke='url(%23g)' stroke-width='1' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E")`;
     }
 
-    return `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='none' stroke='${colors[type]}' stroke-width='1' ${type === 'dashed' ? 'stroke-dasharray=\'4 4\'' : ''} vector-effect='non-scaling-stroke'/%3E%3C/svg%3E")`;
+    return `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='none' stroke='${colors[type]}' stroke-width='1' ${type === 'dashed' ? "stroke-dasharray='4 4'" : ''} vector-effect='non-scaling-stroke'/%3E%3C/svg%3E")`;
   };
 
   const borderTypeOptions = [

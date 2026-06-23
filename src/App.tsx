@@ -22,13 +22,7 @@ const renderFlattenRoutes = (routes: RouteConfig[]): React.ReactNode[] => {
         ? route.path.substring('/dashboard/'.length)
         : route.path;
 
-      result.push(
-        <Route
-          key={route.path}
-          path={relativePath}
-          element={route.element}
-        />
-      );
+      result.push(<Route key={route.path} path={relativePath} element={route.element} />);
     }
     if (route.children) result.push(...renderFlattenRoutes(route.children));
   });

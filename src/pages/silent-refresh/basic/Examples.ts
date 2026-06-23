@@ -2,7 +2,7 @@
  * Promise 链替换 - 基础篇案例元数据
  */
 export const BasicExamples = {
-  title: "Promise 链替换：Axios 拦截器中的\"偷天换日\"",
+  title: 'Promise 链替换：Axios 拦截器中的"偷天换日"',
 
   problem: `// ❌ 错误示范：每个调用方自己处理 401
 async function loadUsers() {
@@ -89,7 +89,7 @@ async function getUsers() {
   return res.data
 }`,
 
-  whyTitle: "为什么上层能无感知？",
+  whyTitle: '为什么上层能无感知？',
   why: `Axios 拦截器的错误处理函数如果 return 一个新的 Promise，这个新 Promise 会替代原来失败的 Promise 继续向后传递。上层调用方 await 的是这一整条 Promise 链的最终结果，根本不知道中间经历了 401 → 刷新 → 重试的过程。就像快递中转站发现地址写错了，悄俏帮你修正后再发一次，你只收到"签收成功"的通知。`,
 
   bad_interceptor: `// ❌ 常见错误：忘记 return！

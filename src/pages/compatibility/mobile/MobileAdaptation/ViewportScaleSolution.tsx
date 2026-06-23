@@ -45,7 +45,9 @@ const ViewportScaleDemo = () => {
               </div>
               <div style={{ marginTop: 8 }}>
                 <Text strong>缩放比例：</Text>
-                <Tag color="blue">scale = 1/{dpr} = {scale.toFixed(3)}</Tag>
+                <Tag color="blue">
+                  scale = 1/{dpr} = {scale.toFixed(3)}
+                </Tag>
               </div>
               <div style={{ marginTop: 8 }}>
                 <Text strong>Layout Viewport：</Text>
@@ -69,7 +71,9 @@ const ViewportScaleDemo = () => {
           <div style={{ marginTop: 8, display: 'flex', gap: 24 }}>
             {/* 不缩放 */}
             <div>
-              <Text strong style={{ fontSize: 12 }}>不缩放（默认）</Text>
+              <Text strong style={{ fontSize: 12 }}>
+                不缩放（默认）
+              </Text>
               <div
                 style={{
                   display: 'grid',
@@ -98,7 +102,9 @@ const ViewportScaleDemo = () => {
 
             {/* 缩放后 */}
             <div>
-              <Text strong style={{ fontSize: 12 }}>缩放后（scale = 1/{dpr}）</Text>
+              <Text strong style={{ fontSize: 12 }}>
+                缩放后（scale = 1/{dpr}）
+              </Text>
               <div
                 style={{
                   display: 'grid',

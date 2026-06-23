@@ -43,53 +43,62 @@ const renderComponent = (item: FormSchemaItem) => {
 };
 
 // 使用 memo 避免由于父组件无关更新导致的额外渲染
-const DynamicFormGenerator: React.FC<DynamicFormGeneratorProps> = memo(({ schema, form, onFinish, initialValues }) => {
-  return (
-    <Form form={form} layout="vertical" onFinish={onFinish} initialValues={initialValues}>
-      {schema.map((item) => {
-        // 处理动态联动逻辑
-        if (item.visibleOn) {
+const DynamicFormGenerator: React.FC<DynamicFormGeneratorProps> = memo(
+  ({ schema, form, onFinish, initialValues }) => {
+    return (
+      <Form form={form} layout="vertical" onFinish={onFinish} initialValues={initialValues}>
+        {schema.map((item) => {
+          // 处理动态联动逻辑
+          if (item.visibleOn) {
+            return (
+              <Form.Item
+                noStyle
+                shouldUpdate={(prevValues, currentValues) =>
+                  prevValues[item.visibleOn!.field] !== currentValues[item.visibleOn!.field]
+                }
+                key={item.name}
+              >
+                {({ getFieldValue }) => {
+                  // 如果当前依赖字段的值不等于所要求的值，则不渲染当前 Item
+                  const isVisible = getFieldValue(item.visibleOn!.field) === item.visibleOn!.value;
+                  if (!isVisible) return null;
+
+                  return (
+                    <Form.Item
+                      name={item.name}
+                      label={item.label}
+                      rules={[
+                        {
+                          required: item.required,
+                          message: item.message || `${item.label}是必填项`,
+                        },
+                      ]}
+                    >
+                      {renderComponent(item)}
+                    </Form.Item>
+                  );
+                }}
+              </Form.Item>
+            );
+          }
+
+          // 默认无联动的普通渲染
           return (
             <Form.Item
-              noStyle
-              shouldUpdate={(prevValues, currentValues) =>
-                prevValues[item.visibleOn!.field] !== currentValues[item.visibleOn!.field]
-              }
               key={item.name}
+              name={item.name}
+              label={item.label}
+              rules={[
+                { required: item.required, message: item.message || `${item.label}是必填项` },
+              ]}
             >
-              {({ getFieldValue }) => {
-                // 如果当前依赖字段的值不等于所要求的值，则不渲染当前 Item
-                const isVisible = getFieldValue(item.visibleOn!.field) === item.visibleOn!.value;
-                if (!isVisible) return null;
-                
-                return (
-                  <Form.Item
-                    name={item.name}
-                    label={item.label}
-                    rules={[{ required: item.required, message: item.message || `${item.label}是必填项` }]}
-                  >
-                    {renderComponent(item)}
-                  </Form.Item>
-                );
-              }}
+              {renderComponent(item)}
             </Form.Item>
           );
-        }
-
-        // 默认无联动的普通渲染
-        return (
-          <Form.Item
-            key={item.name}
-            name={item.name}
-            label={item.label}
-            rules={[{ required: item.required, message: item.message || `${item.label}是必填项` }]}
-          >
-            {renderComponent(item)}
-          </Form.Item>
-        );
-      })}
-    </Form>
-  );
-});
+        })}
+      </Form>
+    );
+  }
+);
 
 export default DynamicFormGenerator;

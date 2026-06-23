@@ -1,6 +1,6 @@
 import React from 'react';
-import {Card, Result, Button} from 'antd';
-import {useNavigate} from 'react-router-dom';
+import { Card, Result, Button } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
 const Sub2Page: React.FC = () => {
   const navigate = useNavigate();

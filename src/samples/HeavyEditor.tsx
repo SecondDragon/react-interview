@@ -22,8 +22,8 @@ function optimize(code) {
 optimize("Heavy Code");`;
 
   return (
-    <Card 
-      title="🖋️ 核心业务编辑器 (Monaco Editor)" 
+    <Card
+      title="🖋️ 核心业务编辑器 (Monaco Editor)"
       extra={<Tag color="red">Bundle Size: ~4MB+</Tag>}
       styles={{ body: { padding: 0 } }}
     >
@@ -38,7 +38,11 @@ optimize("Heavy Code");`;
           defaultLanguage="javascript"
           defaultValue={initialValue}
           theme="vs-light"
-          loading={<div style={{ padding: '20px', textAlign: 'center' }}><Spin tip="Monaco 内核正在初始化..." /></div>}
+          loading={
+            <div style={{ padding: '20px', textAlign: 'center' }}>
+              <Spin tip="Monaco 内核正在初始化..." />
+            </div>
+          }
           options={{
             minimap: { enabled: false },
             fontSize: 14,

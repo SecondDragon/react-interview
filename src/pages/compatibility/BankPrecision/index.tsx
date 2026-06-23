@@ -26,7 +26,9 @@ const PrecisionDemo = () => {
         <Divider />
         <div>
           <Text strong>原生 JS 结果 (a + b):</Text> <Text type="danger">{nativeSum}</Text>
-          <div style={{ fontSize: '12px', color: '#888' }}>由于二进制截断，产生了微小的尾数误差。</div>
+          <div style={{ fontSize: '12px', color: '#888' }}>
+            由于二进制截断，产生了微小的尾数误差。
+          </div>
         </div>
         <div style={{ marginTop: '10px' }}>
           <Text strong>Big.js 修复结果:</Text> <Text type="success">{bigSum}</Text>
@@ -48,9 +50,15 @@ const BankPrecision: React.FC = () => {
       {/* 一、 Bug 出现的现象 */}
       <Card title="一、 Bug 出现的现象" style={{ marginBottom: '24px' }}>
         <Paragraph>
-          在处理金额加减乘除时，会出现看似荒谬的结果，如 <Text code>0.1 + 0.2 = 0.30000000000000004</Text>。
+          在处理金额加减乘除时，会出现看似荒谬的结果，如{' '}
+          <Text code>0.1 + 0.2 = 0.30000000000000004</Text>。
         </Paragraph>
-        <Alert message="对账风险" description={BankPrecisionExamples.phenomenon} type="error" showIcon />
+        <Alert
+          message="对账风险"
+          description={BankPrecisionExamples.phenomenon}
+          type="error"
+          showIcon
+        />
       </Card>
 
       {/* 二、 Bug 出现的底层原因 */}
@@ -58,11 +66,10 @@ const BankPrecision: React.FC = () => {
         <Paragraph>
           <Text strong>IEEE 754 浮点数陷阱：</Text>
         </Paragraph>
+        <Paragraph>{BankPrecisionExamples.reason}</Paragraph>
         <Paragraph>
-          {BankPrecisionExamples.reason}
-        </Paragraph>
-        <Paragraph>
-          十进制中的 0.1 在二进制下是 <Text code>0.0001100110011...</Text> 无限循环。计算机在存储时不得不进行四舍五入，这微小的误差在多步运算后会累积成可见的错误。
+          十进制中的 0.1 在二进制下是 <Text code>0.0001100110011...</Text>{' '}
+          无限循环。计算机在存储时不得不进行四舍五入，这微小的误差在多步运算后会累积成可见的错误。
         </Paragraph>
       </Card>
 
@@ -80,11 +87,17 @@ const BankPrecision: React.FC = () => {
 
       {/* 四、 为什么要这样解决 且互动演示 */}
       <Card
-        title={<span>四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag></span>}
+        title={
+          <span>
+            四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag>
+          </span>
+        }
         style={{ marginBottom: '24px' }}
       >
         <Paragraph>
-          在银行和电商项目中，通常推荐将所有金额乘以 100 转化为“分”进行整数计算，最后展示时再还原。或者直接引入成熟的库如 <Text code>big.js</Text>。
+          在银行和电商项目中，通常推荐将所有金额乘以 100
+          转化为“分”进行整数计算，最后展示时再还原。或者直接引入成熟的库如 <Text code>big.js</Text>
+          。
         </Paragraph>
         <Divider />
         <PrecisionDemo />
@@ -95,15 +108,17 @@ const BankPrecision: React.FC = () => {
         <ul>
           <li>
             <Text strong>串行十进制计算：</Text>
-            <Text code>big.js</Text> 内部将数字拆解为数组（如 <Text code>[0, 1]</Text>），模拟人类手工列算式的过程进行逐位计算，完全避开了 CPU 的二进制浮点运算器。
+            <Text code>big.js</Text> 内部将数字拆解为数组（如 <Text code>[0, 1]</Text>
+            ），模拟人类手工列算式的过程进行逐位计算，完全避开了 CPU 的二进制浮点运算器。
           </li>
           <li>
             <Text strong>固定精度截断：</Text>
             由于是手动模拟，库可以精确控制保留的小数位数，确保每一位都在可控范围内，不会产生不可预期的溢出。
           </li>
           <li>
-            <Text strong>整数化避险：</Text>
-            将 <Text code>0.1 + 0.2</Text> 转化为 <Text code>(1 + 2) / 10</Text>，利用了整数运算在计算机中是绝对精确（只要不溢出）的这一物理特性。
+            <Text strong>整数化避险：</Text>将 <Text code>0.1 + 0.2</Text> 转化为{' '}
+            <Text code>(1 + 2) / 10</Text>
+            ，利用了整数运算在计算机中是绝对精确（只要不溢出）的这一物理特性。
           </li>
         </ul>
       </Card>

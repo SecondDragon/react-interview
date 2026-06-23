@@ -45,7 +45,9 @@ const ViewportScaleDemo = () => {
               </div>
               <div style={{ marginTop: 8 }}>
                 <Text strong>缩放比例：</Text>
-                <Tag color="blue">scale = 1/{dpr} = {scale.toFixed(3)}</Tag>
+                <Tag color="blue">
+                  scale = 1/{dpr} = {scale.toFixed(3)}
+                </Tag>
               </div>
               <div style={{ marginTop: 8 }}>
                 <Text strong>Layout Viewport：</Text>

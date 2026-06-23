@@ -233,28 +233,24 @@ const BigJsonParsePage: React.FC = () => {
       } else if (parseMethod === 'chunk') {
         // ✅ 分片解析
         const chunkSize = 500;
-        await parseJSONInChunks(
-          json,
-          chunkSize,
-          (chunk, prog) => {
-            setProgress(prog);
-            // 渐进式更新表格，只显示最新的 100 条
-            setTableData((prev) => {
-              const combined = [...prev];
-              chunk.forEach((item: any) => {
-                combined.push({
-                  key: item.id,
-                  id: item.id,
-                  name: item.name,
-                  type: item.type,
-                  status: item.status,
-                  amount: item.amount,
-                });
+        await parseJSONInChunks(json, chunkSize, (chunk, prog) => {
+          setProgress(prog);
+          // 渐进式更新表格，只显示最新的 100 条
+          setTableData((prev) => {
+            const combined = [...prev];
+            chunk.forEach((item: any) => {
+              combined.push({
+                key: item.id,
+                id: item.id,
+                name: item.name,
+                type: item.type,
+                status: item.status,
+                amount: item.amount,
               });
-              return combined.slice(-100);
             });
-          }
-        );
+            return combined.slice(-100);
+          });
+        });
         duration = performance.now() - startTime;
         setProgress(100);
       }
@@ -462,8 +458,8 @@ const BigJsonParsePage: React.FC = () => {
           <Card title="主线程状态监测" style={{ marginTop: 16 }} bordered={false}>
             <BlockDetector running={isRunning} />
             <Paragraph type="secondary" style={{ marginTop: 12, fontSize: 12 }}>
-              通过 requestAnimationFrame 检测主线程是否被阻塞。
-              如果圆点变红，说明 JSON.parse 占用了主线程，页面无法响应交互。
+              通过 requestAnimationFrame 检测主线程是否被阻塞。 如果圆点变红，说明 JSON.parse
+              占用了主线程，页面无法响应交互。
             </Paragraph>
           </Card>
         </Col>
@@ -474,9 +470,7 @@ const BigJsonParsePage: React.FC = () => {
             title="解析结果预览（仅展示前 100 条）"
             bordered={false}
             extra={
-              tableData.length > 0 ? (
-                <Tag color="blue">已加载 {tableData.length} 条</Tag>
-              ) : null
+              tableData.length > 0 ? <Tag color="blue">已加载 {tableData.length} 条</Tag> : null
             }
           >
             {isRunning && tableData.length === 0 ? (
@@ -567,25 +561,42 @@ const BigJsonParsePage: React.FC = () => {
       <Paragraph>
         将 JSON.parse 放到 Worker 线程执行，主线程保持响应。注意 Worker 解析后回传大对象仍有开销。
       </Paragraph>
-      <CodeBlock code={BigJsonParseExamples.goodCodeWorker} language="typescript" type="success" title="Web Worker 实现" />
+      <CodeBlock
+        code={BigJsonParseExamples.goodCodeWorker}
+        language="typescript"
+        type="success"
+        title="Web Worker 实现"
+      />
 
       {/* 3.3 分片解析方案 */}
       <Title level={4} style={{ marginTop: 24 }}>
         方案三：分片解析 + 渐进渲染
       </Title>
       <Paragraph>
-        利用 ReadableStream 逐块读取响应数据，每解析一批就渲染一批，配合 requestIdleCallback 让出主线程。
+        利用 ReadableStream 逐块读取响应数据，每解析一批就渲染一批，配合 requestIdleCallback
+        让出主线程。
       </Paragraph>
-      <CodeBlock code={BigJsonParseExamples.goodCodeChunked} language="typescript" type="success" title="分片解析实现" />
+      <CodeBlock
+        code={BigJsonParseExamples.goodCodeChunked}
+        language="typescript"
+        type="success"
+        title="分片解析实现"
+      />
 
       {/* 3.4 流式解析方案 */}
       <Title level={4} style={{ marginTop: 24 }}>
         方案四：流式 JSON 解析（终极方案）
       </Title>
       <Paragraph>
-        使用流式解析器（如 @streamparser/json-whatwg）边接收边解析，内存占用最低，适合 20MB+ 超大数据。
+        使用流式解析器（如 @streamparser/json-whatwg）边接收边解析，内存占用最低，适合 20MB+
+        超大数据。
       </Paragraph>
-      <CodeBlock code={BigJsonParseExamples.goodCodeStreaming} language="typescript" type="success" title="流式解析实现" />
+      <CodeBlock
+        code={BigJsonParseExamples.goodCodeStreaming}
+        language="typescript"
+        type="success"
+        title="流式解析实现"
+      />
 
       <Divider style={{ margin: '40px 0' }} />
 

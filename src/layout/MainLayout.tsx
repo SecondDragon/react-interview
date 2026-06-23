@@ -1,18 +1,18 @@
-import React, {useEffect, Suspense, useMemo, useState, useRef} from 'react';
+import React, { useEffect, Suspense, useMemo, useState, useRef } from 'react';
 import './MainLayout.css';
-import {Layout, Menu, Tabs, Button, Spin} from 'antd';
-import {MenuUnfoldOutlined, MenuFoldOutlined} from '@ant-design/icons';
-import {useUserStore} from '../store/useUserStore';
-import {useAppStore} from '../store/useAppStore';
-import {useTabStore} from '../store/useTabStore';
-import {useNavigate, Outlet, useLocation} from 'react-router-dom';
-import {dashboardRoutes} from '../router/config';
-import type {RouteConfig} from '../router/config';
-import type {MenuItem, FlattenedRouteMap} from './MainLayout.types';
-import {registerMicroApps, start} from 'qiankun';
-import {useOpenKeysByPath} from '../hooks/hooks.ts';
+import { Layout, Menu, Tabs, Button, Spin } from 'antd';
+import { MenuUnfoldOutlined, MenuFoldOutlined } from '@ant-design/icons';
+import { useUserStore } from '../store/useUserStore';
+import { useAppStore } from '../store/useAppStore';
+import { useTabStore } from '../store/useTabStore';
+import { useNavigate, Outlet, useLocation } from 'react-router-dom';
+import { dashboardRoutes } from '../router/config';
+import type { RouteConfig } from '../router/config';
+import type { MenuItem, FlattenedRouteMap } from './MainLayout.types';
+import { registerMicroApps, start } from 'qiankun';
+import { useOpenKeysByPath } from '../hooks/hooks.ts';
 // import DraggablePhoneBar from '../pages/phone-work-bench/phone-bar/DraggablePhoneBar';
-import styled from "styled-components";
+import styled from 'styled-components';
 
 registerMicroApps([
   {
@@ -29,15 +29,15 @@ registerMicroApps([
   },
 ]);
 
-const {Header, Content, Sider} = Layout;
+const { Header, Content, Sider } = Layout;
 
 const MainLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const {username} = useUserStore();
-  const {collapsed, toggleCollapsed} = useAppStore();
-  const {tabs, activeKey, addTab, removeTab, setActiveKey} = useTabStore();
+  const { username } = useUserStore();
+  const { collapsed, toggleCollapsed } = useAppStore();
+  const { tabs, activeKey, addTab, removeTab, setActiveKey } = useTabStore();
 
   // 1. 最好在文件外部或全局声明一个标志位，防止热更新时重复 start 报错
   if (!window.qiankunStarted) {
@@ -93,10 +93,7 @@ const MainLayout: React.FC = () => {
     const map = flatten(dashboardRoutes);
     const current = map[location.pathname];
 
-    if (
-      current &&
-      (current.element || current.path.includes('micro-'))
-    ) {
+    if (current && (current.element || current.path.includes('micro-'))) {
       addTab({
         key: current.path,
         label: current.label as string,
@@ -125,13 +122,13 @@ const MainLayout: React.FC = () => {
   console.log('openKeys', openKeys);
 
   return (
-    <Layout style={{height: '100vh', minWidth: '1480px', overflow: 'hidden'}}>
+    <Layout style={{ height: '100vh', minWidth: '1480px', overflow: 'hidden' }}>
       <Sider
         width={256}
         collapsed={collapsed}
-        style={{background: '#fff', borderRight: '1px solid #f0f0f0'}}
+        style={{ background: '#fff', borderRight: '1px solid #f0f0f0' }}
       >
-        <div style={{display: 'flex', flexDirection: 'column', height: '100%'}}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
           <div
             style={{
               height: '64px',
@@ -145,7 +142,7 @@ const MainLayout: React.FC = () => {
           >
             {collapsed ? 'CMS' : 'Hybrid Admin'}
           </div>
-          <div style={{flex: 1, overflowY: 'auto'}}>
+          <div style={{ flex: 1, overflowY: 'auto' }}>
             <Menu
               forceSubMenuRender
               mode="inline"
@@ -157,8 +154,8 @@ const MainLayout: React.FC = () => {
               }}
               selectedKeys={[location.pathname]}
               items={menuItems}
-              onClick={({key}) => navigate(key)}
-              style={{height: '100%', borderRight: 0, paddingTop: '8px'}}
+              onClick={({ key }) => navigate(key)}
+              style={{ height: '100%', borderRight: 0, paddingTop: '8px' }}
             />
           </div>
         </div>
@@ -184,14 +181,14 @@ const MainLayout: React.FC = () => {
         >
           <Button
             type="text"
-            icon={collapsed ? <MenuUnfoldOutlined/> : <MenuFoldOutlined/>}
+            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={toggleCollapsed}
-            style={{width: 40, height: 40}}
+            style={{ width: 40, height: 40 }}
           />
-          <div style={{flex: 1}}/>
-          <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
-            <span style={{color: '#595959'}}>
-              欢迎您，<b style={{color: '#1890ff'}}>{username || '测试环境'}</b>
+          <div style={{ flex: 1 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <span style={{ color: '#595959' }}>
+              欢迎您，<b style={{ color: '#1890ff' }}>{username || '测试环境'}</b>
             </span>
           </div>
         </Header>
@@ -228,12 +225,12 @@ const MainLayout: React.FC = () => {
             position: 'relative',
           }}
         >
-          <Suspense fallback={<Spin size="large"/>}>
-            <Outlet/>
+          <Suspense fallback={<Spin size="large" />}>
+            <Outlet />
           </Suspense>
           <div
             id="micro-viewport"
-            style={{width: '100%', height: '100%', display: isSubAppRoute ? 'block' : 'none'}}
+            style={{ width: '100%', height: '100%', display: isSubAppRoute ? 'block' : 'none' }}
           />
         </Content>
       </Layout>
@@ -297,14 +294,16 @@ const TabsContainer = styled.div`
 
       /* 确保没有额外的顶部装饰条 */
 
-      &::before, &::after {
+      &::before,
+      &::after {
         display: none !important;
       }
     }
 
     /* 移除 antd 默认的所有装饰线 */
 
-    .ant-tabs-ink-bar, .ant-tabs-ink-bar-animated {
+    .ant-tabs-ink-bar,
+    .ant-tabs-ink-bar-animated {
       display: none !important;
     }
   }

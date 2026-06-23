@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, Typography, Alert, Tag, Button, Space, Badge, Divider, Radio, Input } from 'antd';
-import { PlayCircleOutlined, ReloadOutlined, DisconnectOutlined, InfoCircleOutlined, FireOutlined, ThunderboltOutlined, DatabaseOutlined, ApartmentOutlined } from '@ant-design/icons';
+import {
+  PlayCircleOutlined,
+  ReloadOutlined,
+  DisconnectOutlined,
+  InfoCircleOutlined,
+  FireOutlined,
+  ThunderboltOutlined,
+  DatabaseOutlined,
+  ApartmentOutlined,
+} from '@ant-design/icons';
 import CodeBlock from '@/components/CodeBlock';
 import { SSEReconnectNativeExamples } from './Examples';
 
@@ -33,60 +42,66 @@ const NativeReconnectDemo: React.FC = () => {
     { label: 'Kafka', value: 'kafka', icon: <ApartmentOutlined /> },
   ];
 
-  const connect = useCallback((withReconnect = false, useManualId = false) => {
-    esRef.current?.close();
+  const connect = useCallback(
+    (withReconnect = false, useManualId = false) => {
+      esRef.current?.close();
 
-    const streamId = `native-${endpoint}`;
-    const effectiveLastId = useManualId && manualLastId ? manualLastId : (withReconnect ? lastEventId : null);
+      const streamId = `native-${endpoint}`;
+      const effectiveLastId =
+        useManualId && manualLastId ? manualLastId : withReconnect ? lastEventId : null;
 
-    let url = `${BASE_URL}/sse/${endpoint}?streamId=${streamId}`;
-    // EventSource 不支持自定义 headers，Last-Event-ID 只能由浏览器自动在重连时带上
-    // 首次连接带 Last-Event-ID 需要通过 query param 模拟
-    if (effectiveLastId) {
-      url += `&lastEventId=${encodeURIComponent(effectiveLastId)}`;
-    }
+      let url = `${BASE_URL}/sse/${endpoint}?streamId=${streamId}`;
+      // EventSource 不支持自定义 headers，Last-Event-ID 只能由浏览器自动在重连时带上
+      // 首次连接带 Last-Event-ID 需要通过 query param 模拟
+      if (effectiveLastId) {
+        url += `&lastEventId=${encodeURIComponent(effectiveLastId)}`;
+      }
 
-    const es = new EventSource(url);
-    esRef.current = es;
+      const es = new EventSource(url);
+      esRef.current = es;
 
-    if (withReconnect || useManualId) {
-      setReconnectCount(c => c + 1);
-    }
+      if (withReconnect || useManualId) {
+        setReconnectCount((c) => c + 1);
+      }
 
-    setConnected(true);
-    setDone(false);
+      setConnected(true);
+      setDone(false);
 
-    es.onopen = () => {
-      setReconnectCount(0);
-    };
+      es.onopen = () => {
+        setReconnectCount(0);
+      };
 
-    es.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'final') {
-          setConnected(false);
-          setDone(true);
-          es.close();
-        } else {
-          const msg: MessageItem = {
-            id: event.lastEventId || '',
-            content: `[${data.table}] ${data.content}`,
-            isHistory: effectiveLastId ? true : false,
-          };
-          setMessages(prev => [...prev, msg]);
-          if (event.lastEventId) {
-            setLastEventId(event.lastEventId);
+      es.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'final') {
+            setConnected(false);
+            setDone(true);
+            es.close();
+          } else {
+            const msg: MessageItem = {
+              id: event.lastEventId || '',
+              content: `[${data.table}] ${data.content}`,
+              isHistory: effectiveLastId ? true : false,
+            };
+            setMessages((prev) => [...prev, msg]);
+            if (event.lastEventId) {
+              setLastEventId(event.lastEventId);
+            }
           }
+        } catch {
+          /* ignore */
         }
-      } catch { /* ignore */ }
-    };
+      };
 
-    // 原生重连：onerror 触发后浏览器自动重连（会自动带 Last-Event-ID）
-    es.onerror = () => {
-      setReconnectCount(prev => prev + 1);
-      setConnected(false);
-    };
-  }, [endpoint, lastEventId, manualLastId]);
+      // 原生重连：onerror 触发后浏览器自动重连（会自动带 Last-Event-ID）
+      es.onerror = () => {
+        setReconnectCount((prev) => prev + 1);
+        setConnected(false);
+      };
+    },
+    [endpoint, lastEventId, manualLastId]
+  );
 
   const disconnect = useCallback(() => {
     esRef.current?.close();
@@ -112,7 +127,12 @@ const NativeReconnectDemo: React.FC = () => {
     setManualLastId('');
   }, []);
 
-  useEffect(() => () => { esRef.current?.close() }, []);
+  useEffect(
+    () => () => {
+      esRef.current?.close();
+    },
+    []
+  );
 
   return (
     <div>
@@ -120,7 +140,14 @@ const NativeReconnectDemo: React.FC = () => {
         <div>
           <Text strong>选择后端方案：</Text>
           <Radio.Group
-            options={endpointOptions.map(o => ({ label: <span>{o.icon} {o.label}</span>, value: o.value }))}
+            options={endpointOptions.map((o) => ({
+              label: (
+                <span>
+                  {o.icon} {o.label}
+                </span>
+              ),
+              value: o.value,
+            }))}
             value={endpoint}
             onChange={(e) => {
               setEndpoint(e.target.value);
@@ -133,20 +160,33 @@ const NativeReconnectDemo: React.FC = () => {
         </div>
 
         <Space>
-          <Button type="primary" icon={<PlayCircleOutlined />} onClick={() => connect(false, false)} disabled={connected}>
+          <Button
+            type="primary"
+            icon={<PlayCircleOutlined />}
+            onClick={() => connect(false, false)}
+            disabled={connected}
+          >
             连接 SSE
           </Button>
           <Button danger icon={<DisconnectOutlined />} onClick={disconnect} disabled={!connected}>
             断开
           </Button>
-          <Button icon={<ReloadOutlined />} onClick={reconnect} disabled={connected || !lastEventId} type="dashed">
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={reconnect}
+            disabled={connected || !lastEventId}
+            type="dashed"
+          >
             断点续传
           </Button>
           <Button onClick={reset}>重置</Button>
         </Space>
 
         <Space>
-          <Badge status={done ? 'success' : connected ? 'processing' : 'default'} text={done ? '完成' : connected ? '接收中' : '未连接'} />
+          <Badge
+            status={done ? 'success' : connected ? 'processing' : 'default'}
+            text={done ? '完成' : connected ? '接收中' : '未连接'}
+          />
           <Tag>{messages.length} 条消息</Tag>
           {lastEventId && <Tag color="blue">Last-ID: {lastEventId.slice(-12)}</Tag>}
           {reconnectCount > 0 && <Tag color="orange">重连: {reconnectCount}</Tag>}
@@ -160,7 +200,12 @@ const NativeReconnectDemo: React.FC = () => {
             style={{ width: 220 }}
             disabled={connected}
           />
-          <Button onClick={reconnectWithManualId} disabled={connected || !manualLastId} type="primary" ghost>
+          <Button
+            onClick={reconnectWithManualId}
+            disabled={connected || !manualLastId}
+            type="primary"
+            ghost
+          >
             按手动ID续传
           </Button>
         </Space>
@@ -186,11 +231,7 @@ const NativeReconnectDemo: React.FC = () => {
               {msg.content}
             </div>
           ))}
-          {connected && (
-            <div style={{ color: '#fbbf24', padding: '2px 0' }}>
-              ▌ 接收中...
-            </div>
-          )}
+          {connected && <div style={{ color: '#fbbf24', padding: '2px 0' }}>▌ 接收中...</div>}
         </div>
       </Card>
     </div>
@@ -224,14 +265,28 @@ const SSEReconnectNativePage: React.FC = () => {
           <Text strong>核心原则：</Text>前端几乎不需要写重连代码，浏览器自动处理。
           重点在于服务端如何配合。
         </Paragraph>
-        <CodeBlock code={SSEReconnectNativeExamples.how} title="前端代码" type="success" language="typescript" />
+        <CodeBlock
+          code={SSEReconnectNativeExamples.how}
+          title="前端代码"
+          type="success"
+          language="typescript"
+        />
         <Divider />
-        <CodeBlock code={SSEReconnectNativeExamples.serverCode} title="服务端配合（Node.js）" type="warning" language="typescript" />
+        <CodeBlock
+          code={SSEReconnectNativeExamples.serverCode}
+          title="服务端配合（Node.js）"
+          type="warning"
+          language="typescript"
+        />
       </Card>
 
       {/* 四、互动演示 */}
       <Card
-        title={<span>四、互动演示 <Tag color="blue">Live Demo</Tag></span>}
+        title={
+          <span>
+            四、互动演示 <Tag color="blue">Live Demo</Tag>
+          </span>
+        }
         style={{ marginBottom: 24 }}
       >
         <Alert
@@ -245,17 +300,23 @@ const SSEReconnectNativePage: React.FC = () => {
 
       {/* 五、优缺点 */}
       <Card title="五、优缺点" style={{ marginBottom: 24 }}>
-        <Paragraph style={{ whiteSpace: 'pre-line' }}>{SSEReconnectNativeExamples.prosCons}</Paragraph>
+        <Paragraph style={{ whiteSpace: 'pre-line' }}>
+          {SSEReconnectNativeExamples.prosCons}
+        </Paragraph>
       </Card>
 
       {/* 六、适用场景 */}
       <Card title="六、适用场景" style={{ marginBottom: 24 }}>
-        <Paragraph style={{ whiteSpace: 'pre-line' }}>{SSEReconnectNativeExamples.whenToUse}</Paragraph>
+        <Paragraph style={{ whiteSpace: 'pre-line' }}>
+          {SSEReconnectNativeExamples.whenToUse}
+        </Paragraph>
       </Card>
 
       {/* 七、注意事项 */}
       <Card title="七、注意事项" style={{ background: '#fffbe6' }}>
-        <Paragraph style={{ whiteSpace: 'pre-line' }}>{SSEReconnectNativeExamples.caveats}</Paragraph>
+        <Paragraph style={{ whiteSpace: 'pre-line' }}>
+          {SSEReconnectNativeExamples.caveats}
+        </Paragraph>
       </Card>
     </div>
   );

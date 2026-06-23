@@ -82,7 +82,12 @@ const AmountInput: React.FC = () => {
         <Paragraph>
           用户在格式化（如带逗号的千分位）输入框中间插入或删除数字时，光标会瞬间“瞬移”到字符串末尾。
         </Paragraph>
-        <Alert message="交互灾难" description={AmountInputExamples.phenomenon} type="error" showIcon />
+        <Alert
+          message="交互灾难"
+          description={AmountInputExamples.phenomenon}
+          type="error"
+          showIcon
+        />
       </Card>
 
       {/* 二、 Bug 出现的底层原因 */}
@@ -90,11 +95,10 @@ const AmountInput: React.FC = () => {
         <Paragraph>
           <Text strong>赋值即替换机制：</Text>
         </Paragraph>
+        <Paragraph>{AmountInputExamples.reason}</Paragraph>
         <Paragraph>
-          {AmountInputExamples.reason}
-        </Paragraph>
-        <Paragraph>
-          当我们将格式化后的字符串回填给 <Text code>input.value</Text> 时，浏览器会认为这是一个全新的值，为了安全，它会重置光标到最后。
+          当我们将格式化后的字符串回填给 <Text code>input.value</Text>{' '}
+          时，浏览器会认为这是一个全新的值，为了安全，它会重置光标到最后。
         </Paragraph>
       </Card>
 
@@ -112,19 +116,32 @@ const AmountInput: React.FC = () => {
 
       {/* 四、 为什么要这样解决 且互动演示 */}
       <Card
-        title={<span>四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag></span>}
+        title={
+          <span>
+            四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag>
+          </span>
+        }
         style={{ marginBottom: '24px' }}
       >
         <Row gutter={16}>
-          <Col span={12}><BuggyAmountInput /></Col>
-          <Col span={12}><FixedAmountInput /></Col>
+          <Col span={12}>
+            <BuggyAmountInput />
+          </Col>
+          <Col span={12}>
+            <FixedAmountInput />
+          </Col>
         </Row>
         <Divider />
-        <Steps direction="vertical" size="small" current={3} items={[
-          { title: '记录锚点', description: '修改前统计光标左侧的纯数字个数。' },
-          { title: '异步重排', description: '在渲染后的微任务中重新计算索引。' },
-          { title: '精准复位', description: '根据锚点反推物理位置并调用 setSelectionRange。' },
-        ]} />
+        <Steps
+          direction="vertical"
+          size="small"
+          current={3}
+          items={[
+            { title: '记录锚点', description: '修改前统计光标左侧的纯数字个数。' },
+            { title: '异步重排', description: '在渲染后的微任务中重新计算索引。' },
+            { title: '精准复位', description: '根据锚点反推物理位置并调用 setSelectionRange。' },
+          ]}
+        />
       </Card>
 
       {/* 五、 Bug 能解决的核心原理 */}
@@ -132,11 +149,13 @@ const AmountInput: React.FC = () => {
         <ul>
           <li>
             <Text strong>不变量识别：</Text>
-            在格式化输入中，逗号是变量，但数字的相对顺序是不变量。通过锁定“第 N 个数字”作为锚点，可以绕过格式化带来的字符偏移。
+            在格式化输入中，逗号是变量，但数字的相对顺序是不变量。通过锁定“第 N
+            个数字”作为锚点，可以绕过格式化带来的字符偏移。
           </li>
           <li>
             <Text strong>Rendering Loop 同步：</Text>
-            <Text code>requestAnimationFrame</Text> 确保了我们的光标复位逻辑在浏览器完成 Layout 和 Paint 之后执行，避免了 React 内部状态更新导致的时序冲突。
+            <Text code>requestAnimationFrame</Text> 确保了我们的光标复位逻辑在浏览器完成 Layout 和
+            Paint 之后执行，避免了 React 内部状态更新导致的时序冲突。
           </li>
           <li>
             <Text strong>物理索引重建：</Text>

@@ -154,10 +154,7 @@ const WaterfallUltimate: React.FC = () => {
       scrollableNodeProps={{ onScroll: (e) => setScrollTop(e.currentTarget.scrollTop) }}
       style={{ height: '100%', backgroundColor: '#fafafa' }}
     >
-      <div
-        ref={wrapperRef}
-        style={{ boxSizing: 'border-box', overflowX: 'hidden' }}
-      >
+      <div ref={wrapperRef} style={{ boxSizing: 'border-box', overflowX: 'hidden' }}>
         <h2 style={{ marginBottom: 16 }}>Ultimate级瀑布流 (DOM 节点池复用)</h2>
 
         {/* 技术解析看板 */}

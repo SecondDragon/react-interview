@@ -30,7 +30,9 @@ const VwDemo = () => {
         <div>
           <Text strong>设计稿宽度：</Text>
           <Tag color="blue">{designWidth}px</Tag>
-          <Text strong style={{ marginLeft: 16 }}>1vw = </Text>
+          <Text strong style={{ marginLeft: 16 }}>
+            1vw ={' '}
+          </Text>
           <Tag color="blue">{deviceWidth / 100}px</Tag>
         </div>
 
@@ -67,16 +69,22 @@ const VwDemo = () => {
               </div>
               <div style={{ marginTop: 8 }}>
                 <Text strong>vw 转换：</Text>
-                <Text code>{designPx} / {designWidth} × 100 = {vwValue.toFixed(3)}vw</Text>
+                <Text code>
+                  {designPx} / {designWidth} × 100 = {vwValue.toFixed(3)}vw
+                </Text>
               </div>
               <div style={{ marginTop: 8 }}>
                 <Text strong>实际渲染：</Text>
-                <Text code>{vwValue.toFixed(3)}vw × {deviceWidth}px / 100 = {actualPx.toFixed(1)}px</Text>
+                <Text code>
+                  {vwValue.toFixed(3)}vw × {deviceWidth}px / 100 = {actualPx.toFixed(1)}px
+                </Text>
               </div>
               <div style={{ marginTop: 8 }}>
                 <Text strong>占屏幕比例：</Text>
                 <Text code>{((actualPx / deviceWidth) * 100).toFixed(1)}%</Text>
-                <Text type="secondary">（设计意图：{(designPx / designWidth * 100).toFixed(1)}%）</Text>
+                <Text type="secondary">
+                  （设计意图：{((designPx / designWidth) * 100).toFixed(1)}%）
+                </Text>
               </div>
             </div>
           }

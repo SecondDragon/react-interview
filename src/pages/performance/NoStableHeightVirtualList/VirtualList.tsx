@@ -18,53 +18,55 @@ export interface VirtualListProps<T> {
 /**
  * 内部列表项容器：负责测量自身高度
  */
-const ListItem = memo(({
-  index,
-  children,
-  onMeasure,
-  position
-}: {
-  index: number;
-  children: React.ReactNode;
-  onMeasure: (index: number, el: HTMLElement) => void;
-  position: ItemPosition;
-}) => {
-  const itemRef = useRef<HTMLDivElement>(null);
+const ListItem = memo(
+  ({
+    index,
+    children,
+    onMeasure,
+    position,
+  }: {
+    index: number;
+    children: React.ReactNode;
+    onMeasure: (index: number, el: HTMLElement) => void;
+    position: ItemPosition;
+  }) => {
+    const itemRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const el = itemRef.current;
-    if (!el) return;
+    useEffect(() => {
+      const el = itemRef.current;
+      if (!el) return;
 
-    // 使用 ResizeObserver 监听内容变化
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        if (entry.target === el) {
-          onMeasure(index, el);
+      // 使用 ResizeObserver 监听内容变化
+      const observer = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.target === el) {
+            onMeasure(index, el);
+          }
         }
-      }
-    });
+      });
 
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [index, onMeasure]);
+      observer.observe(el);
+      return () => observer.disconnect();
+    }, [index, onMeasure]);
 
-  return (
-    <div
-      ref={itemRef}
-      style={{
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        top: 0,
-        // 使用 transform 实现 GPU 加速定位，并防止布局抖动
-        transform: `translate3d(0, ${position.top}px, 0)`,
-        // 注意：这里不要设置固定高度，让内容撑开，我们只管测量
-      }}
-    >
-      {children}
-    </div>
-  );
-});
+    return (
+      <div
+        ref={itemRef}
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          top: 0,
+          // 使用 transform 实现 GPU 加速定位，并防止布局抖动
+          transform: `translate3d(0, ${position.top}px, 0)`,
+          // 注意：这里不要设置固定高度，让内容撑开，我们只管测量
+        }}
+      >
+        {children}
+      </div>
+    );
+  }
+);
 
 /**
  * 核心组件：动态高度虚拟列表
@@ -85,10 +87,8 @@ export function VirtualList<T>({
   const { positions, totalHeight, measureItem } = useSizeMeasurer(data, defaultItemHeight);
 
   // 2. 初始化虚拟化计算引擎
-  const { visibleIndices, handleScroll, containerRef, scrollTop, viewportHeight } = useVirtualization(
-    positions,
-    { chunkSize, overscan }
-  );
+  const { visibleIndices, handleScroll, containerRef, scrollTop, viewportHeight } =
+    useVirtualization(positions, { chunkSize, overscan });
 
   // 3. 触底加载逻辑
   const sentinelRef = useRef<HTMLDivElement>(null);

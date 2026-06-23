@@ -9,10 +9,7 @@ interface VirtualizationConfig {
 /**
  * 虚拟化计算 Hook (空间分桶版)
  */
-export function useVirtualization(
-  positions: ItemPosition[],
-  config: VirtualizationConfig
-) {
+export function useVirtualization(positions: ItemPosition[], config: VirtualizationConfig) {
   const [scrollTop, setScrollTop] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(0);
 
@@ -49,7 +46,7 @@ export function useVirtualization(
     for (let c = startChunk; c <= endChunk; c++) {
       const chunk = chunksMap.get(c);
       if (chunk) {
-        chunk.forEach(idx => indicesSet.add(idx));
+        chunk.forEach((idx) => indicesSet.add(idx));
       }
     }
 
@@ -80,6 +77,6 @@ export function useVirtualization(
     handleScroll,
     containerRef,
     scrollTop,
-    viewportHeight
+    viewportHeight,
   };
 }

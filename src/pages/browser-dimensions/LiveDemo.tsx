@@ -56,9 +56,7 @@ const LiveDemo: React.FC = () => {
     };
 
     // 只有当值真正变化时才更新 ref 并触发重渲染
-    const hasChanged = Object.keys(next).some(
-      (key) => (prev as any)[key] !== (next as any)[key]
-    );
+    const hasChanged = Object.keys(next).some((key) => (prev as any)[key] !== (next as any)[key]);
 
     if (hasChanged) {
       dimensionsRef.current = next;
@@ -114,11 +112,22 @@ const LiveDemo: React.FC = () => {
 
   const dims = dimensionsRef.current;
 
-  const StatItem = ({ label, value, unit = 'px' }: { label: string; value: number; unit?: string }) => (
-    <div style={{ padding: '8px', background: '#f5f5f5', borderRadius: '4px', marginBottom: '8px' }}>
+  const StatItem = ({
+    label,
+    value,
+    unit = 'px',
+  }: {
+    label: string;
+    value: number;
+    unit?: string;
+  }) => (
+    <div
+      style={{ padding: '8px', background: '#f5f5f5', borderRadius: '4px', marginBottom: '8px' }}
+    >
       <div style={{ fontSize: '11px', color: '#999' }}>{label}</div>
       <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#1890ff' }}>
-        {value}{unit}
+        {value}
+        {unit}
       </div>
     </div>
   );
@@ -165,7 +174,11 @@ const LiveDemo: React.FC = () => {
           <Card size="small" title={<Tag color="purple">Visual Viewport</Tag>} bordered={false}>
             <StatItem label="vv.width" value={Math.round(dims.visualViewportWidth)} />
             <StatItem label="vv.height" value={Math.round(dims.visualViewportHeight)} />
-            <StatItem label="vv.scale" value={Math.round(dims.visualViewportScale * 100) / 100} unit="" />
+            <StatItem
+              label="vv.scale"
+              value={Math.round(dims.visualViewportScale * 100) / 100}
+              unit=""
+            />
             <StatItem label="scrollTop" value={Math.round(dims.scrollTop)} />
             <StatItem label="scrollLeft" value={Math.round(dims.scrollLeft)} />
           </Card>
@@ -202,37 +215,46 @@ const LiveDemo: React.FC = () => {
             position: 'relative',
           }}
         >
-          <div style={{ width: '600px', height: '100px', background: '#1890ff', color: '#fff', padding: '8px' }}>
+          <div
+            style={{
+              width: '600px',
+              height: '100px',
+              background: '#1890ff',
+              color: '#fff',
+              padding: '8px',
+            }}
+          >
             内容区宽度固定 600px（超出容器宽度，产生滚动条）
           </div>
         </div>
 
         <Row gutter={16} style={{ marginTop: '16px' }}>
           <Col span={8}>
-            <StatItem
-              label="clientWidth（内容+内边距）"
-              value={demoStats.clientWidth}
-            />
+            <StatItem label="clientWidth（内容+内边距）" value={demoStats.clientWidth} />
           </Col>
           <Col span={8}>
-            <StatItem
-              label="offsetWidth（含边框+滚动条）"
-              value={demoStats.offsetWidth}
-            />
+            <StatItem label="offsetWidth（含边框+滚动条）" value={demoStats.offsetWidth} />
           </Col>
           <Col span={8}>
-            <StatItem
-              label="scrollWidth（内容总宽度）"
-              value={demoStats.scrollWidth}
-            />
+            <StatItem label="scrollWidth（内容总宽度）" value={demoStats.scrollWidth} />
           </Col>
         </Row>
 
-        <div style={{ marginTop: '16px', padding: '12px', background: '#fff7e6', borderRadius: '4px' }}>
-          <Text strong style={{ color: '#fa8c16' }}>📐 计算公式：</Text>
+        <div
+          style={{ marginTop: '16px', padding: '12px', background: '#fff7e6', borderRadius: '4px' }}
+        >
+          <Text strong style={{ color: '#fa8c16' }}>
+            📐 计算公式：
+          </Text>
           <div style={{ marginTop: '8px', fontSize: '13px' }}>
-            <div>滚动条宽度 = offsetWidth - clientWidth = <Text strong>{demoStats.offsetWidth - demoStats.clientWidth}px</Text></div>
-            <div>内容溢出 = scrollWidth - clientWidth = <Text strong>{demoStats.scrollWidth - demoStats.clientWidth}px</Text></div>
+            <div>
+              滚动条宽度 = offsetWidth - clientWidth ={' '}
+              <Text strong>{demoStats.offsetWidth - demoStats.clientWidth}px</Text>
+            </div>
+            <div>
+              内容溢出 = scrollWidth - clientWidth ={' '}
+              <Text strong>{demoStats.scrollWidth - demoStats.clientWidth}px</Text>
+            </div>
           </div>
         </div>
       </Card>

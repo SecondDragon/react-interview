@@ -138,7 +138,10 @@ const PlayIcon = styled(PlayCircleOutlined)`
   color: #3b82f6;
   cursor: pointer;
   transition: all 0.2s;
-  &:hover { color: #2563eb; transform: scale(1.1); }
+  &:hover {
+    color: #2563eb;
+    transform: scale(1.1);
+  }
 `;
 
 const PauseIcon = styled(PauseCircleOutlined)`
@@ -146,7 +149,10 @@ const PauseIcon = styled(PauseCircleOutlined)`
   color: #3b82f6;
   cursor: pointer;
   transition: all 0.2s;
-  &:hover { color: #2563eb; transform: scale(1.1); }
+  &:hover {
+    color: #2563eb;
+    transform: scale(1.1);
+  }
 `;
 
 const LoadingIcon = styled(LoadingOutlined)`

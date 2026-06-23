@@ -2,7 +2,7 @@
  * IME 组合输入案例元数据
  */
 export const IMEInputExamples = {
-  description: "中文输入法（IME）合成阶段的内核差异与致命故障分析。",
+  description: '中文输入法（IME）合成阶段的内核差异与致命故障分析。',
   ultimatePlan: `
 const PerfectChineseInput = () => {
   const isComposing = useRef(false);
@@ -43,11 +43,11 @@ const PerfectChineseInput = () => {
   );
 };`,
   cursorJumping: {
-    title: "致命故障 A：光标跳跃与焦点丢失",
-    reason: "React 受控组件模式下，拼音输入触发 setState 导致 DOM 重新渲染，打断输入法缓冲区。",
-    phenomenon: "用户输入拼音时，光标乱跳，甚至输入法弹窗闪退。",
+    title: '致命故障 A：光标跳跃与焦点丢失',
+    reason: 'React 受控组件模式下，拼音输入触发 setState 导致 DOM 重新渲染，打断输入法缓冲区。',
+    phenomenon: '用户输入拼音时，光标乱跳，甚至输入法弹窗闪退。',
     bad: "const [val, setVal] = useState(''); \n<input value={val} onChange={(e) => setVal(e.target.value)} />",
-    good: "const handleEnd = (e) => { setSearchValue(e.target.value); }; \n<input defaultValue={searchValue} onCompositionEnd={handleEnd} />"
+    good: 'const handleEnd = (e) => { setSearchValue(e.target.value); }; \n<input defaultValue={searchValue} onCompositionEnd={handleEnd} />',
   },
   debounceBad: `const [val, setVal] = useState('');
 const debouncedSearch = useMemo(() => debounce(doSearch, 300), []);
@@ -103,5 +103,5 @@ return (
     onCompositionEnd={handleEnd}
     onInput={handleInput}
   />
-);`
+);`,
 };

@@ -23,50 +23,72 @@ const VhUnitDemo = () => {
           {showToolbar ? '模拟页面往下滚动 (隐藏工具栏)' : '模拟点击底部/向上滚动 (唤出工具栏)'}
         </Button>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginTop: '16px' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '20px',
+            marginTop: '16px',
+          }}
+        >
           {/* 左侧：传统的 100vh */}
           <div>
-            <div style={{ marginBottom: '8px', textAlign: 'center' }}><Text type="danger">❌ height: 100vh</Text></div>
-            <div style={{
-              position: 'relative',
-              height: `${screenHeight}px`,
-              border: '2px solid #ccc',
-              overflow: 'hidden',
-              background: '#f0f2f5',
-              borderRadius: '8px'
-            }}>
-              <div style={{
+            <div style={{ marginBottom: '8px', textAlign: 'center' }}>
+              <Text type="danger">❌ height: 100vh</Text>
+            </div>
+            <div
+              style={{
+                position: 'relative',
                 height: `${screenHeight}px`,
-                display: 'flex',
-                flexDirection: 'column',
-                border: '2px dashed #ff4d4f',
-                boxSizing: 'border-box'
-              }}>
-                <div style={{ padding: '10px', textAlign: 'center', color: '#888' }}>页面可滚动内容区</div>
-                <div style={{
-                  marginTop: 'auto',
-                  background: '#ff4d4f',
-                  color: 'white',
-                  padding: '10px',
-                  textAlign: 'center',
-                  fontWeight: 'bold'
-                }}>
+                border: '2px solid #ccc',
+                overflow: 'hidden',
+                background: '#f0f2f5',
+                borderRadius: '8px',
+              }}
+            >
+              <div
+                style={{
+                  height: `${screenHeight}px`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  border: '2px dashed #ff4d4f',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <div style={{ padding: '10px', textAlign: 'center', color: '#888' }}>
+                  页面可滚动内容区
+                </div>
+                <div
+                  style={{
+                    marginTop: 'auto',
+                    background: '#ff4d4f',
+                    color: 'white',
+                    padding: '10px',
+                    textAlign: 'center',
+                    fontWeight: 'bold',
+                  }}
+                >
                   提交按钮 (被工具栏盖住了)
                 </div>
               </div>
 
               {/* 模拟浏览器工具栏 */}
-              <div style={{
-                position: 'absolute',
-                bottom: 0, width: '100%',
-                height: `${toolbarHeight}px`,
-                background: 'rgba(0,0,0,0.85)',
-                color: 'white',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transform: showToolbar ? 'translateY(0)' : `translateY(${toolbarHeight}px)`,
-                transition: 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
-                zIndex: 10
-              }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  width: '100%',
+                  height: `${toolbarHeight}px`,
+                  background: 'rgba(0,0,0,0.85)',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transform: showToolbar ? 'translateY(0)' : `translateY(${toolbarHeight}px)`,
+                  transition: 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                  zIndex: 10,
+                }}
+              >
                 🌐 浏览器地址栏/工具栏
               </div>
             </div>
@@ -74,47 +96,62 @@ const VhUnitDemo = () => {
 
           {/* 右侧：现代的 100dvh */}
           <div>
-            <div style={{ marginBottom: '8px', textAlign: 'center' }}><Text type="success">✅ height: 100dvh (自适应)</Text></div>
-            <div style={{
-              position: 'relative',
-              height: `${screenHeight}px`,
-              border: '2px solid #ccc',
-              overflow: 'hidden',
-              background: '#f0f2f5',
-              borderRadius: '8px'
-            }}>
-              <div style={{
-                height: `${dvhHeight}px`,
-                display: 'flex',
-                flexDirection: 'column',
-                border: '2px dashed #52c41a',
-                boxSizing: 'border-box',
-                transition: 'height 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)'
-              }}>
-                <div style={{ padding: '10px', textAlign: 'center', color: '#888' }}>页面可滚动内容区</div>
-                <div style={{
-                  marginTop: 'auto',
-                  background: '#52c41a',
-                  color: 'white',
-                  padding: '10px',
-                  textAlign: 'center',
-                  fontWeight: 'bold'
-                }}>
+            <div style={{ marginBottom: '8px', textAlign: 'center' }}>
+              <Text type="success">✅ height: 100dvh (自适应)</Text>
+            </div>
+            <div
+              style={{
+                position: 'relative',
+                height: `${screenHeight}px`,
+                border: '2px solid #ccc',
+                overflow: 'hidden',
+                background: '#f0f2f5',
+                borderRadius: '8px',
+              }}
+            >
+              <div
+                style={{
+                  height: `${dvhHeight}px`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  border: '2px dashed #52c41a',
+                  boxSizing: 'border-box',
+                  transition: 'height 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                }}
+              >
+                <div style={{ padding: '10px', textAlign: 'center', color: '#888' }}>
+                  页面可滚动内容区
+                </div>
+                <div
+                  style={{
+                    marginTop: 'auto',
+                    background: '#52c41a',
+                    color: 'white',
+                    padding: '10px',
+                    textAlign: 'center',
+                    fontWeight: 'bold',
+                  }}
+                >
                   提交按钮 (永远可见)
                 </div>
               </div>
 
-              <div style={{
-                position: 'absolute',
-                bottom: 0, width: '100%',
-                height: `${toolbarHeight}px`,
-                background: 'rgba(0,0,0,0.85)',
-                color: 'white',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transform: showToolbar ? 'translateY(0)' : `translateY(${toolbarHeight}px)`,
-                transition: 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
-                zIndex: 10
-              }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  width: '100%',
+                  height: `${toolbarHeight}px`,
+                  background: 'rgba(0,0,0,0.85)',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transform: showToolbar ? 'translateY(0)' : `translateY(${toolbarHeight}px)`,
+                  transition: 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                  zIndex: 10,
+                }}
+              >
                 🌐 浏览器地址栏/工具栏
               </div>
             </div>
@@ -143,7 +180,8 @@ const VhUnit: React.FC = () => {
           style={{ marginBottom: '16px' }}
         />
         <Paragraph>
-          当页面设置 <Text code>height: 100vh</Text> 时，底部按钮会被 Safari 的工具栏完全遮挡，用户必须滚动才能看到。
+          当页面设置 <Text code>height: 100vh</Text> 时，底部按钮会被 Safari
+          的工具栏完全遮挡，用户必须滚动才能看到。
         </Paragraph>
       </Card>
 
@@ -152,9 +190,7 @@ const VhUnit: React.FC = () => {
         <Paragraph>
           <Text strong>Safari 的设计权衡：</Text>
         </Paragraph>
-        <Paragraph>
-          {VhUnitExamples.reason}
-        </Paragraph>
+        <Paragraph>{VhUnitExamples.reason}</Paragraph>
         <Paragraph>
           简单来说，<Text code>100vh</Text> 被定义为视口的最大高度，而不是实时变化的可见高度。
         </Paragraph>
@@ -174,12 +210,14 @@ const VhUnit: React.FC = () => {
 
       {/* 四、 为什么要这样解决 且互动演示 */}
       <Card
-        title={<span>四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag></span>}
+        title={
+          <span>
+            四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag>
+          </span>
+        }
         style={{ marginBottom: '24px' }}
       >
-        <Paragraph style={{ whiteSpace: 'pre-wrap' }}>
-          {VhUnitExamples.whySolveThisWay}
-        </Paragraph>
+        <Paragraph style={{ whiteSpace: 'pre-wrap' }}>{VhUnitExamples.whySolveThisWay}</Paragraph>
         <Divider />
         <VhUnitDemo />
       </Card>
@@ -189,15 +227,18 @@ const VhUnit: React.FC = () => {
         <ul>
           <li>
             <Text strong>dvh (Dynamic Viewport Height)：</Text>
-            浏览器会在布局计算阶段，根据当前是否有 UI 组件（如地址栏）动态计算视口高度，确保其始终代表“真实可见”的垂直空间。
+            浏览器会在布局计算阶段，根据当前是否有 UI
+            组件（如地址栏）动态计算视口高度，确保其始终代表“真实可见”的垂直空间。
           </li>
           <li>
             <Text strong>JS 变量注入：</Text>
-            通过 <Text code>window.innerHeight</Text> 获取到的物理像素值是排除了工具栏的。将其除以 100 存入 CSS 变量，可以实现一个比原生 vh 更精准的单位。
+            通过 <Text code>window.innerHeight</Text> 获取到的物理像素值是排除了工具栏的。将其除以
+            100 存入 CSS 变量，可以实现一个比原生 vh 更精准的单位。
           </li>
           <li>
-            <Text strong>Layout Tree 响应：</Text>
-            当 CSS 变量改变时，所有依赖该变量的元素会自动重新计算高度，而不需要 JS 手动去遍历 DOM 修改样式。
+            <Text strong>Layout Tree 响应：</Text>当 CSS
+            变量改变时，所有依赖该变量的元素会自动重新计算高度，而不需要 JS 手动去遍历 DOM
+            修改样式。
           </li>
         </ul>
       </Card>

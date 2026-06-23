@@ -218,10 +218,7 @@ const WaterfallPage: React.FC = () => {
         在动画期间，卡片依然占据着原本较宽的位置，这会短暂地撑破容器宽度，导致 SimpleBar 出现极其影响体验的横向滚动条。
         加上横向隐藏后，即使动画还在进行中，溢出的部分也会被无情裁掉，完美解决横向滚动条闪烁的问题！
       */}
-      <div
-        ref={wrapperRef}
-        style={{ boxSizing: 'border-box', overflowX: 'hidden' }}
-      >
+      <div ref={wrapperRef} style={{ boxSizing: 'border-box', overflowX: 'hidden' }}>
         {/*<h2 style={{ marginBottom: 24 }}>瀑布流布局示例页面 (固定 {columns} 列)</h2>*/}
         {/*<div style={{ marginBottom: 16, color: '#666' }}>*/}
         {/*  <p>*/}

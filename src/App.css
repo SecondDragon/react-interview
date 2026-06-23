@@ -51,7 +51,8 @@
 }
 
 /* 侧边栏菜单样式优化 */
-.ant-menu-inline, .ant-menu-vertical {
+.ant-menu-inline,
+.ant-menu-vertical {
   border-right: none !important;
 }
 

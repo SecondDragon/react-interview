@@ -18,7 +18,7 @@ const HeavyItem: React.FC<{ text: string; index: number }> = ({ text, index }) =
         backgroundColor: '#f0f2f5',
         borderRadius: '4px',
         border: '1px solid #d9d9d9',
-        fontSize: '12px'
+        fontSize: '12px',
       }}
     >
       <span>#{index} - 匹配项: </span>
@@ -44,10 +44,14 @@ const HeavyList: React.FC<HeavyListProps> = ({ query }) => {
   }, []);
 
   // 过滤数据
-  const filteredItems = items.filter(item => item.includes(query));
+  const filteredItems = items.filter((item) => item.includes(query));
 
   if (query === '') {
-      return <div style={{ color: '#999', textAlign: 'center', marginTop: 40 }}>请输入关键词开始体验卡顿（或并发）对比...</div>;
+    return (
+      <div style={{ color: '#999', textAlign: 'center', marginTop: 40 }}>
+        请输入关键词开始体验卡顿（或并发）对比...
+      </div>
+    );
   }
 
   return (
@@ -55,7 +59,13 @@ const HeavyList: React.FC<HeavyListProps> = ({ query }) => {
       <div style={{ marginBottom: 10, color: '#666' }}>
         找到 {filteredItems.length} 条匹配结果（渲染每条需耗时约1ms）
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+          gap: '8px',
+        }}
+      >
         {filteredItems.map((item, index) => (
           <MemoizedHeavyItem key={index} text={item} index={index} />
         ))}

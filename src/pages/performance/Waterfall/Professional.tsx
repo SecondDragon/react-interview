@@ -91,9 +91,10 @@ const WaterfallProfessional: React.FC = () => {
     const newData = await fetchMockData(nextPage, 50);
 
     pageRef.current = nextPage;
-    if (nextPage >= 100) { // 模拟 5000 条上限
-        hasMoreRef.current = false;
-        setIsUIHasMore(false);
+    if (nextPage >= 100) {
+      // 模拟 5000 条上限
+      hasMoreRef.current = false;
+      setIsUIHasMore(false);
     }
 
     setDataList((prev) => [...prev, ...newData]);
@@ -116,7 +117,7 @@ const WaterfallProfessional: React.FC = () => {
 
   // 监听容器宽度（侧边栏切换、窗口缩放）
   useEffect(() => {
-    const ro = new ResizeObserver(entries => {
+    const ro = new ResizeObserver((entries) => {
       if (entries[0]) setContainerWidth(entries[0].contentRect.width);
     });
     if (wrapperRef.current) ro.observe(wrapperRef.current);
@@ -125,30 +126,59 @@ const WaterfallProfessional: React.FC = () => {
 
   // 触底监听
   useEffect(() => {
-    const ob = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting) loadMoreData();
-    }, { rootMargin: '400px' });
+    const ob = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) loadMoreData();
+      },
+      { rootMargin: '400px' }
+    );
     if (sentinelRef.current) ob.observe(sentinelRef.current);
     return () => ob.disconnect();
   }, [loadMoreData]);
 
   // 初始化首次请求
-  useEffect(() => { loadMoreData(); }, [loadMoreData]);
+  useEffect(() => {
+    loadMoreData();
+  }, [loadMoreData]);
 
   return (
-    <SimpleBar scrollableNodeProps={{ onScroll: handleScroll }} style={{ height: '100%', backgroundColor: '#f5f5f5' }}>
+    <SimpleBar
+      scrollableNodeProps={{ onScroll: handleScroll }}
+      style={{ height: '100%', backgroundColor: '#f5f5f5' }}
+    >
       <div ref={wrapperRef} style={{ boxSizing: 'border-box', overflowX: 'hidden' }}>
         <h2 style={{ marginBottom: 16 }}>专业版瀑布流 (空间索引 + 增量计算)</h2>
 
         {/* 教学看板 */}
-        <div style={{ marginBottom: 16, padding: '16px 24px', backgroundColor: '#fff', borderLeft: '4px solid #1890ff', borderRadius: 4, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-            <h4 style={{ color: '#1890ff', marginBottom: 12 }}>🎓 算法学习手册：</h4>
-            <ul style={{ paddingLeft: 20, color: '#666', lineHeight: '1.8' }}>
-                <li><b>空间分桶 (Binning)</b>：页面被切成了 800px 一个的房间。卡片算出坐标后，会“登记”在它经过的房号下。</li>
-                <li><b>O(1) 级查找</b>：滚动时，JS 直接按“房号”抓人。哪怕数组里有 1 万人，我也只抓这 2 间房里的 30 个人。</li>
-                <li><b>数据状态</b>：当前列表总数 <b>{dataList.length}</b>，React 实际处理节点数 <b>{visibleIndices.length}</b>。</li>
-                <li><b>硬件加速</b>：卡片位置由 <code>translate3d</code> 托管给 GPU，消灭了主线程的重排压力。</li>
-            </ul>
+        <div
+          style={{
+            marginBottom: 16,
+            padding: '16px 24px',
+            backgroundColor: '#fff',
+            borderLeft: '4px solid #1890ff',
+            borderRadius: 4,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+          }}
+        >
+          <h4 style={{ color: '#1890ff', marginBottom: 12 }}>🎓 算法学习手册：</h4>
+          <ul style={{ paddingLeft: 20, color: '#666', lineHeight: '1.8' }}>
+            <li>
+              <b>空间分桶 (Binning)</b>：页面被切成了 800px
+              一个的房间。卡片算出坐标后，会“登记”在它经过的房号下。
+            </li>
+            <li>
+              <b>O(1) 级查找</b>：滚动时，JS 直接按“房号”抓人。哪怕数组里有 1 万人，我也只抓这 2
+              间房里的 30 个人。
+            </li>
+            <li>
+              <b>数据状态</b>：当前列表总数 <b>{dataList.length}</b>，React 实际处理节点数{' '}
+              <b>{visibleIndices.length}</b>。
+            </li>
+            <li>
+              <b>硬件加速</b>：卡片位置由 <code>translate3d</code> 托管给
+              GPU，消灭了主线程的重排压力。
+            </li>
+          </ul>
         </div>
 
         <div style={{ position: 'relative', height: containerHeight }}>
@@ -180,19 +210,53 @@ const WaterfallProfessional: React.FC = () => {
                   boxSizing: 'border-box',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
                   // 顺滑的弹性动画
-                  transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  transition:
+                    'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
                   display: 'flex',
                   flexDirection: 'column',
                 }}
               >
                 {/* 骨架屏占位图 */}
-                <div style={{ width: '100%', height: pos.scaledImgHeight, backgroundColor: item.color, borderRadius: 8, marginBottom: 10, overflow: 'hidden' }}>
-                  <img src={item.imgUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <div
+                  style={{
+                    width: '100%',
+                    height: pos.scaledImgHeight,
+                    backgroundColor: item.color,
+                    borderRadius: 8,
+                    marginBottom: 10,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <img
+                    src={item.imgUrl}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
                 </div>
-                <div style={{ fontWeight: 'bold', fontSize: 14, color: '#222', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</div>
-                <div style={{ fontSize: 12, color: '#aaa', marginTop: 6, display: 'flex', justifyContent: 'space-between' }}>
-                    <span>索引: #{idx}</span>
-                    <span>{item.imgWidth}x{item.imgHeight}</span>
+                <div
+                  style={{
+                    fontWeight: 'bold',
+                    fontSize: 14,
+                    color: '#222',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {item.title}
+                </div>
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: '#aaa',
+                    marginTop: 6,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <span>索引: #{idx}</span>
+                  <span>
+                    {item.imgWidth}x{item.imgHeight}
+                  </span>
                 </div>
               </div>
             );
@@ -202,7 +266,9 @@ const WaterfallProfessional: React.FC = () => {
         {/* 哨兵节点 */}
         <div ref={sentinelRef} style={{ textAlign: 'center', padding: '60px 0' }}>
           {isUILoading && <Spin tip="正在应用空间索引检索数据..." />}
-          {!isUIHasMore && <span style={{ color: '#ccc' }}>—— 5000 条顶级索引数据已加载完毕 ——</span>}
+          {!isUIHasMore && (
+            <span style={{ color: '#ccc' }}>—— 5000 条顶级索引数据已加载完毕 ——</span>
+          )}
         </div>
       </div>
     </SimpleBar>

@@ -322,7 +322,8 @@ export const useCaseData = [
     title: '元素是否进入视口',
     scenario: '图片懒加载，需要判断元素是否进入可视区域',
     formula: 'rect.top < window.innerHeight && rect.bottom > 0',
-    explanation: 'getBoundingClientRect() 返回相对于视口的位置，top < innerHeight 表示元素顶部已进入视口',
+    explanation:
+      'getBoundingClientRect() 返回相对于视口的位置，top < innerHeight 表示元素顶部已进入视口',
     code: `function isInViewport(el) {
   const rect = el.getBoundingClientRect();
   return rect.top < window.innerHeight && rect.bottom > 0;

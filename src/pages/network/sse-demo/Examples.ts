@@ -2,9 +2,10 @@
  * SSE 流式推送演示 - 案例元数据
  */
 export const SSEDemoExamples = {
-  title: "SSE 流式推送 + react-markdown 自定义渲染",
+  title: 'SSE 流式推送 + react-markdown 自定义渲染',
 
-  problem: "后端通过 SSE 推送的是结构化 JSON（如 {table:'Apple', content:'...', type:'answer'}），前端需要将这些 JSON 流实时渲染为丰富的自定义卡片组件，同时保持流式输出的丝滑感。如果用原生 DOM 操作直接拼接，代码会非常难以维护。",
+  problem:
+    "后端通过 SSE 推送的是结构化 JSON（如 {table:'Apple', content:'...', type:'answer'}），前端需要将这些 JSON 流实时渲染为丰富的自定义卡片组件，同时保持流式输出的丝滑感。如果用原生 DOM 操作直接拼接，代码会非常难以维护。",
 
   sseSpec: `// SSE 协议格式：服务端 → 客户端单向流
 // Content-Type: text/event-stream

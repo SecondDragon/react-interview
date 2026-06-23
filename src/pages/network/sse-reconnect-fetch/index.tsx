@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, Typography, Alert, Tag, Button, Space, Badge, Divider, Radio, Input } from 'antd';
-import { PlayCircleOutlined, ReloadOutlined, DisconnectOutlined, InfoCircleOutlined, FireOutlined, ThunderboltOutlined, DatabaseOutlined, ApartmentOutlined } from '@ant-design/icons';
+import {
+  PlayCircleOutlined,
+  ReloadOutlined,
+  DisconnectOutlined,
+  InfoCircleOutlined,
+  FireOutlined,
+  ThunderboltOutlined,
+  DatabaseOutlined,
+  ApartmentOutlined,
+} from '@ant-design/icons';
 import CodeBlock from '@/components/CodeBlock';
 import { SSEReconnectFetchExamples } from './Examples';
 
@@ -43,7 +52,7 @@ class FetchEventSource {
     this.abortController = new AbortController();
 
     const headers: Record<string, string> = {
-      'Accept': 'text/event-stream',
+      Accept: 'text/event-stream',
     };
     if (this.lastEventId) {
       headers['Last-Event-ID'] = this.lastEventId;
@@ -94,7 +103,6 @@ class FetchEventSource {
       }
 
       this._emit('close');
-
     } catch (err: any) {
       if (err.name === 'AbortError') return;
       this._scheduleReconnect(err);
@@ -108,10 +116,7 @@ class FetchEventSource {
       return;
     }
 
-    const delay = Math.min(
-      this.baseDelay * Math.pow(2, this.retryCount),
-      this.maxDelay
-    );
+    const delay = Math.min(this.baseDelay * Math.pow(2, this.retryCount), this.maxDelay);
     const jitter = delay * 0.2 * Math.random();
     const finalDelay = delay + jitter;
 
@@ -146,7 +151,7 @@ class FetchEventSource {
   }
 
   _emit(event: string, data?: any) {
-    this.listeners.get(event)?.forEach(h => h(data));
+    this.listeners.get(event)?.forEach((h) => h(data));
   }
 
   close() {
@@ -166,7 +171,9 @@ const FetchReconnectDemo: React.FC = () => {
   const [lastEventId, setLastEventId] = useState<string | null>(null);
   const [reconnectCount, setReconnectCount] = useState(0);
   const [manualLastId, setManualLastId] = useState('');
-  const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'reconnecting' | 'fatal'>('idle');
+  const [status, setStatus] = useState<
+    'idle' | 'connecting' | 'connected' | 'reconnecting' | 'fatal'
+  >('idle');
   const [endpoint, setEndpoint] = useState('memory');
   const sourceRef = useRef<FetchEventSource | null>(null);
 
@@ -179,74 +186,78 @@ const FetchReconnectDemo: React.FC = () => {
     { label: 'Kafka', value: 'kafka', icon: <ApartmentOutlined /> },
   ];
 
-  const connect = useCallback((withReconnect = false, useManualId = false) => {
-    sourceRef.current?.close();
+  const connect = useCallback(
+    (withReconnect = false, useManualId = false) => {
+      sourceRef.current?.close();
 
-    const streamId = `fetch-${endpoint}`;
-    const effectiveLastId = useManualId && manualLastId ? manualLastId : (withReconnect ? lastEventId : null);
+      const streamId = `fetch-${endpoint}`;
+      const effectiveLastId =
+        useManualId && manualLastId ? manualLastId : withReconnect ? lastEventId : null;
 
-    let url = `${BASE_URL}/sse/${endpoint}?streamId=${streamId}`;
-    if (effectiveLastId) {
-      url += `&lastEventId=${encodeURIComponent(effectiveLastId)}`;
-    }
+      let url = `${BASE_URL}/sse/${endpoint}?streamId=${streamId}`;
+      if (effectiveLastId) {
+        url += `&lastEventId=${encodeURIComponent(effectiveLastId)}`;
+      }
 
-    const source = new FetchEventSource(url, {
-      maxRetries: 5,
-      baseDelay: 1000,
-      maxDelay: 10000,
-    });
-    sourceRef.current = source;
-
-    if (withReconnect || useManualId) {
-      setReconnectCount(c => c + 1);
-    }
-
-    setStatus('connecting');
-    setConnected(true);
-    setDone(false);
-
-    source
-      .on('open', () => {
-        setConnected(true);
-        setStatus('connected');
-      })
-      .on('message', (result: { data: any; id?: string }) => {
-        const data = result.data;
-        if (data.type === 'final') {
-          setConnected(false);
-          setDone(true);
-          setStatus('idle');
-          source.close();
-        } else {
-          const msg: MessageItem = {
-            id: result.id || '',
-            content: `[${data.table}] ${data.content}`,
-            isHistory: effectiveLastId ? true : false,
-          };
-          setMessages(prev => [...prev, msg]);
-          if (result.id) {
-            setLastEventId(result.id);
-          }
-        }
-      })
-      .on('reconnecting', (info: any) => {
-        setConnected(false);
-        setStatus('reconnecting');
-        setReconnectCount(c => c + 1);
-      })
-      .on('fatal', (err: Error) => {
-        setConnected(false);
-        setStatus('fatal');
-        setDone(true);
-      })
-      .on('error', (err: Error) => {
-        setConnected(false);
-        setStatus('idle');
-        setDone(true);
+      const source = new FetchEventSource(url, {
+        maxRetries: 5,
+        baseDelay: 1000,
+        maxDelay: 10000,
       });
+      sourceRef.current = source;
 
-    source.connect();
-  }, [endpoint, lastEventId, manualLastId]);
+      if (withReconnect || useManualId) {
+        setReconnectCount((c) => c + 1);
+      }
+
+      setStatus('connecting');
+      setConnected(true);
+      setDone(false);
+
+      source
+        .on('open', () => {
+          setConnected(true);
+          setStatus('connected');
+        })
+        .on('message', (result: { data: any; id?: string }) => {
+          const data = result.data;
+          if (data.type === 'final') {
+            setConnected(false);
+            setDone(true);
+            setStatus('idle');
+            source.close();
+          } else {
+            const msg: MessageItem = {
+              id: result.id || '',
+              content: `[${data.table}] ${data.content}`,
+              isHistory: effectiveLastId ? true : false,
+            };
+            setMessages((prev) => [...prev, msg]);
+            if (result.id) {
+              setLastEventId(result.id);
+            }
+          }
+        })
+        .on('reconnecting', (info: any) => {
+          setConnected(false);
+          setStatus('reconnecting');
+          setReconnectCount((c) => c + 1);
+        })
+        .on('fatal', (err: Error) => {
+          setConnected(false);
+          setStatus('fatal');
+          setDone(true);
+        })
+        .on('error', (err: Error) => {
+          setConnected(false);
+          setStatus('idle');
+          setDone(true);
+        });
+
+      source.connect();
+    },
+    [endpoint, lastEventId, manualLastId]
+  );
 
   const disconnect = useCallback(() => {
     sourceRef.current?.close();
@@ -274,7 +285,12 @@ const FetchReconnectDemo: React.FC = () => {
     setStatus('idle');
   }, []);
 
-  useEffect(() => () => { sourceRef.current?.close() }, []);
+  useEffect(
+    () => () => {
+      sourceRef.current?.close();
+    },
+    []
+  );
 
   return (
     <div>
@@ -282,7 +298,14 @@ const FetchReconnectDemo: React.FC = () => {
         <div>
           <Text strong>选择后端方案：</Text>
           <Radio.Group
-            options={endpointOptions.map(o => ({ label: <span>{o.icon} {o.label}</span>, value: o.value }))}
+            options={endpointOptions.map((o) => ({
+              label: (
+                <span>
+                  {o.icon} {o.label}
+                </span>
+              ),
+              value: o.value,
+            }))}
             value={endpoint}
             onChange={(e) => {
               setEndpoint(e.target.value);
@@ -295,20 +318,43 @@ const FetchReconnectDemo: React.FC = () => {
         </div>
 
         <Space>
-          <Button type="primary" icon={<PlayCircleOutlined />} onClick={() => connect(false, false)} disabled={connected}>
+          <Button
+            type="primary"
+            icon={<PlayCircleOutlined />}
+            onClick={() => connect(false, false)}
+            disabled={connected}
+          >
             连接 SSE
           </Button>
           <Button danger icon={<DisconnectOutlined />} onClick={disconnect} disabled={!connected}>
             断开
           </Button>
-          <Button icon={<ReloadOutlined />} onClick={reconnect} disabled={connected || !lastEventId} type="dashed">
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={reconnect}
+            disabled={connected || !lastEventId}
+            type="dashed"
+          >
             断点续传
           </Button>
           <Button onClick={reset}>重置</Button>
         </Space>
 
         <Space>
-          <Badge status={done ? 'success' : connected ? 'processing' : status === 'reconnecting' ? 'warning' : 'default'} text={done ? '完成' : connected ? '接收中' : status === 'reconnecting' ? '重连中' : '未连接'} />
+          <Badge
+            status={
+              done
+                ? 'success'
+                : connected
+                  ? 'processing'
+                  : status === 'reconnecting'
+                    ? 'warning'
+                    : 'default'
+            }
+            text={
+              done ? '完成' : connected ? '接收中' : status === 'reconnecting' ? '重连中' : '未连接'
+            }
+          />
           <Tag>{messages.length} 条消息</Tag>
           {lastEventId && <Tag color="blue">Last-ID: {lastEventId.slice(-12)}</Tag>}
           {reconnectCount > 0 && <Tag color="orange">重连: {reconnectCount}</Tag>}
@@ -322,7 +368,12 @@ const FetchReconnectDemo: React.FC = () => {
             style={{ width: 220 }}
             disabled={connected}
           />
-          <Button onClick={reconnectWithManualId} disabled={connected || !manualLastId} type="primary" ghost>
+          <Button
+            onClick={reconnectWithManualId}
+            disabled={connected || !manualLastId}
+            type="primary"
+            ghost
+          >
             按手动ID续传
           </Button>
         </Space>
@@ -348,11 +399,7 @@ const FetchReconnectDemo: React.FC = () => {
               {msg.content}
             </div>
           ))}
-          {connected && (
-            <div style={{ color: '#fbbf24', padding: '2px 0' }}>
-              ▌ 接收中...
-            </div>
-          )}
+          {connected && <div style={{ color: '#fbbf24', padding: '2px 0' }}>▌ 接收中...</div>}
         </div>
       </Card>
     </div>
@@ -366,9 +413,9 @@ const SSEReconnectFetchPage: React.FC = () => {
     <div>
       <Title level={2}>{SSEReconnectFetchExamples.title}</Title>
       <Paragraph>
-        这是目前 <Text strong>AI 流式对话场景的事实标准</Text>。
-        OpenAI、Anthropic、Google 等大厂都采用 <Text code>fetch + ReadableStream</Text> 方案，
-        因为它支持 POST 请求、自定义认证头，以及完全可控的重连策略。
+        这是目前 <Text strong>AI 流式对话场景的事实标准</Text>。 OpenAI、Anthropic、Google
+        等大厂都采用 <Text code>fetch + ReadableStream</Text> 方案， 因为它支持 POST
+        请求、自定义认证头，以及完全可控的重连策略。
       </Paragraph>
 
       {/* 一、是什么 */}
@@ -384,15 +431,24 @@ const SSEReconnectFetchPage: React.FC = () => {
       {/* 三、怎么做 */}
       <Card title="三、怎么做" style={{ marginBottom: 24 }}>
         <Paragraph>
-          <Text strong>核心思路：</Text>用 fetch 发起请求，手动读取 ReadableStream，
-          自己实现 SSE 帧解析和指数退避重连。
+          <Text strong>核心思路：</Text>用 fetch 发起请求，手动读取 ReadableStream， 自己实现 SSE
+          帧解析和指数退避重连。
         </Paragraph>
-        <CodeBlock code={SSEReconnectFetchExamples.how} title="完整实现" type="success" language="typescript" />
+        <CodeBlock
+          code={SSEReconnectFetchExamples.how}
+          title="完整实现"
+          type="success"
+          language="typescript"
+        />
       </Card>
 
       {/* 四、互动演示 */}
       <Card
-        title={<span>四、互动演示 <Tag color="blue">Live Demo</Tag></span>}
+        title={
+          <span>
+            四、互动演示 <Tag color="blue">Live Demo</Tag>
+          </span>
+        }
         style={{ marginBottom: 24 }}
       >
         <Alert
@@ -406,22 +462,33 @@ const SSEReconnectFetchPage: React.FC = () => {
 
       {/* 五、优缺点 */}
       <Card title="五、优缺点" style={{ marginBottom: 24 }}>
-        <Paragraph style={{ whiteSpace: 'pre-line' }}>{SSEReconnectFetchExamples.prosCons}</Paragraph>
+        <Paragraph style={{ whiteSpace: 'pre-line' }}>
+          {SSEReconnectFetchExamples.prosCons}
+        </Paragraph>
       </Card>
 
       {/* 六、适用场景 */}
       <Card title="六、适用场景" style={{ marginBottom: 24 }}>
-        <Paragraph style={{ whiteSpace: 'pre-line' }}>{SSEReconnectFetchExamples.whenToUse}</Paragraph>
+        <Paragraph style={{ whiteSpace: 'pre-line' }}>
+          {SSEReconnectFetchExamples.whenToUse}
+        </Paragraph>
       </Card>
 
       {/* 七、注意事项 */}
       <Card title="七、注意事项" style={{ background: '#fffbe6', marginBottom: 24 }}>
-        <Paragraph style={{ whiteSpace: 'pre-line' }}>{SSEReconnectFetchExamples.caveats}</Paragraph>
+        <Paragraph style={{ whiteSpace: 'pre-line' }}>
+          {SSEReconnectFetchExamples.caveats}
+        </Paragraph>
       </Card>
 
       {/* 八、大厂参考 */}
       <Card title="八、大厂参考：OpenAI 重连策略" style={{ background: '#f0f5ff' }}>
-        <CodeBlock code={SSEReconnectFetchExamples.openaiStrategy} title="OpenAI SDK 重连配置" type="info" language="typescript" />
+        <CodeBlock
+          code={SSEReconnectFetchExamples.openaiStrategy}
+          title="OpenAI SDK 重连配置"
+          type="info"
+          language="typescript"
+        />
       </Card>
     </div>
   );

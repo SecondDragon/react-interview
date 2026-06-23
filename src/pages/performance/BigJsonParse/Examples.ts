@@ -404,7 +404,7 @@ export function generateBigJSON(itemCount: number): string {
   const items = [];
   const statuses = ['正常', '冻结', '核销', '转让', '质押'];
   const types = ['贷款', '债券', '票据', '存款', '理财'];
-  
+
   for (let i = 0; i < itemCount; i++) {
     items.push({
       id: 'ASSET_' + String(i).padStart(10, '0'),
@@ -430,13 +430,13 @@ export function generateBigJSON(itemCount: number): string {
           collateralType: '房产抵押',
           collateralValue: Math.round(Math.random() * 50000000),
           region: ['北京', '上海', '深圳', '广州'][Math.floor(Math.random() * 4)],
-        }
+        },
       },
       // 模拟大字符串字段（如合同摘要）
       contractSummary: '本合同由甲方（贷款人）与乙方（借款人）于'.repeat(10),
     });
   }
-  
+
   return JSON.stringify({
     code: 200,
     message: 'success',
@@ -447,8 +447,8 @@ export function generateBigJSON(itemCount: number): string {
         totalAmount: items.reduce((sum, item) => sum + item.amount, 0),
         countByStatus: {},
         reportTime: new Date().toISOString(),
-      }
-    }
+      },
+    },
   });
 }
 
@@ -471,10 +471,10 @@ export function parseJSONInWorker(
       }
     };
   `;
-  
+
   const blob = new Blob([workerCode], { type: 'application/javascript' });
   const worker = new Worker(URL.createObjectURL(blob));
-  
+
   const promise = new Promise<any>((resolve, reject) => {
     worker.onmessage = (e) => {
       if (e.data.type === 'success') {
@@ -484,12 +484,12 @@ export function parseJSONInWorker(
       }
       worker.terminate();
     };
-    
+
     worker.onerror = (err) => {
       reject(err);
       worker.terminate();
     };
-    
+
     // 模拟进度（Worker 本身不支持真正的进度，这里用定时器模拟）
     let progress = 0;
     const interval = setInterval(() => {
@@ -497,10 +497,10 @@ export function parseJSONInWorker(
       if (progress <= 90) onProgress(progress);
       else clearInterval(interval);
     }, 50);
-    
+
     worker.postMessage(jsonText);
   });
-  
+
   return {
     promise,
     terminate: () => worker.terminate(),
@@ -524,7 +524,7 @@ export async function parseJSONInChunks(
     onChunk(data.data?.items || [], 100);
     return data;
   }
-  
+
   // 提取 items 数组部分（简化处理，实际应该用真正的流式解析器）
   const itemsMatch = jsonText.match(/"items"\s*:\s*(\[[\s\S]*?\])\s*[,}]/);
   if (!itemsMatch) {
@@ -532,20 +532,20 @@ export async function parseJSONInChunks(
     onChunk(data.data?.items || [], 100);
     return data;
   }
-  
+
   // 这里简化演示：实际应该逐字符扫描提取对象
   // 为了 Demo 效果，我们直接 parse 然后分批回调
   const data = JSON.parse(jsonText);
   const items = data.data?.items || [];
-  
+
   for (let i = 0; i < items.length; i += chunkSize) {
     const chunk = items.slice(i, i + chunkSize);
     const progress = Math.round((i / items.length) * 100);
     onChunk(chunk, progress);
-    
+
     // 让出主线程
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
   }
-  
+
   return data;
 }

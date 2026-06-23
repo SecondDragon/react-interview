@@ -1,6 +1,30 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Card, Typography, Alert, Tag, Tabs, Table, Divider, Button, Space, Badge, Radio, Input, Form } from 'antd';
-import { DatabaseOutlined, FireOutlined, ThunderboltOutlined, InfoCircleOutlined, ApartmentOutlined, PlayCircleOutlined, ReloadOutlined, DisconnectOutlined, SendOutlined } from '@ant-design/icons';
+import {
+  Card,
+  Typography,
+  Alert,
+  Tag,
+  Tabs,
+  Table,
+  Divider,
+  Button,
+  Space,
+  Badge,
+  Radio,
+  Input,
+  Form,
+} from 'antd';
+import {
+  DatabaseOutlined,
+  FireOutlined,
+  ThunderboltOutlined,
+  InfoCircleOutlined,
+  ApartmentOutlined,
+  PlayCircleOutlined,
+  ReloadOutlined,
+  DisconnectOutlined,
+  SendOutlined,
+} from '@ant-design/icons';
 import CodeBlock from '@/components/CodeBlock';
 import { SSEBackendStorageExamples } from './Examples';
 
@@ -35,85 +59,91 @@ const SSELiveDemo: React.FC = () => {
 
   const BASE_URL = 'http://localhost:8080/api';
 
-  const connect = useCallback(async (withReconnect = false, useManualId = false) => {
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
+  const connect = useCallback(
+    async (withReconnect = false, useManualId = false) => {
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
 
-    const streamId = `demo-${endpoint}`;
-    const effectiveLastId = useManualId && manualLastId ? manualLastId : (withReconnect ? lastEventId : null);
+      const streamId = `demo-${endpoint}`;
+      const effectiveLastId =
+        useManualId && manualLastId ? manualLastId : withReconnect ? lastEventId : null;
 
-    const url = `${BASE_URL}/sse/${endpoint}?streamId=${streamId}`;
-    const headers: Record<string, string> = {
-      'Accept': 'text/event-stream',
-    };
-    if (effectiveLastId) {
-      headers['Last-Event-ID'] = effectiveLastId;
-    }
+      const url = `${BASE_URL}/sse/${endpoint}?streamId=${streamId}`;
+      const headers: Record<string, string> = {
+        Accept: 'text/event-stream',
+      };
+      if (effectiveLastId) {
+        headers['Last-Event-ID'] = effectiveLastId;
+      }
 
-    setConnected(true);
-    setDone(false);
+      setConnected(true);
+      setDone(false);
 
-    if (withReconnect || useManualId) {
-      setReconnectCount(c => c + 1);
-    }
+      if (withReconnect || useManualId) {
+        setReconnectCount((c) => c + 1);
+      }
 
-    try {
-      const response = await fetch(url, { headers, signal: controller.signal });
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
+      try {
+        const response = await fetch(url, { headers, signal: controller.signal });
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
 
-      if (!reader) return;
+        if (!reader) return;
 
-      while (true) {
-        const { done: readerDone, value } = await reader.read();
-        if (readerDone) break;
+        while (true) {
+          const { done: readerDone, value } = await reader.read();
+          if (readerDone) break;
 
-        buffer += decoder.decode(value, { stream: true });
+          buffer += decoder.decode(value, { stream: true });
 
-        // 按双换行分割 SSE 帧（支持 \n\n 和 \r\n\r\n）
-        const frames = buffer.split(/\r?\n\r?\n/);
-        buffer = frames.pop() || '';
+          // 按双换行分割 SSE 帧（支持 \n\n 和 \r\n\r\n）
+          const frames = buffer.split(/\r?\n\r?\n/);
+          buffer = frames.pop() || '';
 
-        for (const frame of frames) {
-          const lines = frame.split(/\r?\n/);
-          let currentId = '';
-          let currentData = '';
+          for (const frame of frames) {
+            const lines = frame.split(/\r?\n/);
+            let currentId = '';
+            let currentData = '';
 
-          for (const line of lines) {
-            if (line.startsWith('id:')) {
-              currentId = line.slice(3).trim();
-            } else if (line.startsWith('data:')) {
-              currentData = line.slice(5).trim();
+            for (const line of lines) {
+              if (line.startsWith('id:')) {
+                currentId = line.slice(3).trim();
+              } else if (line.startsWith('data:')) {
+                currentData = line.slice(5).trim();
+              }
+            }
+
+            if (currentData) {
+              try {
+                const chunk: StreamChunk = JSON.parse(currentData);
+                const msg: MessageItem = {
+                  id: currentId,
+                  content: `[${chunk.table}] ${chunk.content}`,
+                  isHistory: effectiveLastId ? true : false,
+                };
+                setMessages((prev) => [...prev, msg]);
+                if (currentId) {
+                  setLastEventId(currentId);
+                }
+              } catch {
+                /* ignore */
+              }
             }
           }
-
-          if (currentData) {
-            try {
-              const chunk: StreamChunk = JSON.parse(currentData);
-              const msg: MessageItem = {
-                id: currentId,
-                content: `[${chunk.table}] ${chunk.content}`,
-                isHistory: effectiveLastId ? true : false,
-              };
-              setMessages(prev => [...prev, msg]);
-              if (currentId) {
-                setLastEventId(currentId);
-              }
-            } catch { /* ignore */ }
-          }
         }
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          console.error('SSE error:', err);
+        }
+      } finally {
+        setConnected(false);
+        setDone(true);
       }
-    } catch (err: any) {
-      if (err.name !== 'AbortError') {
-        console.error('SSE error:', err);
-      }
-    } finally {
-      setConnected(false);
-      setDone(true);
-    }
-  }, [endpoint, lastEventId, manualLastId]);
+    },
+    [endpoint, lastEventId, manualLastId]
+  );
 
   const disconnect = useCallback(() => {
     abortRef.current?.abort();
@@ -162,7 +192,12 @@ const SSELiveDemo: React.FC = () => {
     }
   }, [endpoint, sendContent, sendTable]);
 
-  useEffect(() => () => { abortRef.current?.abort() }, []);
+  useEffect(
+    () => () => {
+      abortRef.current?.abort();
+    },
+    []
+  );
 
   const endpointOptions = [
     { label: '内存队列', value: 'memory' },
@@ -198,12 +233,7 @@ const SSELiveDemo: React.FC = () => {
           >
             连接 SSE (GET)
           </Button>
-          <Button
-            icon={<DisconnectOutlined />}
-            onClick={disconnect}
-            disabled={!connected}
-            danger
-          >
+          <Button icon={<DisconnectOutlined />} onClick={disconnect} disabled={!connected} danger>
             断开
           </Button>
           <Button
@@ -274,14 +304,12 @@ const SSELiveDemo: React.FC = () => {
         </Card>
       </Space>
 
-      <Card
-        title="📡 实时消息流"
-        size="small"
-        style={{ background: '#1e1e1e', color: '#d4d4d4' }}
-      >
+      <Card title="📡 实时消息流" size="small" style={{ background: '#1e1e1e', color: '#d4d4d4' }}>
         <div style={{ maxHeight: 350, overflowY: 'auto', fontFamily: 'monospace', fontSize: 13 }}>
           {messages.length === 0 && (
-            <Text style={{ color: '#9ca3af' }}>等待 SSE 数据... 点击"连接 SSE"或 POST 发送消息</Text>
+            <Text style={{ color: '#9ca3af' }}>
+              等待 SSE 数据... 点击"连接 SSE"或 POST 发送消息
+            </Text>
           )}
           {messages.map((msg, i) => (
             <div key={i} style={{ padding: '2px 0', color: msg.isHistory ? '#6b7280' : '#9cdcfe' }}>
@@ -290,11 +318,7 @@ const SSELiveDemo: React.FC = () => {
               {msg.content}
             </div>
           ))}
-          {connected && (
-            <div style={{ color: '#fbbf24', padding: '2px 0' }}>
-              ▌ 接收中...
-            </div>
-          )}
+          {connected && <div style={{ color: '#fbbf24', padding: '2px 0' }}>▌ 接收中...</div>}
         </div>
       </Card>
     </div>
@@ -307,10 +331,38 @@ const SSEBackendStoragePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
   const comparisonData = [
-    { scheme: '内存队列', delay: '最低', capacity: '1000条', persist: '否', distribute: '否', suited: '演示/内部工具' },
-    { scheme: 'Redis Stream', delay: '低', capacity: '万级', persist: '可选(AOF)', distribute: '是', suited: '中等规模分布式' },
-    { scheme: '数据库+缓存', delay: '中', capacity: '无上限', persist: '是', distribute: '是', suited: '生产环境高并发' },
-    { scheme: 'Kafka 消息总线', delay: '中低', capacity: '百万级+', persist: '是', distribute: '是', suited: '超高并发/削峰' },
+    {
+      scheme: '内存队列',
+      delay: '最低',
+      capacity: '1000条',
+      persist: '否',
+      distribute: '否',
+      suited: '演示/内部工具',
+    },
+    {
+      scheme: 'Redis Stream',
+      delay: '低',
+      capacity: '万级',
+      persist: '可选(AOF)',
+      distribute: '是',
+      suited: '中等规模分布式',
+    },
+    {
+      scheme: '数据库+缓存',
+      delay: '中',
+      capacity: '无上限',
+      persist: '是',
+      distribute: '是',
+      suited: '生产环境高并发',
+    },
+    {
+      scheme: 'Kafka 消息总线',
+      delay: '中低',
+      capacity: '百万级+',
+      persist: '是',
+      distribute: '是',
+      suited: '超高并发/削峰',
+    },
   ];
 
   const columns = [
@@ -339,7 +391,11 @@ const SSEBackendStoragePage: React.FC = () => {
     },
     {
       key: 'demo',
-      label: <span><PlayCircleOutlined /> 实时演示</span>,
+      label: (
+        <span>
+          <PlayCircleOutlined /> 实时演示
+        </span>
+      ),
       children: (
         <div>
           <Alert
@@ -348,10 +404,19 @@ const SSEBackendStoragePage: React.FC = () => {
             message="连接后端四种 SSE 存储方案，体验断点续传"
             description={
               <ul style={{ margin: '8px 0', paddingLeft: 20 }}>
-                <li><strong>GET 连接 SSE</strong>：接收流式消息，自动记录 Last-Event-ID</li>
-                <li><strong>POST 发送消息</strong>：主动发送消息到当前方案，所有连接的客户端都能收到</li>
-                <li><strong>断点续传</strong>：断开后再连接，只收到断点之后的消息（历史消息标记为灰色）</li>
-                <li><strong>手动 ID 续传</strong>：输入任意消息 ID，验证后端能否正确返回后续消息</li>
+                <li>
+                  <strong>GET 连接 SSE</strong>：接收流式消息，自动记录 Last-Event-ID
+                </li>
+                <li>
+                  <strong>POST 发送消息</strong>：主动发送消息到当前方案，所有连接的客户端都能收到
+                </li>
+                <li>
+                  <strong>断点续传</strong>
+                  ：断开后再连接，只收到断点之后的消息（历史消息标记为灰色）
+                </li>
+                <li>
+                  <strong>手动 ID 续传</strong>：输入任意消息 ID，验证后端能否正确返回后续消息
+                </li>
               </ul>
             }
             style={{ marginBottom: 16 }}
@@ -362,43 +427,104 @@ const SSEBackendStoragePage: React.FC = () => {
     },
     {
       key: 'memory',
-      label: <span><FireOutlined /> 内存队列</span>,
+      label: (
+        <span>
+          <FireOutlined /> 内存队列
+        </span>
+      ),
       children: (
         <div>
-          <Alert type="info" showIcon message="适用：单实例、低并发、可接受重启丢失" style={{ marginBottom: 16 }} />
-          <CodeBlock code={SSEBackendStorageExamples.memoryQueue} title="内存队列实现" type="warning" language="javascript" />
+          <Alert
+            type="info"
+            showIcon
+            message="适用：单实例、低并发、可接受重启丢失"
+            style={{ marginBottom: 16 }}
+          />
+          <CodeBlock
+            code={SSEBackendStorageExamples.memoryQueue}
+            title="内存队列实现"
+            type="warning"
+            language="javascript"
+          />
         </div>
       ),
     },
     {
       key: 'redis',
-      label: <span><ThunderboltOutlined /> Redis Stream</span>,
+      label: (
+        <span>
+          <ThunderboltOutlined /> Redis Stream
+        </span>
+      ),
       children: (
         <div>
-          <Alert type="info" showIcon message="适用：分布式、中等并发、消息量可控" style={{ marginBottom: 16 }} />
-          <CodeBlock code={SSEBackendStorageExamples.redisStream} title="Redis Stream 实现" type="success" language="javascript" />
+          <Alert
+            type="info"
+            showIcon
+            message="适用：分布式、中等并发、消息量可控"
+            style={{ marginBottom: 16 }}
+          />
+          <CodeBlock
+            code={SSEBackendStorageExamples.redisStream}
+            title="Redis Stream 实现"
+            type="success"
+            language="javascript"
+          />
         </div>
       ),
     },
     {
       key: 'db',
-      label: <span><DatabaseOutlined /> 数据库+缓存</span>,
+      label: (
+        <span>
+          <DatabaseOutlined /> 数据库+缓存
+        </span>
+      ),
       children: (
         <div>
-          <Alert type="info" showIcon message="适用：高并发、需要审计、消息量大" style={{ marginBottom: 16 }} />
-          <CodeBlock code={SSEBackendStorageExamples.databaseCache} title="SQL 表设计" type="info" language="sql" />
+          <Alert
+            type="info"
+            showIcon
+            message="适用：高并发、需要审计、消息量大"
+            style={{ marginBottom: 16 }}
+          />
+          <CodeBlock
+            code={SSEBackendStorageExamples.databaseCache}
+            title="SQL 表设计"
+            type="info"
+            language="sql"
+          />
           <Divider />
-          <CodeBlock code={SSEBackendStorageExamples.databaseCacheCode} title="Node.js 实现" type="success" language="javascript" />
+          <CodeBlock
+            code={SSEBackendStorageExamples.databaseCacheCode}
+            title="Node.js 实现"
+            type="success"
+            language="javascript"
+          />
         </div>
       ),
     },
     {
       key: 'kafka',
-      label: <span><ApartmentOutlined /> Kafka 消息总线</span>,
+      label: (
+        <span>
+          <ApartmentOutlined /> Kafka 消息总线
+        </span>
+      ),
       children: (
         <div>
-          <Alert type="info" showIcon message="适用：超高并发、削峰填谷、多消费者、消息回放" style={{ marginBottom: 16 }} />
-          <CodeBlock code={SSEBackendStorageExamples.kafkaCode} title="Kafka 实现" type="warning" language="javascript" />
+          <Alert
+            type="info"
+            showIcon
+            message="适用：超高并发、削峰填谷、多消费者、消息回放"
+            style={{ marginBottom: 16 }}
+          />
+          <CodeBlock
+            code={SSEBackendStorageExamples.kafkaCode}
+            title="Kafka 实现"
+            type="warning"
+            language="javascript"
+          />
         </div>
       ),
     },
@@ -407,7 +533,16 @@ const SSEBackendStoragePage: React.FC = () => {
       label: '架构图',
       children: (
         <div>
-          <pre style={{ background: '#1e1e1e', color: '#d4d4d4', padding: 16, borderRadius: 6, fontSize: 13, lineHeight: 1.6 }}>
+          <pre
+            style={{
+              background: '#1e1e1e',
+              color: '#d4d4d4',
+              padding: 16,
+              borderRadius: 6,
+              fontSize: 13,
+              lineHeight: 1.6,
+            }}
+          >
             {SSEBackendStorageExamples.architecture}
           </pre>
         </div>
@@ -418,7 +553,9 @@ const SSEBackendStoragePage: React.FC = () => {
       label: '注意事项',
       children: (
         <div>
-          <Paragraph style={{ whiteSpace: 'pre-line' }}>{SSEBackendStorageExamples.caveats}</Paragraph>
+          <Paragraph style={{ whiteSpace: 'pre-line' }}>
+            {SSEBackendStorageExamples.caveats}
+          </Paragraph>
         </div>
       ),
     },
@@ -428,8 +565,9 @@ const SSEBackendStoragePage: React.FC = () => {
     <div>
       <Title level={2}>{SSEBackendStorageExamples.title}</Title>
       <Paragraph>
-        SSE 断点续传的核心是<strong>数据存储设计</strong>。前端重连时带上 <Text code>Last-Event-ID</Text>，
-        后端必须能从存储中查出该 ID 之后的消息。四种方案各有适用场景。
+        SSE 断点续传的核心是<strong>数据存储设计</strong>。前端重连时带上{' '}
+        <Text code>Last-Event-ID</Text>， 后端必须能从存储中查出该 ID
+        之后的消息。四种方案各有适用场景。
       </Paragraph>
 
       <Card>

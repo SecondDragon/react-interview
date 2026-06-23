@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, Typography, Alert, Tag, Button, Space, Badge, Divider, Row, Col } from 'antd';
-import { PlayCircleOutlined, PauseCircleOutlined, InfoCircleOutlined, ThunderboltOutlined, NotificationOutlined } from '@ant-design/icons';
+import {
+  PlayCircleOutlined,
+  PauseCircleOutlined,
+  InfoCircleOutlined,
+  ThunderboltOutlined,
+  NotificationOutlined,
+} from '@ant-design/icons';
 import CodeBlock from '@/components/CodeBlock';
 import { SSEReconnectHybridExamples } from './Examples';
 
@@ -27,17 +33,17 @@ const HybridReconnectDemo: React.FC = () => {
     const connectWs = (attempt: number) => {
       if (attempt > 3) {
         setWsState('open');
-        setWsMessages(prev => [...prev, '✅ WebSocket 连接成功']);
+        setWsMessages((prev) => [...prev, '✅ WebSocket 连接成功']);
         // 模拟高频消息
         const interval = setInterval(() => {
-          setWsMessages(prev => [...prev, `⚡ 实时操作: ${new Date().toLocaleTimeString()}`]);
+          setWsMessages((prev) => [...prev, `⚡ 实时操作: ${new Date().toLocaleTimeString()}`]);
         }, 2000);
         wsTimerRef.current = interval as any;
         return;
       }
       if (attempt > 0) {
         setWsRetry(attempt);
-        setWsMessages(prev => [...prev, `🔄 WS 第 ${attempt} 次重试...`]);
+        setWsMessages((prev) => [...prev, `🔄 WS 第 ${attempt} 次重试...`]);
       }
       setTimeout(() => connectWs(attempt + 1), 1000 * attempt + 500);
     };
@@ -51,17 +57,20 @@ const HybridReconnectDemo: React.FC = () => {
     const connectSse = (attempt: number) => {
       if (attempt > 2) {
         setSseState('open');
-        setSseMessages(prev => [...prev, '✅ SSE 连接成功']);
+        setSseMessages((prev) => [...prev, '✅ SSE 连接成功']);
         // 模拟低频通知
         const interval = setInterval(() => {
-          setSseMessages(prev => [...prev, `📢 系统通知: 用户${Math.floor(Math.random() * 100)} 上线`]);
+          setSseMessages((prev) => [
+            ...prev,
+            `📢 系统通知: 用户${Math.floor(Math.random() * 100)} 上线`,
+          ]);
         }, 4000);
         sseTimerRef.current = interval as any;
         return;
       }
       if (attempt > 0) {
         setSseRetry(attempt);
-        setSseMessages(prev => [...prev, `🔄 SSE 第 ${attempt} 次重试...`]);
+        setSseMessages((prev) => [...prev, `🔄 SSE 第 ${attempt} 次重试...`]);
       }
       setTimeout(() => connectSse(attempt + 1), 1500 * attempt + 800);
     };
@@ -73,29 +82,45 @@ const HybridReconnectDemo: React.FC = () => {
     if (sseTimerRef.current) clearInterval(sseTimerRef.current);
     setWsState('closed');
     setSseState('closed');
-    setWsMessages(prev => [...prev, '❌ WebSocket 断开']);
-    setSseMessages(prev => [...prev, '❌ SSE 断开']);
+    setWsMessages((prev) => [...prev, '❌ WebSocket 断开']);
+    setSseMessages((prev) => [...prev, '❌ SSE 断开']);
   }, []);
 
-  useEffect(() => () => {
-    if (wsTimerRef.current) clearInterval(wsTimerRef.current);
-    if (sseTimerRef.current) clearInterval(sseTimerRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (wsTimerRef.current) clearInterval(wsTimerRef.current);
+      if (sseTimerRef.current) clearInterval(sseTimerRef.current);
+    },
+    []
+  );
 
-  const stateColor = (s: string) => ({
-    closed: 'default',
-    connecting: 'processing',
-    open: 'success',
-    reconnecting: 'warning',
-  } as any)[s] || 'default';
+  const stateColor = (s: string) =>
+    (
+      ({
+        closed: 'default',
+        connecting: 'processing',
+        open: 'success',
+        reconnecting: 'warning',
+      }) as any
+    )[s] || 'default';
 
   return (
     <div>
       <Space style={{ marginBottom: 16 }}>
-        <Button type="primary" icon={<PlayCircleOutlined />} onClick={connect} disabled={wsState === 'open' || sseState === 'open'}>
+        <Button
+          type="primary"
+          icon={<PlayCircleOutlined />}
+          onClick={connect}
+          disabled={wsState === 'open' || sseState === 'open'}
+        >
           连接双通道
         </Button>
-        <Button danger icon={<PauseCircleOutlined />} onClick={disconnect} disabled={wsState === 'closed' && sseState === 'closed'}>
+        <Button
+          danger
+          icon={<PauseCircleOutlined />}
+          onClick={disconnect}
+          disabled={wsState === 'closed' && sseState === 'closed'}
+        >
           断开
         </Button>
       </Space>
@@ -111,17 +136,31 @@ const HybridReconnectDemo: React.FC = () => {
       <Row gutter={16}>
         <Col span={12}>
           <Card
-            title={<span><ThunderboltOutlined /> WebSocket 通道（高频双向）</span>}
+            title={
+              <span>
+                <ThunderboltOutlined /> WebSocket 通道（高频双向）
+              </span>
+            }
             size="small"
             style={{ background: '#1e1e1e', color: '#d4d4d4' }}
           >
             <div style={{ marginBottom: 8 }}>
               <Badge status={stateColor(wsState)} text={wsState} />
-              <Tag color="blue" style={{ marginLeft: 8 }}>重试: {wsRetry}</Tag>
+              <Tag color="blue" style={{ marginLeft: 8 }}>
+                重试: {wsRetry}
+              </Tag>
             </div>
             <div style={{ maxHeight: 250, overflowY: 'auto' }}>
               {wsMessages.map((msg, i) => (
-                <div key={i} style={{ padding: '3px 0', borderBottom: '1px solid #333', fontSize: '0.8rem', color: '#f0a0a0' }}>
+                <div
+                  key={i}
+                  style={{
+                    padding: '3px 0',
+                    borderBottom: '1px solid #333',
+                    fontSize: '0.8rem',
+                    color: '#f0a0a0',
+                  }}
+                >
                   {msg}
                 </div>
               ))}
@@ -130,17 +169,31 @@ const HybridReconnectDemo: React.FC = () => {
         </Col>
         <Col span={12}>
           <Card
-            title={<span><NotificationOutlined /> SSE 通道（低频单向）</span>}
+            title={
+              <span>
+                <NotificationOutlined /> SSE 通道（低频单向）
+              </span>
+            }
             size="small"
             style={{ background: '#1e1e1e', color: '#d4d4d4' }}
           >
             <div style={{ marginBottom: 8 }}>
               <Badge status={stateColor(sseState)} text={sseState} />
-              <Tag color="blue" style={{ marginLeft: 8 }}>重试: {sseRetry}</Tag>
+              <Tag color="blue" style={{ marginLeft: 8 }}>
+                重试: {sseRetry}
+              </Tag>
             </div>
             <div style={{ maxHeight: 250, overflowY: 'auto' }}>
               {sseMessages.map((msg, i) => (
-                <div key={i} style={{ padding: '3px 0', borderBottom: '1px solid #333', fontSize: '0.8rem', color: '#a0c0f0' }}>
+                <div
+                  key={i}
+                  style={{
+                    padding: '3px 0',
+                    borderBottom: '1px solid #333',
+                    fontSize: '0.8rem',
+                    color: '#a0c0f0',
+                  }}
+                >
                   {msg}
                 </div>
               ))}
@@ -179,12 +232,21 @@ const SSEReconnectHybridPage: React.FC = () => {
           <Text strong>核心思路：</Text>统一连接管理器，按消息类型自动路由到对应通道，
           重连策略、心跳检测等基础设施共享。
         </Paragraph>
-        <CodeBlock code={SSEReconnectHybridExamples.how} title="混合架构实现" type="success" language="typescript" />
+        <CodeBlock
+          code={SSEReconnectHybridExamples.how}
+          title="混合架构实现"
+          type="success"
+          language="typescript"
+        />
       </Card>
 
       {/* 四、互动演示 */}
       <Card
-        title={<span>四、互动演示 <Tag color="blue">Live Demo</Tag></span>}
+        title={
+          <span>
+            四、互动演示 <Tag color="blue">Live Demo</Tag>
+          </span>
+        }
         style={{ marginBottom: 24 }}
       >
         <Alert
@@ -198,22 +260,37 @@ const SSEReconnectHybridPage: React.FC = () => {
 
       {/* 五、优缺点 */}
       <Card title="五、优缺点" style={{ marginBottom: 24 }}>
-        <Paragraph style={{ whiteSpace: 'pre-line' }}>{SSEReconnectHybridExamples.prosCons}</Paragraph>
+        <Paragraph style={{ whiteSpace: 'pre-line' }}>
+          {SSEReconnectHybridExamples.prosCons}
+        </Paragraph>
       </Card>
 
       {/* 六、适用场景 */}
       <Card title="六、适用场景" style={{ marginBottom: 24 }}>
-        <Paragraph style={{ whiteSpace: 'pre-line' }}>{SSEReconnectHybridExamples.whenToUse}</Paragraph>
+        <Paragraph style={{ whiteSpace: 'pre-line' }}>
+          {SSEReconnectHybridExamples.whenToUse}
+        </Paragraph>
       </Card>
 
       {/* 七、注意事项 */}
       <Card title="七、注意事项" style={{ background: '#fffbe6', marginBottom: 24 }}>
-        <Paragraph style={{ whiteSpace: 'pre-line' }}>{SSEReconnectHybridExamples.caveats}</Paragraph>
+        <Paragraph style={{ whiteSpace: 'pre-line' }}>
+          {SSEReconnectHybridExamples.caveats}
+        </Paragraph>
       </Card>
 
       {/* 八、架构图 */}
       <Card title="八、整体架构" style={{ background: '#f0f5ff' }}>
-        <pre style={{ background: '#1e1e1e', color: '#d4d4d4', padding: 16, borderRadius: 6, fontSize: 13, lineHeight: 1.6 }}>
+        <pre
+          style={{
+            background: '#1e1e1e',
+            color: '#d4d4d4',
+            padding: 16,
+            borderRadius: 6,
+            fontSize: 13,
+            lineHeight: 1.6,
+          }}
+        >
           {SSEReconnectHybridExamples.architecture}
         </pre>
       </Card>

@@ -13,10 +13,7 @@ const ClampDemo = () => {
   const minSize = 14;
   const preferredVw = 4.267;
   const maxSize = 20;
-  const calculatedSize = Math.min(
-    maxSize,
-    Math.max(minSize, (viewportWidth * preferredVw) / 100)
-  );
+  const calculatedSize = Math.min(maxSize, Math.max(minSize, (viewportWidth * preferredVw) / 100));
 
   return (
     <Card title="🎨 clamp() 字体适配演示" size="small">
