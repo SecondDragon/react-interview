@@ -60,7 +60,40 @@
 
 - **注释与解释：** 所有代码注释及文档解释必须使用 **中文**。
 - **代码块展示：** 优先使用 `@src/components/CodeDiff.tsx` 组件进行代码对比展示。
-- **数据源管理：** 案例的元数据（描述、原理简述、Bad/Good Code）应维护在各自的组件中；组件如果过大的话，维护在同名或者简写的 ts/js 文件中，总之要让他在按照字母排序时和演示组件挨得最近。
+
+- **源码提取规范（?raw 模式）：**
+  - 使用 Vite 的 `?raw` 语法在构建时自动提取源码字符串，替代手写在模板字符串中的代码示例。
+  - Bad/Good Code 应提取为独立的 `.tsx` / `.css` 文件，统一放在 `demos/` 子目录下：
+    ```
+    pages/SomeTopic/
+    ├── index.tsx          # 主页面
+    ├── data.ts            # 纯数据（描述/原理/对比表等，不含代码字符串）
+    ├── LiveDemo.tsx       # 互动演示组件
+    └── demos/
+        ├── topic-name.bad.tsx    # ❌ 反面教材（仅用于 ?raw 提取，不会被编译执行）
+        └── topic-name.good.tsx   # ✅ 最佳实践（仅用于 ?raw 提取）
+    ```
+  - 命名约定：反面教材使用 `.bad.tsx` 后缀，最佳实践使用 `.good.tsx` 后缀。
+  - `.bad.tsx` 文件已被 Vite 的 `?raw` 导入，TypeScript 编译器通过 `tsconfig.json` 中的 `exclude` 排除，不会参与类型检查。
+
+- **数据 vs 代码分离原则：**
+  - `data.ts` 只存放纯数据：描述文本、原理要点、对比表格数据、互动演示的代码片段（小型 snippet 可保留字符串形式）。
+  - 所有通过 `CodeDiff` 展示的 Bad/Good Code 必须提取到 `demos/` 目录下的独立文件中，通过 `?raw` 导入。
+  - 示例：
+    ```typescript
+    import badCode from './demos/topic-name.bad.tsx?raw';
+    import goodCode from './demos/topic-name.good.tsx?raw';
+
+    <CodeDiff
+      oldValue={badCode}
+      newValue={goodCode}
+      leftTitle="❌ 反面教材"
+      rightTitle="✅ 最佳实践"
+      type="error"
+      hideDiffMarkers={true}
+    />
+    ```
+
 - **路由页面组织：** 当新建一个路由页面组件时，要给这个组件一个单独的文件夹，它相关的所有组件内的信息都应该放到这个单独的文件夹里。
 - **样式变量位置：** 所有 styled-components 生成的样式变量都放在组件页面的最后，以免影响对组件代码的阅读。
 

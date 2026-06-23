@@ -1,5 +1,6 @@
 /**
- * undefined 与 null 的区别 - 示例代码和元数据
+ * undefined 与 null 的区别 - 元数据
+ * 纯数据文件：不包含 Bad/Good Code，这些已提取到 demos/ 目录中
  */
 
 export const UndefinedVsNullMeta = {
@@ -13,79 +14,6 @@ export const UndefinedVsNullMeta = {
 
   reason:
     'JavaScript 语言设计上的历史包袱，加上 ECMAScript 规范对两个值的精确定义不同，导致它们在表达式求值、类型转换、运算符语义上表现各异。理解这些差异的本质，需要回到 ECMAScript 规范、Brendan Eich 的设计初衷以及现代 TypeScript 的类型系统。',
-
-  bad: `/* ❌ 错误：用 == 判断空值 */
-function fetchUser(id) {
-  if (id == null) {
-    // 虽然能同时覆盖 null 和 undefined，但意图不明确
-    return Promise.reject('id 不能为空');
-  }
-}
-
-/* ❌ 错误：默认值处理逻辑混乱 */
-function greet(name) {
-  // 如果用户显式传入 null，仍然会使用默认值，可能不是预期行为
-  const finalName = name || '匿名用户';
-  return \`你好，\${finalName}\`;
-}
-
-/* ❌ 错误：把 undefined 和 null 混为一谈 */
-function updateConfig(config) {
-  // 错误：undefined 表示"未设置"，null 可能表示"显式清空"
-  // 这里统一覆盖，会丢失"显式清空"的语义
-  return { ...defaultConfig, ...config };
-}
-
-/* ❌ 错误：JSON 序列化时不区分 undefined 和 null */
-const payload = {
-  id: 1,
-  nickname: undefined, // 会被丢弃，导致后端接收不到该字段
-  avatar: null,        // 会保留为 null
-};
-fetch('/api/user', {
-  method: 'POST',
-  body: JSON.stringify(payload),
-});`,
-
-  good: `/* ✅ 正确：明确区分 undefined 和 null 的语义 */
-function fetchUser(id: string | undefined) {
-  if (id === undefined) {
-    return Promise.reject('id 未提供');
-  }
-  // null 在这里表示"无此用户"，与 undefined 区分
-}
-
-/* ✅ 正确：使用空值合并运算符 ?? */
-function greet(name: string | null | undefined) {
-  // 只有 null / undefined 才会触发默认值，空字符串不会
-  const finalName = name ?? '匿名用户';
-  return \`你好，\${finalName}\`;
-}
-
-/* ✅ 正确：尊重显式清空语义 */
-function updateConfig(userConfig?: Partial<Config>) {
-  // undefined：未设置，保持默认
-  // null：显式清空，覆盖默认
-  return {
-    theme: userConfig?.theme === undefined ? defaultConfig.theme : userConfig.theme,
-    lang: userConfig?.lang === undefined ? defaultConfig.lang : userConfig.lang,
-  };
-}
-
-/* ✅ 正确：显式删除 undefined 字段或保留为 null */
-const payload = {
-  id: 1,
-  nickname: undefined,
-  avatar: null,
-};
-// 方案一：丢弃未设置字段
-const cleanedPayload = Object.fromEntries(
-  Object.entries(payload).filter(([, v]) => v !== undefined)
-);
-// 方案二：统一转为 null 发送给后端
-const normalizedPayload = Object.fromEntries(
-  Object.entries(payload).map(([k, v]) => [k, v === undefined ? null : v])
-);`,
 
   whySolveThisWay: `为什么要严格区分 undefined 和 null？\n\n1. 语义清晰\n   - undefined："此处应有值，但目前没有"（未初始化、未传入、未找到）\n   - null："此处本可以有值，但被显式置为空"（用户清空、API 表示无结果）\n\n2. 避免隐式类型转换陷阱\n   - Number(undefined) === NaN，Number(null) === 0\n   - 不加区分地使用 +value 可能导致难以追踪的 bug\n\n3. 与 JSON / 后端协议对齐\n   - undefined 不会被 JSON 序列化，null 会\n   - GraphQL、protobuf 等协议对两者的处理也不同\n\n4. TypeScript strictNullChecks 的要求\n   - 开启严格空检查后，undefined 和 null 不能随意赋值给其他类型\n   - 明确区分能大幅降低运行时空值错误`,
 

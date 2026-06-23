@@ -1,7 +1,9 @@
 import React from 'react';
 import { Card, Typography, Divider, Alert, Tag, Table } from 'antd';
-import { UndefinedVsNullMeta, comparisonData, bestPracticeData } from './Examples';
+import { UndefinedVsNullMeta, comparisonData, bestPracticeData } from './data';
 import CodeDiff from '@/components/CodeDiff';
+import badCode from './demos/undefined-null.bad.tsx?raw';
+import goodCode from './demos/undefined-null.good.tsx?raw';
 import LiveDemo from './LiveDemo';
 
 const { Title, Paragraph, Text } = Typography;
@@ -88,8 +90,8 @@ const UndefinedVsNull: React.FC = () => {
         </Paragraph>
 
         <CodeDiff
-          oldValue={UndefinedVsNullMeta.bad}
-          newValue={UndefinedVsNullMeta.good}
+          oldValue={badCode}
+          newValue={goodCode}
           leftTitle="❌ 反面教材"
           rightTitle="✅ 最佳实践"
           type="error"

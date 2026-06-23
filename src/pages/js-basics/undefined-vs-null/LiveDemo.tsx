@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card, Button, Input, Typography, Space, Alert, Tag, Row, Col } from 'antd';
-import { liveDemoSnippets } from './Examples';
+import { liveDemoSnippets } from './data';
 import CodeBlock from '@/components/CodeBlock';
 
 const { Title, Text, Paragraph } = Typography;
