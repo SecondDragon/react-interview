@@ -13,7 +13,8 @@ import { registerMicroApps, start } from 'qiankun';
 import { useOpenKeysByPath } from '../hooks/hooks.ts';
 // import DraggablePhoneBar from '../pages/phone-work-bench/phone-bar/DraggablePhoneBar';
 import styled from 'styled-components';
-
+import SimpleBar from 'simplebar-react';
+import 'simplebar-react/dist/simplebar.min.css';
 registerMicroApps([
   {
     name: 'vue-app',
@@ -142,22 +143,24 @@ const MainLayout: React.FC = () => {
           >
             {collapsed ? 'CMS' : 'Hybrid Admin'}
           </div>
-          <div style={{ flex: 1, overflowY: 'auto' }}>
-            <Menu
-              forceSubMenuRender
-              mode="inline"
-              openKeys={openKeys}
-              onOpenChange={(keys1) => {
-                console.log('keys1', keys1);
-                // @ts-ignore
-                setOpenKeys(keys1);
-              }}
-              selectedKeys={[location.pathname]}
-              items={menuItems}
-              onClick={({ key }) => navigate(key)}
-              style={{ height: '100%', borderRight: 0, paddingTop: '8px' }}
-            />
-          </div>
+          <SimpleBarMenuWrapper>
+            <SimpleBar style={{ height: '100%' }}>
+              <Menu
+                forceSubMenuRender
+                mode="inline"
+                openKeys={openKeys}
+                onOpenChange={(keys1) => {
+                  console.log('keys1', keys1);
+                  // @ts-ignore
+                  setOpenKeys(keys1);
+                }}
+                selectedKeys={[location.pathname]}
+                items={menuItems}
+                onClick={({ key }) => navigate(key)}
+                style={{ height: '100%', borderRight: 0, paddingTop: '8px' }}
+              />
+            </SimpleBar>
+          </SimpleBarMenuWrapper>
         </div>
       </Sider>
 
@@ -240,6 +243,29 @@ const MainLayout: React.FC = () => {
 };
 
 export default MainLayout;
+const SimpleBarMenuWrapper = styled.div`
+  flex: 1;
+  overflow: hidden;
+
+  .simplebar-track {
+    &.simplebar-vertical {
+      width: 6px;
+    }
+    &.simplebar-horizontal {
+      height: 6px;
+    }
+  }
+
+  .simplebar-scrollbar {
+    &::before {
+      background-color: rgba(0, 0, 0, 0.18);
+      border-radius: 3px;
+      left: 1px;
+      right: 1px;
+    }
+  }
+`;
+
 const TabsContainer = styled.div`
   && {
     background: #fff;
