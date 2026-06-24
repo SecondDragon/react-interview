@@ -1,4 +1,4 @@
-﻿/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable react-refresh/only-export-components */
 import React, { lazy } from 'react';
 import {
   DashboardOutlined,
@@ -14,6 +14,7 @@ import {
   SafetyOutlined,
   GlobalOutlined,
   FileTextOutlined,
+  BookOutlined,
 } from '@ant-design/icons';
 
 export interface RouteConfig {
@@ -49,6 +50,9 @@ const NoStableHeightVirtualListPage = lazy(
 const VirtuosoListPage = lazy(() => import('../pages/performance/VirtuosoList/index'));
 const ConcurrentRenderPage = lazy(() => import('../pages/performance/ConcurrentRender/index'));
 const BigJsonParsePage = lazy(() => import('../pages/performance/BigJsonParse/index'));
+const ReverseChatVirtualListPage = lazy(
+  () => import('../pages/performance/ReverseChatVirtualList/index')
+);
 const DynamicFormPage = lazy(() => import('../pages/components-encapsulation/DynamicForm/index'));
 const ProDynamicFormPage = lazy(
   () => import('../pages/components-encapsulation/ProDynamicForm/index')
@@ -78,6 +82,10 @@ const VerticalCentering = lazy(() => import('../pages/compatibility/VerticalCent
 const AudioPlayback = lazy(() => import('../pages/compatibility/AudioPlayback/index'));
 const BrowserDimensions = lazy(() => import('../pages/browser-dimensions/index'));
 const UndefinedVsNull = lazy(() => import('../pages/js-basics/undefined-vs-null/index'));
+
+// 设计模式专题
+const DesignPatternsOverview = lazy(() => import('../pages/design-patterns/overview/index'));
+const ObserverPattern = lazy(() => import('../pages/design-patterns/observer/index'));
 
 // 网络请求专题
 const SilentRefreshBasic = lazy(() => import('../pages/silent-refresh/basic'));
@@ -303,6 +311,11 @@ export const dashboardRoutes: RouteConfig[] = [
         label: '大数据量 JSON 解析优化',
         element: <BigJsonParsePage />,
       },
+      {
+        path: '/dashboard/performance/reverse-chat-virtual-list',
+        label: '反向虚拟聊天列表',
+        element: <ReverseChatVirtualListPage />,
+      },
     ],
   },
 
@@ -468,6 +481,23 @@ export const dashboardRoutes: RouteConfig[] = [
         label: 'SSE 流式推送（旧）',
         hideInMenu: true,
         element: <SSEDemoPage />,
+      },
+    ],
+  },
+  {
+    path: '/dashboard/design-patterns',
+    label: '设计模式专题',
+    icon: <BookOutlined />,
+    children: [
+      {
+        path: '/dashboard/design-patterns/overview',
+        label: '设计模式概览',
+        element: <DesignPatternsOverview />,
+      },
+      {
+        path: '/dashboard/design-patterns/observer',
+        label: '观察者模式',
+        element: <ObserverPattern />,
       },
     ],
   },
