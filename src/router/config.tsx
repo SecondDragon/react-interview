@@ -82,6 +82,7 @@ const VerticalCentering = lazy(() => import('../pages/compatibility/VerticalCent
 const AudioPlayback = lazy(() => import('../pages/compatibility/AudioPlayback/index'));
 const BrowserDimensions = lazy(() => import('../pages/browser-dimensions/index'));
 const UndefinedVsNull = lazy(() => import('../pages/js-basics/undefined-vs-null/index'));
+const ModuleSystems = lazy(() => import('../pages/js-basics/module-systems/index'));
 
 // 设计模式专题
 const DesignPatternsOverview = lazy(() => import('../pages/design-patterns/overview/index'));
@@ -402,6 +403,11 @@ export const dashboardRoutes: RouteConfig[] = [
         path: '/dashboard/js-basics/undefined-vs-null',
         label: 'undefined 与 null 的区别',
         element: <UndefinedVsNull />,
+      },
+      {
+        path: '/dashboard/js-basics/module-systems',
+        label: 'JavaScript 模块化',
+        element: <ModuleSystems />,
       },
     ],
   },
