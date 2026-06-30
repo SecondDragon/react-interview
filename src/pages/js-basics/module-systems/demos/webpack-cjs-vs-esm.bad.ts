@@ -5,5 +5,5 @@ export const used = 'used';
 export const unused = 'unused';
 
 // main.ts
-const utils = require('./utils');
+const utils: { used: string } = require('./utils');
 console.log(utils.used);

@@ -34,12 +34,12 @@ const CommonJSIntro: React.FC = () => {
       </Card>
 
       <Card title="执行流程" style={{ marginBottom: 24 }}>
-        <List ordered>
-          <List.Item>require(&apos;x&apos;) 调用 Module._resolveFilename 解析路径</List.Item>
-          <List.Item>Module._load 检查缓存，若未加载则创建 Module 实例</List.Item>
-          <List.Item>调用 Module.load 读取文件内容并包装成函数</List.Item>
-          <List.Item>同步执行模块顶层代码，填充 module.exports</List.Item>
-          <List.Item>返回 module.exports</List.Item>
+        <List>
+          <List.Item>1. require(&apos;x&apos;) 调用 Module._resolveFilename 解析路径</List.Item>
+          <List.Item>2. Module._load 检查缓存，若未加载则创建 Module 实例</List.Item>
+          <List.Item>3. 调用 Module.load 读取文件内容并包装成函数</List.Item>
+          <List.Item>4. 同步执行模块顶层代码，填充 module.exports</List.Item>
+          <List.Item>5. 返回 module.exports</List.Item>
         </List>
       </Card>
 

@@ -11,7 +11,7 @@ const WebpackBundling: React.FC = () => {
     <>
       <Card title="产物形态" style={{ marginBottom: 24 }}>
         <Paragraph>
-          ESM 被转译为 <Text code>__webpack_require__.d(__webpack_exports__, {'{'} foo: () => foo {'}'})</Text>，使用 getter 实现 live binding。
+          ESM 被转译为 <Text code>__webpack_require__.d(__webpack_exports__, {'{'} foo: () =&gt; foo {'}'})</Text>，使用 getter 实现 live binding。
           CJS 被转译为 <Text code>module.exports = ...</Text> 或 <Text code>__webpack_require__.n</Text> 兼容包装器。
           动态 import() 被拆分为单独 chunk，使用 <Text code>__webpack_require__.e</Text> 加载。
         </Paragraph>

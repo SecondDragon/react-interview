@@ -23,6 +23,5 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"],
-  "exclude": ["node_modules", "dist", "**/*.bad.tsx", "**/*.bad.ts", "**/*.bad.cjs", "**/*.bad.mjs"],
-  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }]
+  "exclude": ["node_modules", "dist", "**/*.bad.tsx", "**/*.bad.ts", "**/*.bad.cjs", "**/*.bad.mjs"]
 }
