@@ -1,0 +1,22 @@
+sequenceDiagram
+    participant A as a.js
+    participant B as b.js
+    participant Cache as Module._cache
+
+    A->>Cache: 创建 a 的 Module 实例，module.exports = {}
+    Note over A: a.js 开始执行<br/>const b = require('./b')<br/>Node 暂停 a，转去加载 b
+
+    A->>B: require('./b') 触发 b 加载
+    B->>Cache: 创建 b 的 Module 实例，module.exports = {}
+    Note over B: b.js 开始执行<br/>const a = require('./a')<br/>Node 暂停 b，转去加载 a
+
+    B->>Cache: require('./a') 查询缓存
+    Cache-->>B: 返回 a 的半成品 module.exports = {}
+    Note over B: b.js 中 a = {}<br/>a.value 为 undefined<br/>module.exports = { value: 'b', aValue: a.value }
+
+    B->>B: b.js 执行完成
+    B-->>A: 返回 b 的完整 module.exports = { value: 'b', aValue: undefined }
+
+    Note over A: a.js 继续执行<br/>console.log('in a, b.value =', b.value)<br/>此时 b.value = 'b'<br/>module.exports = { value: 'a' }
+
+    A->>A: a.js 执行完成，module.exports = { value: 'a' }

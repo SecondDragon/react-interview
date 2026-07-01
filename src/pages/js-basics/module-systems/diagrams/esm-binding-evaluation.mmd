@@ -1,0 +1,37 @@
+flowchart TD
+    subgraph Phase3["求值阶段：按依赖图深度优先执行，binding 状态变化"]
+        direction TB
+        subgraph MainEval["main.mjs 求值"]
+            MainCode["console.log(fetchB())"]
+            MainFetchBVal["fetchB binding: ← a.fetchB 函数"]
+        end
+
+        subgraph AEval["a.mjs 先求值"]
+            A_a_val["a binding: 'a' ✓"]
+            A_getA_val["getA binding: 函数 ✓"]
+            A_fetchB_val["fetchB binding: 函数 ✓"]
+        end
+
+        subgraph BEval["b.mjs 后求值"]
+            B_b_val["b binding: 'b' ✓"]
+            B_getB_val["getB binding: 函数 ✓"]
+            B_fetchA_val["fetchA binding: 函数 ✓"]
+        end
+    end
+
+    AEval --> BEval
+    BEval --> MainEval
+
+    A_fetchB_val -."内部调用 getB".-> B_getB_val
+    B_getB_val -."读取 b binding".-> B_b_val
+    B_b_val -."返回 'b'".-> A_fetchB_val
+    A_fetchB_val -."返回 'b'".-> MainFetchBVal
+    MainFetchBVal -."输出".-> Output["控制台: 'b'"]
+
+    Note1["因为函数延迟访问，调用 fetchB 时 a、b 都已完成求值"] -.-> Phase3
+
+    style Phase3 fill:#e6ffe6,stroke:#52c41a
+    style AEval fill:#fff
+    style BEval fill:#fff
+    style MainEval fill:#fff
+    style Output fill:#d9f7be

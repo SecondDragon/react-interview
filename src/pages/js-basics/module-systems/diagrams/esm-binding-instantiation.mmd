@@ -1,0 +1,33 @@
+flowchart TD
+    subgraph Phase2["实例化阶段：创建 Module Environment Record 与 binding 链接"]
+        direction TB
+        subgraph MainEnv["main.mjs Environment Record"]
+            MainFetchB["fetchB binding"]
+        end
+
+        subgraph AEnv["a.mjs Environment Record"]
+            A_a["a binding: uninitialized"]
+            A_getA["getA binding: uninitialized"]
+            A_fetchB["fetchB binding: uninitialized"]
+            A_b["b binding (Import Binding)"]
+        end
+
+        subgraph BEnv["b.mjs Environment Record"]
+            B_b["b binding: uninitialized"]
+            B_getB["getB binding: uninitialized"]
+            B_fetchA["fetchA binding: uninitialized"]
+            B_a["a binding (Import Binding)"]
+        end
+    end
+
+    MainFetchB -- "指向" --> A_fetchB
+    A_b -- "指向" --> B_b
+    B_a -- "指向" --> A_a
+
+    Note1["Import Binding 不持有值，只指向被导入模块的 binding 槽位"] -.-> A_b
+    Note1 -.-> B_a
+
+    style Phase2 fill:#fff5e6,stroke:#fa8c16
+    style MainEnv fill:#fff
+    style AEnv fill:#fff
+    style BEnv fill:#fff

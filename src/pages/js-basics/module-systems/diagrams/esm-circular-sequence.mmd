@@ -1,0 +1,29 @@
+sequenceDiagram
+    participant A as a.mjs
+    participant B as b.mjs
+
+    rect rgb(230, 245, 255)
+        Note over A: 构造阶段：以 a.mjs 为入口递归解析
+        A->>A: 解析 a.mjs<br/>import { b } from './b.mjs'
+        A->>B: 解析 b.mjs<br/>import { a } from './a.mjs'
+        Note over A: 生成 Module Record<br/>a.mjs 记录依赖 b.mjs<br/>b.mjs 记录依赖 a.mjs（已存在，去重）
+    end
+
+    rect rgb(255, 245, 230)
+        Note over A: 实例化阶段：创建 Module Environment Record
+        A->>A: a.mjs 创建 a 和 b 的 binding<br/>初始状态 uninitialized<br/>a.b 指向 b.mjs 的 b binding
+        B->>B: b.mjs 创建 b 和 a 的 binding<br/>初始状态 uninitialized<br/>b.a 指向 a.mjs 的 a binding
+        Note over A: 此时所有 binding 链接已建立<br/>但没有任何模块执行顶层代码
+    end
+
+    rect rgb(230, 255, 230)
+        Note over A: 求值阶段：按依赖图深度优先执行
+        A->>A: 开始执行 a.mjs 顶层代码
+        Note over A: import { b } from './b.mjs'<br/>此时 b 的 binding 仍为 uninitialized
+        Note over A: export const a = 'a'<br/>a 的 binding 从 uninitialized 变为 'a'
+        Note over A: console.log('in a, b =', b)<br/>立即读取 b 的 binding
+        A->>B: 读取 b 的 binding
+        Note right of B: b 的 binding 仍为 uninitialized
+        B--xA: 抛出 ReferenceError<br/>Cannot access 'b' before initialization
+        Note right of A: 顶层访问触发 TDZ 错误
+    end

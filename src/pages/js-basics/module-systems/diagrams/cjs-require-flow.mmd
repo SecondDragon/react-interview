@@ -1,0 +1,12 @@
+graph TD
+    A["调用 require 加载 x"] --> B{Module._cache 中存在 x?}
+    B -->|是| C[直接返回 x.module.exports]
+    B -->|否| D[创建 Module 实例]
+    D --> E[Module._resolveFilename 解析真实路径]
+    E --> F[读取文件内容]
+    F --> G[包装成函数: exports, require, module, __filename, __dirname]
+    G --> H[同步执行模块顶层代码]
+    H --> I[代码中可能再次 require 其他模块]
+    I --> H
+    H --> J[返回 module.exports]
+    J --> K[缓存并返回结果]

@@ -1,0 +1,11 @@
+graph TD
+    A[.js 源文件] --> B{V8 解析模块}
+    B --> C[CommonJS]
+    B --> D[ES Module]
+    C --> E[require 触发时创建 Module 实例]
+    E --> F[包装函数并执行顶层代码]
+    F --> G[得到 module.exports 快照]
+    D --> H[构造阶段：Module Loader 维护 Module Map]
+    H --> I[实例化阶段：V8 创建 Module Environment Record]
+    I --> J[求值阶段：V8 执行顶层代码]
+    J --> K[binding 从 uninitialized 变为值]

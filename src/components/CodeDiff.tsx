@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Tag } from 'antd';
+import { Tag, Button, message, Tooltip } from 'antd';
+import { CopyOutlined, CheckOutlined } from '@ant-design/icons';
 
 interface CodeDiffProps {
   /** 左侧/旧代码（对比模式下必填） */
@@ -23,6 +24,34 @@ interface CodeDiffProps {
   /** 是否隐藏 diff 标记（只展示左右代码，不标红绿差异） */
   hideDiffMarkers?: boolean;
 }
+
+/**
+ * 复制按钮
+ */
+const CopyButton: React.FC<{ text: string }> = ({ text }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      message.success('代码已复制');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      message.error('复制失败');
+    }
+  };
+
+  return (
+    <Tooltip title={copied ? '已复制' : '复制代码'}>
+      <Button
+        size="small"
+        icon={copied ? <CheckOutlined /> : <CopyOutlined />}
+        onClick={handleCopy}
+      />
+    </Tooltip>
+  );
+};
 
 /**
  * 统一代码展示组件
@@ -77,17 +106,18 @@ const CodeDiff: React.FC<CodeDiffProps> = ({
           <div
             style={{
               padding: '10px 16px',
-              // background: currentTheme.bg,
               borderBottom: `1px solid ${currentTheme.border}`,
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
               fontWeight: 'bold',
-              // color: '#e0e0e0',
             }}
           >
             <span>{title}</span>
-            <Tag color={currentTheme.tagColor}>{currentTheme.label}</Tag>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <CopyButton text={code?.trim() || ''} />
+              <Tag color={currentTheme.tagColor}>{currentTheme.label}</Tag>
+            </div>
           </div>
         )}
         <SyntaxHighlighter
@@ -117,7 +147,6 @@ const CodeDiff: React.FC<CodeDiffProps> = ({
     <div
       style={{
         margin: '16px 0',
-        // border: `1px solid ${currentTheme.border}`,
         borderRadius: '8px',
         overflow: 'hidden',
         boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
@@ -127,13 +156,11 @@ const CodeDiff: React.FC<CodeDiffProps> = ({
       <div
         style={{
           padding: '10px 16px',
-          // background: currentTheme.bg,
           borderBottom: `1px solid #e0e0e0`,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           fontWeight: 'bold',
-          // color: '#e0e0e0',
         }}
       >
         <span>{title || '代码对比'}</span>
@@ -162,9 +189,13 @@ const CodeDiff: React.FC<CodeDiffProps> = ({
                 fontWeight: 'bold',
                 color: hideDiffMarkers ? '#999' : '#ff7875',
                 textAlign: 'center',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
               }}
             >
-              {leftTitle}
+              <span style={{ flex: 1, textAlign: 'center' }}>{leftTitle}</span>
+              <CopyButton text={oldValue?.trim() || ''} />
             </div>
           )}
           <div style={{ flex: 1, background: hideDiffMarkers ? '#1e1e1e' : '#2b1d1d' }}>
@@ -194,9 +225,13 @@ const CodeDiff: React.FC<CodeDiffProps> = ({
                 fontWeight: 'bold',
                 color: hideDiffMarkers ? '#999' : '#73d13d',
                 textAlign: 'center',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
               }}
             >
-              {rightTitle}
+              <span style={{ flex: 1, textAlign: 'center' }}>{rightTitle}</span>
+              <CopyButton text={newValue?.trim() || ''} />
             </div>
           )}
           <div style={{ flex: 1, background: hideDiffMarkers ? '#1e1e1e' : '#1d2b1d' }}>

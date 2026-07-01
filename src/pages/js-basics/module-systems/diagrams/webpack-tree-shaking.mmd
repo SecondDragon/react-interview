@@ -1,0 +1,10 @@
+graph TD
+    A[Webpack 解析入口] --> B{遇到 import 或 export}
+    B -->|是| C[构建静态依赖图]
+    C --> D[标记 usedExports]
+    D --> E[删除未使用的 export 代码]
+    E --> F[生成更小的 bundle]
+    B -->|否，遇到 require| G[无法做静态分析]
+    G --> H[require 路径可能是动态计算的]
+    H --> I[无法确定哪些导出被使用]
+    I --> J[保留所有导出，bundle 更大]

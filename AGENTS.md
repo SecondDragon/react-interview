@@ -228,6 +228,18 @@ const { Title } = Typography;
 
 5. **命名约定**：`.mmd` 文件名应与图表内容对应，使用 kebab-case，例如 `fallback-flow.mmd`、`request-lifecycle.mmd`。
 
+6. **Mermaid 图表类型选择**：
+
+   - **流程图（`flowchart` / `graph TD`）**：优先用于展示**静态结构、依赖关系、binding 指向、模块状态变化**等非时序概念。例如：
+     - 模块依赖图（`main.mjs → a.mjs → b.mjs`）
+     - Module Environment Record 中 binding 槽位的互相指向
+     - 构造 / 实例化 / 求值三个阶段的状态变迁
+   - **序列图（`sequenceDiagram`）**：优先用于展示**按时间顺序的交互流程**、函数调用时序、执行步骤。例如：
+     - CommonJS `require` 的执行流程
+     - ES Module 循环依赖中模块按顺序求值的过程
+   - **状态图（`stateDiagram`）**：优先用于展示**单一实体或模块的状态机转移**。
+   - **选择原则**：当需要展示“实体长什么样、互相怎么指向”时用流程图；当需要展示“谁先做什么、后做什么”时用序列图。同一知识点可以两种图并存，以互补方式展示结构与流程。
+
 ---
 
 ## 代码风格与工具要求

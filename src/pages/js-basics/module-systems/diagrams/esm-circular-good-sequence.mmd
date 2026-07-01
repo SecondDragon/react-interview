@@ -1,0 +1,43 @@
+sequenceDiagram
+    participant Main as main.mjs
+    participant A as a.mjs
+    participant B as b.mjs
+
+    rect rgb(230, 245, 255)
+        Note over Main: 构造阶段：从入口 main.mjs 开始递归解析
+        Main->>Main: 解析 main.mjs<br/>import { fetchB } from './a.mjs'
+        Main->>A: 解析 a.mjs<br/>import { getB } from './b.mjs'
+        A->>B: 解析 b.mjs<br/>import { getA } from './a.mjs'
+        Note over Main: 生成 Module Record<br/>main.mjs 记录依赖 a.mjs<br/>a.mjs 记录依赖 b.mjs<br/>b.mjs 记录依赖 a.mjs（已存在，去重）
+    end
+
+    rect rgb(255, 245, 230)
+        Note over Main: 实例化阶段：创建 Module Environment Record
+        Main->>Main: main.mjs 创建 fetchB binding<br/>初始状态 uninitialized<br/>并指向 a.mjs 的 fetchB binding
+        A->>A: a.mjs 创建 a / getA / fetchB binding<br/>初始状态 uninitialized<br/>a.getB 指向 b.mjs 的 getB binding
+        B->>B: b.mjs 创建 b / getB / fetchA binding<br/>初始状态 uninitialized<br/>b.getA 指向 a.mjs 的 getA binding
+        Note over Main: 此时所有 binding 链接已建立<br/>但没有任何模块执行顶层代码
+    end
+
+    rect rgb(230, 255, 230)
+        Note over Main: 求值阶段：按依赖图深度优先执行
+        Main->>A: 开始执行 a.mjs 顶层代码
+        Note over A: export const a = 'a'<br/>a 的 binding 从 uninitialized 变为 'a'
+        Note over A: export function getA() { return a }<br/>getA 的 binding 指向函数
+        Note over A: export function fetchB() { return getB() }<br/>fetchB 的 binding 指向函数<br/>注意：函数内部此时不读取 b
+
+        Main->>B: 开始执行 b.mjs 顶层代码
+        Note over B: export const b = 'b'<br/>b 的 binding 从 uninitialized 变为 'b'
+        Note over B: export function getB() { return b }<br/>getB 的 binding 指向函数
+        Note over B: export function fetchA() { return getA() }<br/>fetchA 的 binding 指向函数<br/>注意：函数内部此时不读取 a
+
+        Main->>Main: 开始执行 main.mjs 顶层代码
+        Note over Main: console.log(fetchB())
+        Main->>A: 调用 fetchB()
+        A->>B: fetchB 内部调用 getB()
+        B->>B: getB 读取 b 的 binding
+        Note right of B: 此时 b 已完成求值，值为 'b'
+        B-->>A: 返回 'b'
+        A-->>Main: 返回 'b'
+        Note right of Main: 成功输出 'b'，无 TDZ
+    end

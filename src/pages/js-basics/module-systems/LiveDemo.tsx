@@ -1,83 +1,86 @@
 import React, { useState } from 'react';
-import { Card, Tabs, Steps, Button, Table, Typography, Tag } from 'antd';
+import { Card, Tabs, Steps, Button, Table, Typography, Tag, Space } from 'antd';
+import { cjsLiveDemoSteps, esmLiveDemoStages } from './data';
 
 const { Paragraph, Text } = Typography;
 
 const LiveDemo: React.FC = () => {
   const [esmStep, setEsmStep] = useState(0);
+  const [cjsStep, setCjsStep] = useState(0);
 
-  const esmStages = [
-    {
-      title: '构造阶段',
-      content: '建立 Module Map，a.mjs 和 b.mjs 的 Module Record 已创建，Status 为 uninstantiated。',
-      records: [
-        { module: 'a.mjs', status: 'uninstantiated', bindings: 'a: uninitialized, b: (import from a)' },
-        { module: 'b.mjs', status: 'uninstantiated', bindings: 'b: uninitialized, a: (import from b)' },
-      ],
-    },
-    {
-      title: '实例化阶段',
-      content: '为每个模块创建 Environment Record，export 分配 binding 并标记为 uninitialized；import 建立 Import Binding 链接。',
-      records: [
-        { module: 'a.mjs', status: 'instantiated', bindings: 'a: uninitialized, b: → b.binding.b' },
-        { module: 'b.mjs', status: 'instantiated', bindings: 'b: uninitialized, a: → a.binding.a' },
-      ],
-    },
-    {
-      title: '求值阶段',
-      content: '执行顶层代码，binding 从 uninitialized 变为具体值。循环依赖通过 evaluating 状态避免重复执行。',
-      records: [
-        { module: 'a.mjs', status: 'evaluated', bindings: 'a: "a", b: "b"' },
-        { module: 'b.mjs', status: 'evaluated', bindings: 'b: "b", a: "a"' },
-      ],
-    },
-  ];
-
-  const cjsSteps = [
-    { title: 'a 开始执行', description: 'module.exports = {}' },
-    { title: "a 执行 require('./b')", description: 'b 开始执行，a 暂停' },
-    { title: "b 执行 require('./a')", description: '从缓存拿到 a 的半成品 exports，可能为 {}' },
-    { title: 'b 执行完成', description: '返回 b 的 module.exports' },
-    { title: 'a 继续执行', description: '填充并最终返回 module.exports' },
-  ];
-
-  const columns = [
+  const esmColumns = [
     { title: '模块', dataIndex: 'module', key: 'module' },
-    { title: '状态', dataIndex: 'status', key: 'status', render: (text: string) => <Tag color="blue">{text}</Tag> },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      render: (text: string) => (
+        <Tag color={text === 'evaluated' ? 'green' : text === 'instantiated' ? 'blue' : 'default'}>
+          {text}
+        </Tag>
+      ),
+    },
     { title: 'Bindings', dataIndex: 'bindings', key: 'bindings' },
   ];
 
   const tabItems = [
     {
       key: 'cjs',
-      label: 'CommonJS 状态机',
+      label: 'CommonJS 循环依赖执行流',
       children: (
         <div>
           <Paragraph>
-            CommonJS 中，a → b → a 循环依赖时，a 的 module.exports 在 b 执行时已经存在，但可能还是空对象 {'{}'}。
+            在 CommonJS 中，循环依赖的处理是“边执行边暴露”。当 a 被 b 再次 require 时，
+            a 的 <Text code>module.exports</Text> 已经存在，但内部可能还是空对象。
           </Paragraph>
-          <Steps direction="vertical" current={2} items={cjsSteps} />
+          <Steps direction="vertical" current={cjsStep} items={cjsLiveDemoSteps.map((s) => ({ title: s.title, description: s.description }))} />
+          <Space style={{ marginTop: 16 }}>
+            <Button disabled={cjsStep === 0} onClick={() => setCjsStep((prev) => prev - 1)}>
+              上一步
+            </Button>
+            <Button disabled={cjsStep === cjsLiveDemoSteps.length - 1} onClick={() => setCjsStep((prev) => prev + 1)}>
+              下一步
+            </Button>
+            <Button onClick={() => setCjsStep(0)}>重置</Button>
+          </Space>
         </div>
       ),
     },
     {
       key: 'esm',
-      label: 'ES Module 三阶段',
+      label: 'ES Module 三阶段推进器',
       children: (
         <div>
-          <Steps current={esmStep} onChange={setEsmStep} direction="horizontal" items={esmStages.map((s) => ({ title: s.title }))} />
-          <Paragraph style={{ marginTop: 16 }}>
-            <Text strong>{esmStages[esmStep].title}</Text>：{esmStages[esmStep].content}
+          <Paragraph>
+            ES Module 在循环依赖中不会重复执行模块。三阶段模型让所有 binding 先建立链接，
+            再执行代码。点击下方按钮逐步观察模块状态变化。
           </Paragraph>
-          <Table dataSource={esmStages[esmStep].records} columns={columns} pagination={false} bordered size="small" />
-          <Button.Group style={{ marginTop: 16 }}>
-            <Button disabled={esmStep === 0} onClick={() => setEsmStep(esmStep - 1)}>
+          <Steps
+            current={esmStep}
+            onChange={setEsmStep}
+            direction="horizontal"
+            items={esmLiveDemoStages.map((s) => ({ title: s.title }))}
+          />
+          <Paragraph style={{ marginTop: 16 }}>
+            <Text strong>{esmLiveDemoStages[esmStep].title}</Text>：
+            {esmLiveDemoStages[esmStep].content}
+          </Paragraph>
+          <Table
+            dataSource={esmLiveDemoStages[esmStep].records}
+            columns={esmColumns}
+            pagination={false}
+            bordered
+            size="small"
+          />
+          <Space style={{ marginTop: 16 }}>
+            <Button disabled={esmStep === 0} onClick={() => setEsmStep((prev) => prev - 1)}>
               上一步
             </Button>
-            <Button disabled={esmStep === esmStages.length - 1} onClick={() => setEsmStep(esmStep + 1)}>
+            <Button disabled={esmStep === esmLiveDemoStages.length - 1} onClick={() => setEsmStep((prev) => prev + 1)}>
               下一步
             </Button>
-          </Button.Group>
+            <Button onClick={() => setEsmStep(0)}>重置</Button>
+          </Space>
         </div>
       ),
     },

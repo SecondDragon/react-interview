@@ -1,0 +1,417 @@
+import CodeDiff from '@/components/CodeDiff';
+import MermaidViewer from '@/components/MermaidViewer';
+import LiveDemo from './LiveDemo';
+import TreeShakingDemo from './TreeShakingDemo';
+import cjsRequireFlow from './diagrams/cjs-require-flow.mmd?raw';
+import esmThreeStages from './diagrams/esm-three-stages.mmd?raw';
+import cjsCircularSequence from './diagrams/cjs-circular-sequence.mmd?raw';
+import esmCircularSequence from './diagrams/esm-circular-sequence.mmd?raw';
+import esmCircularGoodSequence from './diagrams/esm-circular-good-sequence.mmd?raw';
+import esmBindingConstruction from './diagrams/esm-binding-construction.mmd?raw';
+import esmBindingInstantiation from './diagrams/esm-binding-instantiation.mmd?raw';
+import esmBindingEvaluation from './diagrams/esm-binding-evaluation.mmd?raw';
+import webpackTreeShaking from './diagrams/webpack-tree-shaking.mmd?raw';
+import v8ModuleRelation from './diagrams/v8-module-relation.mmd?raw';
+import badCommonjsNative from './demos/commonjs-native.bad.cjs?raw';
+import goodCommonjsNative from './demos/commonjs-native.good.cjs?raw';
+import badCommonjsCircular from './demos/commonjs-circular.bad.cjs?raw';
+import goodCommonjsCircular from './demos/commonjs-circular.good.cjs?raw';
+import badEsmCircular from './demos/esm-circular.bad.mjs?raw';
+import goodEsmCircular from './demos/esm-circular.good.mjs?raw';
+import badWebpack from './demos/webpack-cjs-vs-esm.bad.ts?raw';
+import goodWebpack from './demos/webpack-cjs-vs-esm.good.ts?raw';
+import { comparisonData, interviewQuestions } from './data';
+import { Card, List, Typography } from 'antd';
+import ComparisonTable from './ComparisonTable';
+
+<Typography.Title level={2}>JavaScript 模块化</Typography.Title>
+
+<Typography.Paragraph type="secondary">
+  JavaScript 模块化是面试与工程中的核心考点。本页系统对比 CommonJS 与 ES Module 两种主流方案：从语法、运行时数据结构、循环依赖处理，到 Webpack 打包差异与 V8 执行模型，帮助你避开 TDZ、undefined 导出等常见陷阱。
+</Typography.Paragraph>
+
+<Card title="一、为什么需要模块化" style={{ marginBottom: 24 }}>
+  在没有模块化方案时，前端代码通常通过 `script` 标签全局加载，这会带来以下问题：
+
+  - **全局变量污染**：不同文件容易定义同名变量，导致运行时互相覆盖。
+  - **依赖关系不透明**：无法从代码中直观看出某个文件依赖了哪些模块。
+  - **加载顺序不可控**：`script` 标签的执行顺序依赖 HTML 中的书写顺序。
+  - **难以按需加载**：所有代码一次性加载，不利于首屏优化和代码拆分。
+
+  面试中常见疑问：
+  - 为什么 `import` 不能放在 `if` 语句里？
+  - CommonJS 和 ES Module 能混用吗？
+  - 循环依赖下为什么 CommonJS 会读到 `undefined`，ES Module 有时却会抛 TDZ 错误？
+  - Webpack 为什么需要 ES Module 才能做 tree-shaking？
+</Card>
+
+<Card title="二、CommonJS 详解" style={{ marginBottom: 24 }}>
+
+  ## 2.1 诞生背景与设计目标
+
+  CommonJS 最初由 Mozilla 工程师 Kevin Dangoor 在 2009 年提出，目标是让 JavaScript 在浏览器之外也能拥有模块化能力。Node.js 在 2009 年底采纳并实现了 CommonJS 规范。
+
+  它的设计哲学可以概括为三点：
+  1. **同步加载**：服务端文件都在本地磁盘，同步读取不会阻塞 UI。
+  2. **运行时动态**：`require` 是普通函数调用，路径可以动态计算。
+  3. **简单直接**：模块就是一个被包装的文件，`module.exports` 是导出的对象。
+
+  ## 2.2 require 的完整执行流程
+
+  当 Node.js 执行 `require('./x')` 时，会经历以下步骤：
+
+  <MermaidViewer source={cjsRequireFlow} />
+
+  1. **路径解析**：调用 `Module._resolveFilename` 把 `'./x'` 解析成绝对路径。
+  2. **缓存检查**：调用 `Module._load` 查看 `Module._cache` 是否已存在该模块。若存在，直接返回缓存的 `module.exports`。
+  3. **创建实例**：缓存未命中时，创建一个新的 `Module` 实例，并将其放入缓存（注意：此时缓存的是一个半成品）。
+  4. **读取与包装**：读取文件内容，并用 `(function (exports, require, module, __filename, __dirname) { ... })` 包装成函数。
+  5. **同步执行**：调用包装函数，执行模块顶层代码。执行过程中可能再次触发 `require`。
+  6. **返回导出**：执行完成后，返回 `module.exports`。
+
+  关键理解：**模块在第一次 `require` 时立即执行，且只执行一次。后续所有 `require` 都返回缓存中的同一个对象引用。**
+
+  ## 2.3 module.exports 与 exports 的关系
+
+  每个 CommonJS 模块执行时，Node.js 都会注入四个变量：`require`、`module`、`exports`、`__filename`、`__dirname`。其中：
+
+  - `module` 是一个 `Module` 实例，**真正的导出对象**是 `module.exports`。
+  - `exports` 只是 `module.exports` 的引用（`exports = module.exports`）。
+  - 你可以给 `exports` 添加属性，但不能把 `exports` 重新赋值为新对象。
+
+  为什么 `exports = { ... }` 会失败？因为重新赋值后，`exports` 指向了一个新的对象，但 `module.exports` 仍然指向原来的空对象。外部 `require` 返回的是 `module.exports`，所以读不到新对象。
+
+  <CodeDiff
+    oldValue={badCommonjsNative}
+    newValue={goodCommonjsNative}
+    leftTitle="❌ exports 被重新赋值"
+    rightTitle="✅ 直接操作 module.exports"
+    type="error"
+    hideDiffMarkers={true}
+  />
+
+  ## 2.4 模块缓存机制
+
+  `Module._cache` 是一个以模块绝对路径为 key 的对象。它的作用有两个：
+  1. **避免重复执行**：同一模块被多次 `require` 时只执行一次，提升性能。
+  2. **保证单例**：多次 `require` 返回的是同一个 `module.exports` 对象，状态共享。
+
+  如果你需要清除缓存，可以删除 `require.cache[require.resolve('./x')]`，但这通常只在测试或热更新场景中使用。
+
+  ## 2.5 循环依赖中的半成品导出
+
+  CommonJS 处理循环依赖的方式是“边执行边暴露”。当 a 执行到 `require('./b')` 时，a 的 `module.exports` 已经被创建并放入缓存，但内部可能还是空对象。如果 b 此时 `require('./a')` 并立即读取 a 的导出，就会拿到 `undefined`。
+
+  <MermaidViewer source={cjsCircularSequence} />
+
+  避免 CommonJS 循环依赖陷阱的方法：
+  1. **延迟访问**：不要在被循环依赖的模块顶层立即读取对方导出。
+  2. **导出函数**：把需要读取对方导出的逻辑放到函数里，调用时再去读取。
+  3. **重构依赖关系**：从根本上消除循环依赖，例如把公共状态提取到第三个模块。
+
+  <CodeDiff
+    oldValue={badCommonjsCircular}
+    newValue={goodCommonjsCircular}
+    leftTitle="❌ 顶层立即读取导致 undefined"
+    rightTitle="✅ 导出函数延迟访问"
+    type="error"
+    hideDiffMarkers={true}
+  />
+</Card>
+
+<Card title="三、ES Module 详解" style={{ marginBottom: 24 }}>
+
+  ## 3.1 诞生背景与设计目标
+
+  ES Module（ESM）是 ECMAScript 2015（ES6）引入的官方模块系统。与 CommonJS 不同，ESM 的设计目标是为浏览器和 JavaScript 引擎提供统一的静态模块系统：
+
+  1. **静态分析**：`import`/`export` 必须是顶层声明，路径必须是字符串字面量。这样引擎和打包工具可以在执行前确定模块依赖图。
+  2. **编译期优化**：支持 tree-shaking、scope hoisting、并行加载等优化。
+  3. **动态绑定（live binding）**：`import` 绑定到被导出模块的内存槽位，而不是值的快照。
+
+  ## 3.2 三阶段执行模型
+
+  ES Module 的执行不是“读到文件就执行”，而是分为三个明确阶段：
+
+  <MermaidViewer source={esmThreeStages} />
+
+  ### 阶段一：构造（Construction）
+
+  从入口模块开始，递归解析所有 `import` 声明。为每个模块创建 **Module Record**，其中包含：
+  - `RequestedModules`：该模块请求了哪些模块。
+  - `ImportEntries`：具体导入哪些绑定。
+  - `LocalExportEntries` / `IndirectExportEntries` / `StarExportEntries`：导出声明。
+
+  同时维护一个 **Module Map**，保证同一 URL 的模块只被加载一次。
+
+  ### 阶段二：实例化（Instantiation）
+
+  为每个模块创建 **Module Environment Record**。对于每个 `export` 声明：
+  - 分配一个 binding（可以理解为变量槽位）。
+  - 初始状态为 `uninitialized`，这相当于处于 **TDZ（Temporal Dead Zone）**。
+
+  对于每个 `import` 声明：
+  - 创建一个 **Import Binding**。
+  - 这个 Import Binding 指向被导出模块对应 export 的 binding 槽位。
+
+  此时所有模块之间的链接已经建立，但还没有执行任何代码。
+
+  ### 阶段三：求值（Evaluation）
+
+  按依赖图的深度优先顺序执行模块顶层代码。当执行到：
+
+  ```js
+  export const a = 1;
+  ```
+
+  时，`a` 的 binding 从 `uninitialized` 变为 `1`。由于 `import` 方指向的是同一个 binding 槽位，所以它们会自动读取到最新值。这就是 **live binding** 的本质。
+
+  ## 3.3 live binding 原理
+
+  live binding 不是“值同步”或“代理”，而是“同一段内存的引用”。
+
+  假设有两个模块：
+
+  ```js
+  // a.mjs
+  export let count = 0;
+  export function increment() { count++; }
+  ```
+
+  ```js
+  // b.mjs
+  import { count, increment } from './a.mjs';
+  increment();
+  console.log(count); // 1
+  ```
+
+  `b.mjs` 中的 `count` 并不是 `a.mjs` 中 `count` 的值拷贝，而是同一个 binding 的引用。因此调用 `increment()` 后，`b.mjs` 读取到的 `count` 也会变成 1。
+
+  注意：**`export default` 导出的是表达式求值后的值快照，不支持 live binding。** 例如 `export default count` 会把当前 `count` 的值固定下来，后续修改不会同步。
+
+  ## 3.4 静态分析与语法限制
+
+  由于 ESM 需要静态分析，语法上有严格限制：
+  - `import`/`export` 必须出现在模块顶层，不能放在 `if`、`for`、`function` 内部。
+  - `import` 路径必须是字符串字面量，不能动态计算。
+  - 运行时动态导入需要使用 `import()` 函数，它返回一个 `Promise`。
+
+  这些限制正是 Webpack 等工具能够做 tree-shaking 的前提。
+
+  ## 3.5 循环依赖中的 TDZ
+
+  ESM 处理循环依赖时，所有 binding 在实例化阶段已经存在，但值尚未初始化。如果先求值的模块在顶层代码中访问了后求值模块的 export，就会触发 TDZ 错误。
+
+  避免 ESM 循环依赖陷阱的方法：
+  1. 延迟访问，导出函数而不是立即读取值。
+  2. 把共享状态提取到独立的第三个模块。
+  3. 重新审视模块边界，消除循环依赖。
+
+  <CodeDiff
+    oldValue={badEsmCircular}
+    newValue={goodEsmCircular}
+    leftTitle="❌ 顶层访问触发 TDZ"
+    rightTitle="✅ 导出函数延迟访问"
+    type="error"
+    hideDiffMarkers={true}
+  />
+
+  下面是上面两段代码的实际执行流程对比。左侧的 ❌ 示例中，a.mjs 在顶层立即访问 `b`，而 b 的 binding 尚未初始化，直接抛出 TDZ 错误；右侧的 ✅ 示例中，两个模块只导出函数，等 main.mjs 调用时再去读取 binding，此时两边都已完成求值。
+
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginTop: 24 }}>
+    <div>
+      <Typography.Title level={5}>❌ 坏代码执行流程</Typography.Title>
+      <MermaidViewer source={esmCircularSequence} />
+    </div>
+    <div>
+      <Typography.Title level={5}>✅ 好代码执行流程</Typography.Title>
+      <MermaidViewer source={esmCircularGoodSequence} />
+    </div>
+  </div>
+
+  序列图展示了“时间线上发生了什么”。接下来用三张流程图展示 ES Module 循环依赖中**静态结构**的变化：Module Record 依赖图、binding 槽位与互相指向、以及求值后 binding 状态的变化。
+
+  ### 构造阶段
+
+  <MermaidViewer source={esmBindingConstruction} />
+
+  构造阶段从入口 `main.mjs` 开始，递归解析所有 `import` 声明。每个模块生成一个 **Module Record**，记录它依赖哪些模块、导入了哪些绑定、导出了哪些绑定。`Module Map` 保证同一模块只被创建一次。
+
+  ### 实例化阶段
+
+  <MermaidViewer source={esmBindingInstantiation} />
+
+  实例化阶段为每个模块创建 **Module Environment Record**。每个 `export` 声明分配一个 binding 槽位，初始状态为 `uninitialized`。每个 `import` 声明创建一个 **Import Binding**，它并不自己持有值，而是指向被导入模块对应 export 的 binding 槽位。
+
+  ### 求值阶段
+
+  <MermaidViewer source={esmBindingEvaluation} />
+
+  求值阶段按依赖图深度优先执行。先执行 `a.mjs`，再执行 `b.mjs`，最后执行 `main.mjs`。由于好代码中只在函数内部读取对方 binding，调用 `fetchB()` 时 `a` 和 `b` 都已完成求值，因此可以正常读取到 `'b'`。
+</Card>
+
+<Card title="四、CommonJS vs ES Module 对比" style={{ marginBottom: 24 }}>
+  下面从 9 个维度对比两种模块系统：
+
+  <ComparisonTable />
+</Card>
+
+<Card title="五、循环依赖专题" style={{ marginBottom: 24 }}>
+
+  循环依赖是模块系统中最容易出错的地方。两种模块系统的处理方式截然不同。
+
+  ## 5.1 CommonJS 的“边执行边暴露”
+
+  在 CommonJS 中，模块在执行过程中就会不断填充 `module.exports`。当 a 执行到 `require("./b")` 时，Node.js 会暂停 a 的执行去加载 b。如果 b 又 `require("./a")`，它会从缓存中拿到 a 的半成品 `module.exports`。
+
+  这就是为什么很多人在循环依赖中读到 `undefined`。核心原因不是模块没被加载，而是导出对象已经存在但还没来得及填充。
+
+  ## 5.2 ES Module 的“先建链接后求值”
+
+  ES Module 不会在循环依赖中重复执行模块。实例化阶段就已经建立了所有 binding 的链接。求值阶段按照依赖图的深度优先顺序执行。
+
+  先求值的模块如果在顶层代码中访问了后求值模块的 export，就会触发 TDZ。这与 `let`/`const` 的 TDZ 本质相同：变量存在但尚未初始化。
+
+  ## 5.3 如何避免循环依赖问题
+
+  无论哪种模块系统，循环依赖都不是好的设计。推荐的解决方案：
+
+  1. **延迟访问**：不要在模块顶层立即读取对方导出。
+  2. **导出函数**：将读取对方导出的逻辑封装到函数内部，调用时才去读取。
+  3. **抽象共享模块**：把两个模块都依赖的状态抽取到第三个独立模块。
+  4. **重新设计模块边界**：从架构上消除循环依赖。
+</Card>
+
+<Card title="六、Webpack 打包差异" style={{ marginBottom: 24 }}>
+
+  ## 6.1 Webpack 如何处理 CJS 和 ESM
+
+  当 Webpack 遇到 ES Module 时，会把它们转译为特定的 Webpack 运行时格式。例如：
+
+  - 命名导出会被转译为 `__webpack_require__.d(__webpack_exports__, { foo: () => foo })`，通过 getter 实现 live binding。
+  - 默认导出会被转译为 `__webpack_exports__["default"]`。
+  - CommonJS 会被转译为 `module.exports = ...` 或 `__webpack_require__.n` 兼容包装器。
+  - `import()` 会被拆分为单独 chunk，通过 `__webpack_require__.e` 动态加载。
+
+  ## 6.2 为什么 ESM 才能 tree-shaking
+
+  <MermaidViewer source={webpackTreeShaking} />
+
+  tree-shaking 的前提是打包工具能够在编译阶段确定哪些导出被使用了。ES Module 的 `import`/`export` 是静态声明，Webpack 可以安全地分析。而 CommonJS 的 `require`/`module.exports` 是运行时动态行为，Webpack 无法保证删除某个导出不会破坏程序。
+
+  同时，`sideEffects` 配置在 ESM 项目下才能准确标记无副作用模块。如果源码中混用了 `require`，Webpack 会认为该模块可能存在副作用而不敢删除。
+
+  <CodeDiff
+    oldValue={badWebpack}
+    newValue={goodWebpack}
+    leftTitle="❌ 混用 CJS 导致 tree-shaking 失效"
+    rightTitle="✅ 全部 ESM 利于静态分析"
+    type="error"
+    hideDiffMarkers={true}
+  />
+
+  ## 6.3 为什么需要 tree-shaking？手动删除不也一样吗？
+
+  这是很多开发者的真实疑问：WebStorm 已经会把未使用的变量标灰，我直接手动删掉不就好了？为什么还要依赖打包工具做 tree-shaking？
+
+  答案是：**两者解决的问题域完全不同。**
+
+  ### 6.3.1 手动删除的边界
+
+  WebStorm 的提示只覆盖**你当前项目源码里写了但没用到**的东西。例如你自己写了一个 `utilA`，然后在项目内没有任何地方 `import` 它，WebStorm 会标灰，你顺手删掉——这确实是最干净的做法。
+
+  但以下场景，手动删除完全无能为力：
+
+  1. **第三方库的源码**：你只用到 `lodash` 的 `debounce`，但 `lodash` 里还有几百个函数。你不可能每次进入 `node_modules` 手动删。
+  2. **UI 组件库**：你只用到 `antd` 的 `Button`，但 `antd` 有 60+ 组件，手动删除不现实。
+  3. **跨项目复用的内部库**：团队维护一个工具库，50 个项目各取所需，你不能为每个项目单独维护一个裁剪版。
+  4. **运行时条件才用到的代码**：某些组件只在 `isAdmin === true` 时渲染，构建时无法确定哪个会真正运行。
+
+  所以：
+
+  - **手动删除**是“开发时的人肉 lint”，适合清理你自己的死代码。
+  - **tree-shaking**是“构建时的自动死代码消除”，负责你买不到、改不了、管不到的那部分代码。
+
+  ### 6.3.2 一个具体例子
+
+  假设你引入了一个名为 `@utils/core` 的工具库，它一次性导出了 6 个函数：
+
+  ```js
+  export { debounce, throttle, deepClone, formatDate, uuid, validatePhone } from '@utils/core';
+  ```
+
+  但你的业务页面只用到其中的 `debounce` 和 `uuid`。没有 tree-shaking 时，打包工具会把整个库的 6 个函数全部打进 bundle；有了 tree-shaking，只有 `debounce` 和 `uuid` 会保留，其余 4 个函数在最终产物中消失。
+
+  这带来的收益不是“少敲几次删除键”，而是：
+
+  - **网络传输量更小**：用户下载的 JS 更少。
+  - **解析时间更短**：浏览器解析的 AST 更小。
+  - **缓存更稳定**：业务代码变更时，vendor chunk 不变的概率更高。
+  - **依赖治理成本更低**：可以放心使用“大而全”的工具库，而不用自己维护裁剪版。
+
+  下方的互动演示让你可以亲手勾选“我用到了哪些函数”，实时观察 tree-shaking 前后 bundle 大小的变化。
+
+  <TreeShakingDemo />
+
+  ### 6.3.3 什么时候不该依赖 tree-shaking
+
+  tree-shaking 不是乱扔代码的借口。以下情况你仍然应该手动清理：
+
+  - 你自己写的导出，但项目里没有任何地方使用。
+  - 你自己写的死代码、注释掉的旧逻辑、调试用的临时函数。
+  - 可以通过重构消除的冗余依赖。
+
+  简言之：**自己的代码自己负责删，别人的代码交给 tree-shaking。**
+</Card>
+
+<Card title="七、与 V8 执行模型的关系" style={{ marginBottom: 24 }}>
+
+  ## 7.1 V8 执行流水线
+
+  V8 引擎执行 JavaScript 通常分为三个阶段：
+
+  1. **解析（Parsing）**：Parser 和 Pre-parser 将源码转换为 AST。
+  2. **编译（Compilation）**：Ignition 生成字节码，热点代码会被 TurboFan 进一步编译为机器码。
+  3. **执行（Execution）**：运行字节码或机器码。
+
+  ## 7.2 CommonJS 与 V8
+
+  每次调用 `require` 时，Node.js 会读取文件内容并通过包装函数执行。这直接触发 V8 的解析→编译→执行流水线，没有独立的实例化阶段。
+
+  因此 `module.exports` 是模块执行完成后返回的对象快照，不支持 live binding。如果你在模块执行完成后再去修改 `module.exports`，已经 `require` 过的模块不会感知到变化。
+
+  ## 7.3 ES Module 与 V8
+
+  <MermaidViewer source={v8ModuleRelation} />
+
+  ES Module 的三阶段中，只有求值阶段会调用 V8。具体分工如下：
+
+  - **构造阶段**：模块加载器在 V8 外部维护 Module Map。它负责读取文件、解析 import 路径、去重等工作。
+  - **实例化阶段**：V8 创建 Module Environment Record，为每个 export 分配 binding。这个过程由 V8 的模块系统原语支持。
+  - **求值阶段**：模块加载器调用 V8 的 `Module::Evaluate`，执行单个模块的顶层代码。
+  - **循环依赖**：`evaluating` 状态由模块加载器维护，V8 只负责执行单个模块脚本。
+
+  这种分层设计让 ES Module 既能利用 V8 的高效执行，又能在编译器外部完成静态分析。
+</Card>
+
+<Card title="八、互动演示" style={{ marginBottom: 24, border: '2px solid #1890ff' }}>
+  下方的 Live Demo 展示了 CommonJS 循环依赖的完整执行流程，以及 ES Module 的三阶段执行过程。你可以通过「上一步」「下一步」逐步观察模块状态变化。
+
+  <LiveDemo />
+</Card>
+
+<Card title="九、核心原理与面试考点" style={{ background: '#f0f5ff' }}>
+  以下是本节知识点的精华总结，建议在面试前重点回顾：
+
+  <List
+    dataSource={interviewQuestions}
+    renderItem={(item) => (
+      <List.Item>
+        <List.Item.Meta
+          title={<Typography.Text strong>{item.question}</Typography.Text>}
+          description={<Typography.Paragraph type="secondary">{item.answer}</Typography.Paragraph>}
+        />
+      </List.Item>
+    )}
+  />
+</Card>

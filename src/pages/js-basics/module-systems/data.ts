@@ -1,60 +1,13 @@
+import { Tag } from 'antd';
+
 /**
- * JavaScript 模块化 - 元数据与纯数据
- * 纯数据文件：不包含 Bad/Good Code，这些已提取到 demos/ 目录中
+ * JavaScript 模块化 - 纯数据文件
+ *
+ * 职责说明：
+ * 本文件只存放组件需要的数据：对比表格、面试题、Live Demo 的状态数据等。
+ * 所有概念性讲解、流程说明、代码对比已经迁移到 content.mdx 中。
+ * 注意：本文件禁止写 JSX，列定义请放在 ComparisonTable.tsx 中。
  */
-
-export const ModuleSystemsMeta = {
-  title: 'JavaScript 模块化',
-
-  description:
-    'JavaScript 模块化是面试与工程中的核心考点。本页系统对比 CommonJS 与 ES Module 两种主流方案：从语法、运行时数据结构、循环依赖处理，到 Webpack 打包差异与 V8 执行模型，帮助你避开 TDZ、undefined 导出等常见陷阱。',
-
-  phenomenon: `在没有模块化方案时，前端代码通常通过 script 标签全局加载，带来以下问题：
-
-1. 全局变量污染：不同文件容易定义同名变量，导致运行时互相覆盖。
-2. 依赖关系不透明：无法从代码中直观看出某个文件依赖了哪些模块。
-3. 加载顺序不可控：script 标签的执行顺序依赖 HTML 中的书写顺序。
-4. 难以按需加载：所有代码一次性加载，不利于首屏优化和代码拆分。
-
-面试中常见疑问：
-- 为什么 import 不能放在 if 语句里？
-- CommonJS 和 ES Module 能混用吗？
-- 循环依赖下为什么 CommonJS 会读到 undefined，ES Module 有时却会抛 TDZ 错误？
-- Webpack 为什么需要 ES Module 才能做 tree-shaking？`,
-
-  reason: `CommonJS 设计之初服务于服务端（Node.js），强调同步加载与运行时灵活性；ES Module 则是 ECMAScript 标准，强调静态分析与编译期优化。两者在导出机制、执行模型、循环依赖处理上存在本质差异：
-
-- CommonJS 的 module.exports 是对象引用，require 返回的是执行完成后的对象快照。
-- ES Module 使用 live binding，import 实际上绑定到被导出模块的内存槽位，求值后自动同步更新。
-- Webpack 需要静态 import/export 结构才能安全删除未使用代码。`,
-
-  whySolveThisWay: `理解两种模块系统的数据结构与执行阶段，可以帮助我们在实际开发中：
-
-1. 避免循环依赖中的 undefined / TDZ 陷阱。
-2. 在需要热更新或绑定同步的场景选择命名导出而非默认导出。
-3. 在 Webpack 项目中统一使用 ESM 语法，提升 tree-shaking 效果。
-4. 在 Node.js 或工具链中正确混用 CJS 与 ESM，避免打包产物异常。`,
-
-  principle: `核心原理：两种模块系统的本质差异
-
-1. CommonJS 是运行时模块系统
-   - require 是同步函数调用，模块在第一次 require 时立即执行。
-   - Module._cache 缓存已加载模块，保证同一模块只执行一次。
-   - module.exports 初始为 {}，执行后返回最终对象；exports 只是它的引用，不能重新赋值。
-
-2. ES Module 是三阶段模块系统
-   - 构造阶段：建立 Module Map，记录所有依赖关系。
-   - 实例化阶段：为 export/import 创建 binding 并建立链接，此时值尚未初始化。
-   - 求值阶段：执行顶层代码，binding 从 uninitialized 变为具体值。
-
-3. 循环依赖处理
-   - CommonJS：返回半成品 module.exports，后续代码继续填充它，但先访问方可能拿到旧值或 undefined。
-   - ES Module：通过预先建立的 binding 链接，求值后自动同步更新，但先求值模块访问后求值模块可能触发 TDZ。
-
-4. 与 V8 的关系
-   - CommonJS：每次 require 直接触发 V8 的解析→编译→执行流水线。
-   - ES Module：构造阶段在 V8 外部完成；实例化阶段由 V8 创建 Module Environment Record；求值阶段调用 V8 执行模块脚本。`,
-};
 
 export const comparisonData = [
   {
@@ -146,7 +99,207 @@ export const interviewQuestions = [
   },
   {
     key: '7',
+    question: '手动删除未使用代码和 tree-shaking 有什么区别？',
+    answer: '手动删除适合清理你自己项目源码里的死代码和未使用导出；tree-shaking 负责你改不到的代码，比如第三方库 lodash、UI 组件库 antd、跨项目复用的内部共享库，以及运行时条件才用到的导出。两者是互补关系，不是替代关系。',
+  },
+  {
+    key: '8',
     question: '动态 import() 返回的是快照还是绑定？',
     answer: 'import() 返回的 Module Namespace Object 是快照：它的属性在 Promise resolve 时被读取并固定。若后续被导入模块重新赋值命名导出，Namespace Object 不会自动更新。',
+  },
+];
+
+/**
+ * Live Demo 中 CommonJS 状态机的步骤数据
+ */
+export const cjsLiveDemoSteps = [
+  {
+    title: 'a 开始执行',
+    description: 'Node.js 为 a 创建 Module 对象，module.exports 初始化为 {}',
+  },
+  {
+    title: 'a 执行 require("./b")',
+    description: '检查缓存未发现 b，暂停 a 的执行，开始加载并执行 b',
+  },
+  {
+    title: 'b 执行 require("./a")',
+    description: '从缓存中拿到 a 的 Module 对象，但 a 此时只执行到 require("./b")，module.exports 仍然是空对象 {}',
+  },
+  {
+    title: 'b 读取 a.x 并执行完成',
+    description: '由于 a.x 尚未赋值，b 读取到 undefined。随后 b 的 module.exports 被填充并返回',
+  },
+  {
+    title: 'a 继续执行并返回',
+    description: 'a 的 require("./b") 返回，a 继续填充 module.exports，最终返回完整导出对象',
+  },
+];
+
+/**
+ * Live Demo 中 ES Module 三阶段数据
+ */
+export const esmLiveDemoStages = [
+  {
+    title: '构造阶段',
+    content: '从入口模块开始，递归解析所有 import 声明。为每个模块创建 Module Record，记录其 RequestedModules、ImportEntries、LocalExportEntries。使用 Module Map 去重，确保同一模块只加载一次。',
+    records: [
+      { module: 'a.mjs', status: 'uninstantiated', bindings: 'export a: uninitialized; import b: 来自 b.mjs' },
+      { module: 'b.mjs', status: 'uninstantiated', bindings: 'export b: uninitialized; import a: 来自 a.mjs' },
+    ],
+  },
+  {
+    title: '实例化阶段',
+    content: '为每个模块创建 Module Environment Record。export 声明分配 binding，初始状态为 uninitialized（处于 TDZ）。import 创建 Import Binding，指向被导出模块的 binding 槽位。',
+    records: [
+      { module: 'a.mjs', status: 'instantiated', bindings: 'a: uninitialized; b: → b.mjs 的 b binding' },
+      { module: 'b.mjs', status: 'instantiated', bindings: 'b: uninitialized; a: → a.mjs 的 a binding' },
+    ],
+  },
+  {
+    title: '求值阶段',
+    content: '按深度优先顺序执行模块顶层代码。当执行 export const a = 1 时，a 的 binding 从 uninitialized 变为具体值。由于 import 是绑定引用，所有引用方自动读取到最新值。',
+    records: [
+      { module: 'a.mjs', status: 'evaluated', bindings: 'a: "a-value"; b: "b-value"' },
+      { module: 'b.mjs', status: 'evaluated', bindings: 'b: "b-value"; a: "a-value"' },
+    ],
+  },
+];
+
+/**
+ * Tree Shaking Demo 数据
+ *
+ * 模拟一个“大而全”的工具库 @utils/core，其中包含 6 个导出函数。
+ * 业务项目只用到其中一部分。Demo 通过勾选使用哪些导出，
+ * 实时展示 tree-shaking 后 bundle 中保留和剔除的内容。
+ */
+export interface TreeShakingExportItem {
+  key: string;
+  name: string;
+  size: number; // 单位 KB，模拟值
+  description: string;
+  code: string;
+}
+
+export const treeShakingExports: TreeShakingExportItem[] = [
+  {
+    key: 'debounce',
+    name: 'debounce',
+    size: 2.1,
+    description: '防抖函数，延迟执行高频触发的事件回调',
+    code: `export function debounce(fn, wait) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), wait);
+  };
+}`,
+  },
+  {
+    key: 'throttle',
+    name: 'throttle',
+    size: 1.8,
+    description: '节流函数，限制高频事件的触发频率',
+    code: `export function throttle(fn, limit) {
+  let inThrottle;
+  return (...args) => {
+    if (!inThrottle) {
+      fn.apply(this, args);
+      inThrottle = true;
+      setTimeout(() => (inThrottle = false), limit);
+    }
+  };
+}`,
+  },
+  {
+    key: 'deepClone',
+    name: 'deepClone',
+    size: 3.5,
+    description: '深拷贝，递归复制对象与数组',
+    code: `export function deepClone(obj) {
+  if (obj === null || typeof obj !== 'object') return obj;
+  const clone = Array.isArray(obj) ? [] : {};
+  for (const key in obj) {
+    clone[key] = deepClone(obj[key]);
+  }
+  return clone;
+}`,
+  },
+  {
+    key: 'formatDate',
+    name: 'formatDate',
+    size: 4.2,
+    description: '日期格式化，支持多种输出模板',
+    code: `export function formatDate(date, fmt = 'yyyy-MM-dd') {
+  const d = new Date(date);
+  const pad = (n) => String(n).padStart(2, '0');
+  const map = {
+    'yyyy': d.getFullYear(),
+    'MM': pad(d.getMonth() + 1),
+    'dd': pad(d.getDate()),
+  };
+  return fmt.replace(/yyyy|MM|dd/g, (k) => map[k]);
+}`,
+  },
+  {
+    key: 'uuid',
+    name: 'uuid',
+    size: 1.5,
+    description: '生成唯一标识字符串',
+    code: `export function uuid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}`,
+  },
+  {
+    key: 'validatePhone',
+    name: 'validatePhone',
+    size: 0.8,
+    description: '中国大陆手机号校验正则',
+    code: `export function validatePhone(phone) {
+  return /^1[3-9]\\d{9}$/.test(String(phone));
+}`,
+  },
+];
+
+/**
+ * 手动删除 vs tree-shaking 对比表数据
+ */
+export const treeShakingComparisonData = [
+  {
+    key: '1',
+    scenario: '你自己项目里有一个没用的导出',
+    webstorm: '✅ 能标灰提示',
+    manualDelete: '✅ 可以直接删除，最干净',
+    treeShaking: '❌ 不需要，也不该依赖它',
+  },
+  {
+    key: '2',
+    scenario: '第三方库 lodash 你只用到 debounce',
+    webstorm: '❌ 无法进入 node_modules 分析',
+    manualDelete: '❌ 不能修改 node_modules',
+    treeShaking: '✅ 只保留 debounce，其余剔除',
+  },
+  {
+    key: '3',
+    scenario: 'UI 组件库 antd 你只用到 Button',
+    webstorm: '❌ 无法决定哪些组件该删',
+    manualDelete: '❌ 组件库源码不属于你',
+    treeShaking: '✅ 只打包 Button 相关代码',
+  },
+  {
+    key: '4',
+    scenario: '运行时条件渲染的组件',
+    webstorm: '⚠️ 不一定能判断',
+    manualDelete: '❌ 运行时才知用哪个',
+    treeShaking: '✅ 先剔除明确未被引用的',
+  },
+  {
+    key: '5',
+    scenario: '内部共享库被多个项目复用',
+    webstorm: '❌ 跨项目无法分析',
+    manualDelete: '❌ 不能拆成 50 个子包',
+    treeShaking: '✅ 各项目按需取用',
   },
 ];

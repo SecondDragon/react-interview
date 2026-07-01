@@ -1,0 +1,10 @@
+graph TD
+    A[入口模块 main.mjs] -->|构造阶段| B[递归解析所有 import 声明]
+    B --> C[为每个模块创建 Module Record]
+    C --> D[建立 Module Map 去重]
+    D -->|实例化阶段| E[创建 Module Environment Record]
+    E --> F[为 export 分配 binding 初始为 uninitialized]
+    E --> G[为 import 创建 Import Binding 链接]
+    G -->|求值阶段| H[按依赖图执行模块顶层代码]
+    H --> I[export 的 binding 从 uninitialized 变为具体值]
+    I --> J[所有 import 方通过绑定读取最新值]

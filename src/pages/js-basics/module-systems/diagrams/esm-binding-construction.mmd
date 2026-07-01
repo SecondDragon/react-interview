@@ -1,0 +1,26 @@
+flowchart TD
+    subgraph Phase1["构造阶段：建立 Module Record 与依赖图"]
+        direction TB
+        Main["main.mjs
+        RequestedModules: [a.mjs]"]
+        A["a.mjs
+        RequestedModules: [b.mjs]
+        ImportEntries: { b } from b.mjs
+        LocalExportEntries: { a, getA, fetchB }"]
+        B["b.mjs
+        RequestedModules: [a.mjs]
+        ImportEntries: { a } from a.mjs
+        LocalExportEntries: { b, getB, fetchA }"]
+    end
+
+    Main -->|"请求 a.mjs"| A
+    A -->|"请求 b.mjs"| B
+    B -->|"发现 a.mjs 已存在，去重"| A
+
+    Note1["Module Map 保证同一模块只创建一次 Module Record"] -.-> A
+    Note1 -.-> B
+
+    style Phase1 fill:#e6f5ff,stroke:#1890ff
+    style Main fill:#fff
+    style A fill:#fff
+    style B fill:#fff
