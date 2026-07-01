@@ -94,6 +94,7 @@ const SilentRefreshBasic = lazy(() => import('../pages/silent-refresh/basic'));
 const SilentRefreshProduction = lazy(() => import('../pages/silent-refresh/production'));
 const SilentRefreshExtended = lazy(() => import('../pages/silent-refresh/extended'));
 const QiankunBasicPage = lazy(() => import('../pages/qiankun/basic/index'));
+const QiankunAssetLoadingPage = lazy(() => import('../pages/qiankun/asset-loading/index'));
 const SSEDemoPage = lazy(() => import('../pages/network/sse-demo'));
 const SSEReconnectNative = lazy(() => import('../pages/network/sse-reconnect-native'));
 const SSEReconnectFetch = lazy(() => import('../pages/network/sse-reconnect-fetch'));
@@ -268,6 +269,11 @@ export const dashboardRoutes: RouteConfig[] = [
         path: '/dashboard/qiankun/basic',
         label: '乾坤基础',
         element: <QiankunBasicPage />,
+      },
+      {
+        path: '/dashboard/qiankun/asset-loading',
+        label: '子应用资源的加载',
+        element: <QiankunAssetLoadingPage />,
       },
     ],
   },
