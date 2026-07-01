@@ -30,6 +30,7 @@ export interface RouteConfig {
 // 懒加载组件
 const Overview = lazy(() => import('../pages/overview/index'));
 const ReactApiLearning = lazy(() => import('../pages/react-api/index'));
+const UseTransitionPage = lazy(() => import('../pages/react-api/useTransition/index'));
 const TaskList = lazy(() => import('../pages/tasks/TaskList'));
 const MyTasks = lazy(() => import('../pages/tasks/MyTasks'));
 const UserList = lazy(() => import('../pages/users/UserList'));
@@ -249,6 +250,11 @@ export const dashboardRoutes: RouteConfig[] = [
         path: '/dashboard/react-api/overview',
         label: '专题概览',
         element: <ReactApiLearning />,
+      },
+      {
+        path: '/dashboard/react-api/use-transition',
+        label: 'useTransition',
+        element: <UseTransitionPage />,
       },
     ],
   },
@@ -491,26 +497,10 @@ export const dashboardRoutes: RouteConfig[] = [
     ],
   },
   {
-    path: '/dashboard/design-patterns',
-    label: '设计模式专题',
-    icon: <BookOutlined />,
-    children: [
-      {
-        path: '/dashboard/design-patterns/overview',
-        label: '设计模式概览',
-        element: <DesignPatternsOverview />,
-      },
-      {
-        path: '/dashboard/design-patterns/observer',
-        label: '观察者模式',
-        element: <ObserverPattern />,
-      },
-    ],
-  },
-  {
     path: '/dashboard/settings',
-    label: '系统全局配置',
+    label: '系统设置',
     icon: <SettingOutlined />,
     element: <Settings />,
+    closable: false,
   },
 ];
