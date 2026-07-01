@@ -1,12 +1,15 @@
 import React, { lazy } from 'react';
 import './App.css';
+import './styles/mdx.css';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { App as AntdApp, ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
+import { MDXProvider } from '@mdx-js/react';
 
 import MainLayout from './layout/MainLayout.tsx';
 import { dashboardRoutes } from './router/config';
 import type { RouteConfig } from './router/config';
+import { mdxComponents } from './components/MdxComponents';
 
 const Forbidden = lazy(() => import('./pages/error/Forbidden'));
 
@@ -33,20 +36,22 @@ const App: React.FC = () => {
   return (
     <ConfigProvider locale={zhCN}>
       <AntdApp>
-        <Router>
-          <Routes>
-            <Route path="/dashboard" element={<MainLayout />}>
-              <Route path="micro-vue/*" element={null} />
+        <MDXProvider components={mdxComponents}>
+          <Router>
+            <Routes>
+              <Route path="/dashboard" element={<MainLayout />}>
+                <Route path="micro-vue/*" element={null} />
 
-              {/* 渲染主应用的普通业务路由 */}
-              {renderFlattenRoutes(dashboardRoutes)}
-              <Route path="forbidden" element={<Forbidden />} />
-              <Route index element={<Navigate to="/dashboard/overview" replace />} />
-            </Route>
-            <Route path="/" element={<Navigate to="/dashboard/overview" replace />} />
-            <Route path="*" element={<Navigate to="/dashboard/overview" replace />} />
-          </Routes>
-        </Router>
+                {/* 渲染主应用的普通业务路由 */}
+                {renderFlattenRoutes(dashboardRoutes)}
+                <Route path="forbidden" element={<Forbidden />} />
+                <Route index element={<Navigate to="/dashboard/overview" replace />} />
+              </Route>
+              <Route path="/" element={<Navigate to="/dashboard/overview" replace />} />
+              <Route path="*" element={<Navigate to="/dashboard/overview" replace />} />
+            </Routes>
+          </Router>
+        </MDXProvider>
       </AntdApp>
     </ConfigProvider>
   );

@@ -1,0 +1,15 @@
+<!-- ✅ 最佳实践：HTML 标签使用协议相对 URL -->
+<!-- 省略协议，自动跟随当前页面协议；保留域名，避免被主应用 base 带偏。 -->
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>子应用</title>
+    <link rel="stylesheet" href="//sql.example.com/sql/css/app.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="//sql.example.com/sql/js/app.js"></script>
+  </body>
+</html>

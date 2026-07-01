@@ -1,0 +1,65 @@
+import CodeDiff from '@/components/CodeDiff';
+import LiveDemo from './LiveDemo';
+import MermaidViewer from '@/components/MermaidViewer';
+import badCode from './demos/font-family.bad.css?raw';
+import goodCode from './demos/font-family.good.css?raw';
+import fallbackFlow from './diagrams/fallback-flow.mmd?raw';
+import { platformFontDataSource, platformFontColumns } from './data';
+import { Card, Table, Tag } from 'antd';
+
+
+# 跨平台字体栈 (Font Family) 最佳实践
+
+<Card title="一、 Bug 出现的现象" style={{ marginBottom: '24px' }}>
+ ### 同样的网页，在不同操作系统下视觉体验差异巨大。
+
+  - **Windows 锯齿感：** 由于 ClearType 渲染机制，部分字体在 Windows 下显得生硬。
+  - **信创系统回退：** 国产 Linux 系统由于缺少微软雅黑，常回退到极难看的宋体，导致排版错位。
+  - **Emoji 乱码：** 缺乏跨平台字体栈会导致表情包显示为方块。
+</Card>
+
+<Card title="二、 Bug 出现的底层原因" style={{ marginBottom: '24px' }}>
+  ### **系统预装差异与回退链失效：**
+
+  每个操作系统都有自己的“亲儿子”字体。如果 CSS 只写死一种字体，在不具备该字体的平台上，浏览器会随机选择一种系统字体，彻底破坏 UI 的一致性。
+
+  <Table dataSource={platformFontDataSource} columns={platformFontColumns} pagination={false} size="small" bordered />
+</Card>
+
+<Card title="三、 Bug 如何解决" style={{ marginBottom: '24px' }}>
+  建立“阶梯式”回退机制，确保每一类设备都能用到其最优字体。
+
+  <CodeDiff
+    oldValue={badCode}
+    newValue={goodCode}
+    leftTitle="❌ 反面教材"
+    rightTitle="✅ 最佳实践"
+    type="error"
+    hideDiffMarkers={true}
+  />
+</Card>
+
+<Card
+  title={
+    <span>
+      四、 为什么要这样解决 且互动演示 <Tag color="blue">Live Demo</Tag>
+    </span>
+  }
+  style={{ marginBottom: '24px', border: '2px solid #1890ff' }}
+>
+  选择系统变量优先 + 中英文字体分离 + 无衬线兜底的字体栈，能够在绝大多数平台上获得最佳渲染效果，同时保证在信创/Linux 环境下不会回退到宋体。
+
+  通过下方 Live Demo，你可以切换不同字体栈并修改文本，直观感受不同回退链带来的渲染差异。
+
+  <LiveDemo />
+</Card>
+
+<Card title="五、 Bug 能解决的核心原理" style={{ background: '#f0f5ff' }}>
+  - **字符级回退 (Character-level Fallback)：** 这是核心！浏览器在渲染每个字符时，会按顺序遍历字体栈。将英文字体（如 Arial）排在前面，中文（如微软雅黑）排在后面，可以实现“英文用 Arial，中文自动回退到微软雅黑”的完美效果。
+  - **系统变量 (Magic Keywords)：** 像 `-apple-system` 是浏览器的“暗号”，它告诉引擎直接调用操作系统当前默认的、经过高度优化的 UI 字体。
+  - **无衬线兜底 (sans-serif)：** 作为最后的防线，确保在没有任何匹配字体时，也能以现代风格的黑体（而非报纸风格的宋体）进行展示。
+
+  字体回退流程如下：
+
+  <MermaidViewer source={fallbackFlow} />
+</Card>

@@ -1,0 +1,104 @@
+/* 全局 Markdown 默认样式恢复
+ *
+ * 这些样式仅作用于 MDX 渲染出来的原生 Markdown 元素（带有 mdx-* 类名），
+ * 不会影响 Ant Design 组件的样式。
+ */
+
+.mdx-heading {
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.mdx-h1 { font-size: 2em; }
+.mdx-h2 { font-size: 1.5em; }
+.mdx-h3 { font-size: 1.25em; }
+.mdx-h4 { font-size: 1em; }
+.mdx-h5 { font-size: 0.875em; }
+.mdx-h6 { font-size: 0.85em; }
+
+.mdx-paragraph {
+  margin-top: 0;
+  margin-bottom: 1em;
+  line-height: 1.6;
+}
+
+.mdx-list {
+  margin-top: 0;
+  margin-bottom: 1em;
+  padding-left: 2em;
+}
+
+.mdx-list-item {
+  margin-bottom: 0.25em;
+}
+
+.mdx-code {
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.05);
+  font-size: 0.875em;
+}
+
+.mdx-pre {
+  padding: 1em;
+  overflow: auto;
+  border-radius: 4px;
+  background: #f6f8fa;
+  margin-bottom: 1em;
+}
+
+.mdx-pre .mdx-code {
+  padding: 0;
+  background: transparent;
+  font-size: 1em;
+}
+
+.mdx-link {
+  color: #1890ff;
+  text-decoration: none;
+}
+
+.mdx-link:hover {
+  text-decoration: underline;
+}
+
+.mdx-strong {
+  font-weight: 600;
+}
+
+.mdx-em {
+  font-style: italic;
+}
+
+.mdx-blockquote {
+  margin: 0 0 1em;
+  padding: 0 1em;
+  border-left: 4px solid #d9d9d9;
+  color: #666;
+}
+
+.mdx-hr {
+  border: 0;
+  border-top: 1px solid #e8e8e8;
+  margin: 1.5em 0;
+}
+
+.mdx-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 1em;
+}
+
+.mdx-th,
+.mdx-td {
+  padding: 0.5em 1em;
+  border: 1px solid #d9d9d9;
+}
+
+.mdx-th {
+  background: #f0f0f0;
+  font-weight: 600;
+}

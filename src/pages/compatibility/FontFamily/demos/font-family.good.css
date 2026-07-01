@@ -1,0 +1,19 @@
+/* 工业级标准字体栈 */
+body {
+  font-family: 
+    -apple-system,                /* 1. iOS/macOS Safari 专有 */
+    BlinkMacSystemFont,           /* 2. macOS Chrome/Edge */
+    "Segoe UI",                   /* 3. Windows 现代字体 */
+    Roboto,                       /* 4. Android/Linux 现代字体 */
+    "Helvetica Neue", Arial,      /* 5. 经典英文 fallback */
+    "PingFang SC",                /* 6. Apple 中文优先 */
+    "Microsoft YaHei",            /* 7. Windows 中文 */
+    "Source Han Sans CN",         /* 8. 信创/Linux 中文 */
+    "Noto Sans CJK SC",           /* 9. Google 免费中文字体 */
+    sans-serif,                   /* 10. 最终兜底 */
+    "Apple Color Emoji", "Segoe UI Emoji"; /* 表情符号处理 */
+  
+  /* macOS 字体抗锯齿优化 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

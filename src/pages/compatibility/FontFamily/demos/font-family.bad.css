@@ -1,0 +1,5 @@
+/* 反面教材：只指定单一中文字体或顺序错误 */
+body {
+  /* 在 Mac 上会强制渲染并不完美的微软雅黑，而非原生平方 */
+  font-family: "Microsoft YaHei", sans-serif; 
+}

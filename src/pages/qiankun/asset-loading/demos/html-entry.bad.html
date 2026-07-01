@@ -1,0 +1,15 @@
+<!-- ❌ 反面教材：HTML 标签使用相对路径 -->
+<!-- 在 qiankun 嵌入时，浏览器会以主应用地址为 base 解析，导致资源 404。 -->
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>子应用</title>
+    <link rel="stylesheet" href="./css/app.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="./js/app.js"></script>
+  </body>
+</html>

@@ -9,3 +9,13 @@ declare module '*?raw' {
   const src: string;
   export default src;
 }
+
+declare module '*.html?raw' {
+  const src: string;
+  export default src;
+}
+
+declare module '*.ts?raw' {
+  const src: string;
+  export default src;
+}

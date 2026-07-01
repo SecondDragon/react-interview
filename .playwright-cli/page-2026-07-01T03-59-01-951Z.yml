@@ -1,0 +1,86 @@
+- generic [ref=e4]:
+  - complementary [ref=e5]:
+    - generic [ref=e7]:
+      - generic [ref=e8]: Hybrid Admin
+      - region "scrollable content" [ref=e14]:
+        - menu [ref=e16]:
+          - menuitem "dashboard 系统概览" [ref=e17] [cursor=pointer]:
+            - img "dashboard" [ref=e18]:
+              - img [ref=e19]
+            - generic [ref=e21]: 系统概览
+          - menuitem "tool 兼容性问题解决" [ref=e22] [cursor=pointer]:
+            - img "tool" [ref=e23]:
+              - img [ref=e24]
+            - generic [ref=e26]: 兼容性问题解决
+          - menuitem "appstore 通用组件封装" [ref=e27] [cursor=pointer]:
+            - img "appstore" [ref=e28]:
+              - img [ref=e29]
+            - generic [ref=e31]: 通用组件封装
+          - menuitem "api React API 学习" [ref=e32] [cursor=pointer]:
+            - img "api" [ref=e33]:
+              - img [ref=e34]
+            - generic [ref=e36]: React API 学习
+          - menuitem "api qiankun 专题" [expanded] [ref=e37] [cursor=pointer]:
+            - img "api" [ref=e38]:
+              - img [ref=e39]
+            - generic [ref=e41]: qiankun 专题
+          - menu:
+            - menuitem "乾坤基础" [ref=e42] [cursor=pointer]:
+              - generic [ref=e43]: 乾坤基础
+            - menuitem "子应用资源的加载" [ref=e44] [cursor=pointer]:
+              - generic [ref=e45]: 子应用资源的加载
+          - menuitem "tool 性能优化专题" [ref=e46] [cursor=pointer]:
+            - img "tool" [ref=e47]:
+              - img [ref=e48]
+            - generic [ref=e50]: 性能优化专题
+          - menuitem "check-square 任务中心" [ref=e51] [cursor=pointer]:
+            - img "check-square" [ref=e52]:
+              - img [ref=e53]
+            - generic [ref=e56]: 任务中心
+          - menuitem "menu 多级菜单示例" [ref=e57] [cursor=pointer]:
+            - img "menu" [ref=e58]:
+              - img [ref=e59]
+            - generic [ref=e61]: 多级菜单示例
+          - menuitem "api Vue 微应用中心" [ref=e62] [cursor=pointer]:
+            - img "api" [ref=e63]:
+              - img [ref=e64]
+            - generic [ref=e66]: Vue 微应用中心
+          - menuitem "team 用户权限管理" [ref=e67] [cursor=pointer]:
+            - img "team" [ref=e68]:
+              - img [ref=e69]
+            - generic [ref=e71]: 用户权限管理
+          - menuitem "fullscreen 浏览器的各种尺寸" [ref=e72] [cursor=pointer]:
+            - img "fullscreen" [ref=e73]:
+              - img [ref=e74]
+            - generic [ref=e76]: 浏览器的各种尺寸
+          - menuitem "file-text JavaScript 基础" [ref=e77] [cursor=pointer]:
+            - img "file-text" [ref=e78]:
+              - img [ref=e79]
+            - generic [ref=e81]: JavaScript 基础
+          - menuitem "global 网络请求专题" [ref=e82] [cursor=pointer]:
+            - img "global" [ref=e83]:
+              - img [ref=e84]
+            - generic [ref=e86]: 网络请求专题
+          - menuitem "setting 系统设置" [ref=e87] [cursor=pointer]:
+            - img "setting" [ref=e88]:
+              - img [ref=e89]
+            - generic [ref=e91]: 系统设置
+  - generic [ref=e92]:
+    - banner [ref=e93]:
+      - button "menu-fold" [ref=e94] [cursor=pointer]:
+        - img "menu-fold" [ref=e96]:
+          - img [ref=e97]
+      - generic [ref=e100]: 欢迎您，测试环境
+    - generic [ref=e102]:
+      - tablist [ref=e103]:
+        - generic [ref=e105]:
+          - tab "系统概览" [ref=e107] [cursor=pointer]
+          - generic [ref=e108] [cursor=pointer]:
+            - tab "子应用资源的加载" [selected] [ref=e109]
+            - button "remove" [ref=e110]:
+              - img "close" [ref=e111]:
+                - img [ref=e112]
+      - generic:
+        - generic:
+          - tabpanel "子应用资源的加载"
+    - main [ref=e114]

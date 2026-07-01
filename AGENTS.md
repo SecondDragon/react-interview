@@ -45,7 +45,8 @@
    - 举出比较适合使用这种优化方法的场景，一定要贴近日常开发。
 4. **四、为什么要这样解决且新增互动演示 (Live Demo)：**
    - 阐述选择该方案的权衡（性能、兼容性、维护成本）。
-   - **必须**包含一个可交互的 `Live Demo` 区域（使用 Ant Design 组件模拟场景与修复后的对比），让用户能亲手感触差异。（针对性能优化，如果同一个组件在优化之后无法显示差异，可以使用不同的但也有说服力的组件。）
+   - **必须**包含一个可交互的 `Live Demo` 区域，使用 Ant Design 组件模拟场景与修复后的对比，让用户能亲手感触差异。
+   - 针对性能优化，如果同一个组件在优化之后无法直接显示差异，可以使用不同的但具有说服力的组件来展示优化效果。
 5. **四、代码演示：**
    - 提供清晰、简洁的优化方案。
    - 使用 `CodeDiff` 组件对比"反面教材 (Bad Practice)"与"最佳实践 (Best Practice)"。
@@ -56,23 +57,185 @@
 
 ---
 
-## 代码风格与工具要求
+## 新增：MDX 内容承载规范
 
-- **注释与解释：** 所有代码注释及文档解释必须使用 **中文**。
+### 3. 新页面默认使用 MDX 承载内容 (`@src/pages/**/*.mdx`)
+
+从本规范生效之日起，**新创建的教程页面**默认使用 `.mdx` 文件承载文字、图表、代码对比与结构说明；React 组件仅负责承载交互逻辑（Live Demo、性能组件、控制面板等）。
+
+旧页面保持原有 `data.ts + chapters/` 结构不变，除非用户明确要求重构。
+
+#### 3.1 目录结构
+
+```text
+pages/SomeTopic/
+├── index.tsx          # 主页面，导入并渲染 content.mdx
+├── content.mdx        # 教程正文：文字、图表、代码对比、组件嵌入
+├── data.ts            # 纯组件数据：配置、初始状态、对比表格、小型 snippet
+├── LiveDemo.tsx       # 互动演示组件（如需要）
+├── SomeComponent.tsx  # 性能组件或其他需要渲染的真实组件
+└── demos/
+    ├── topic-name.bad.tsx    # 反面教材（仅用于 ?raw 提取，不编译执行）
+    └── topic-name.good.tsx   # 最佳实践（仅用于 ?raw 提取）
+```
+
+#### 3.2 `content.mdx` 编写规范
+
+`.mdx` 文件中可以写 Markdown 原生内容，也可以直接 import React 组件和 `?raw` 源码。
+
+```mdx
+import { CodeDiff } from '@/components/CodeDiff';
+import { LiveDemo } from './LiveDemo';
+import { OptimizedList } from './OptimizedList';
+import badCode from './demos/topic.bad.tsx?raw';
+import goodCode from './demos/topic.good.tsx?raw';
+
+# 标题
+
+这里是文字说明。
+
+## 代码对比
+
+<CodeDiff
+  oldValue={badCode}
+  newValue={goodCode}
+  leftTitle="❌ 反面教材"
+  rightTitle="✅ 最佳实践"
+  type="error"
+  hideDiffMarkers={true}
+/>
+
+## 互动演示
+
+<LiveDemo />
+```
+
+#### 3.3 代码对比必须使用 `CodeDiff` 组件
+
+MDX 中需要展示左右并排代码或 diff 对比时，**统一使用项目已有的 `CodeDiff` 组件**，通过 `?raw` 导入 `demos/` 目录下的源码。禁止在 `.mdx` 中手写大段代码字符串用于对比。
+
+#### 3.4 性能组件直接作为 React 组件渲染
+
+性能优化专题中需要展示真实优化组件时，应将该组件作为独立 React 组件实现，并在 `.mdx` 中 import 渲染。
+
+```mdx
+import { UnoptimizedList } from './UnoptimizedList';
+import { OptimizedList } from './OptimizedList';
+
+<div className="grid grid-cols-2 gap-4">
+
+<div>
+**未优化版本**
+<UnoptimizedList data={mockData} />
+</div>
+
+<div>
+**优化版本**
+<OptimizedList data={mockData} />
+</div>
+
+</div>
+```
+
+#### 3.5 `data.ts` 职责边界
+
+`data.ts` **只存放 React 组件需要的数据**，包括但不限于：
+
+- Live Demo 的初始状态、配置项
+- 对比表格数据
+- 小型 snippet（用于组件内部逻辑）
+- 性能测试用的 mock 数据
+
+`data.ts` **不再存放**：
+
+- 大段文字说明
+- 概念性解释
+- 图表说明
+- 步骤性讲解
+
+上述内容必须迁移到 `.mdx` 文件中。
+
+---
+
+#### 3.6 MDX 文件只允许顶层 import/export
+
+`.mdx` 文件本质上是编译为 JSX 的模块，**仅支持顶层 `import` 和 `export` 语句**，不支持运行时语句（如变量声明、函数声明、解构赋值等）。
+
+因此，如果需要使用组件的属性或解构子组件，**必须通过完整路径调用**，禁止在 `.mdx` 中写解构赋值。
+
+✅ 正确示例：
+
+```mdx
+import { Card, Typography } from 'antd';
+
+<Typography.Title level={2}>标题</Typography.Title>
+
+<Card title="内容">
+  ...
+</Card>
+```
+
+❌ 错误示例：
+
+```mdx
+import { Card, Typography } from 'antd';
+
+const { Title } = Typography;
+
+<Title>标题</Title>
+```
+
+同理，像 `const { Meta } = Card`、`const { Paragraph } = Typography` 等解构写法均不允许。应使用 `Card.Meta`、`Typography.Paragraph` 等完整路径。
+
+> 说明：MDX 编译器会将 `.mdx` 文件视为 ES Module，文件中除 import/export 外的顶层语句会破坏模块结构，导致运行时错误（如 `Expected component X to be defined`）。
+
+---
+
+#### 3.7 Mermaid 图表使用规范
+
+在 `.mdx` 中使用 Mermaid 图表时，应遵循以下规范：
+
+1. **图表源文件独立存放**：将 Mermaid 源码保存为独立的 `.mmd` 文件，统一放在页面目录下的 `diagrams/` 子目录中：
+   ```text
+   pages/SomeTopic/
+   ├── content.mdx
+   ├── diagrams/
+   │   └── flowchart.mmd
+   └── ...
+   ```
+
+2. **通过 `?raw` 导入图表源文件**：与 `demos/` 源码提取规范保持一致，禁止在 `.mdx` 中直接写大段 Mermaid 字符串。
+
+   ✅ 正确示例：
+   ```mdx
+   import MermaidViewer from '@/components/MermaidViewer';
+   import flowchart from './diagrams/flowchart.mmd?raw';
+
+   <MermaidViewer source={flowchart} />
+   ```
+
+   ❌ 错误示例：
+   ```mdx
+   <MermaidViewer source={`
+   graph TD
+     A --> B
+   `} />
+   ```
+
+3. **使用统一的 `MermaidViewer` 组件**：所有 `.mdx` 文件必须通过 `@/components/MermaidViewer` 渲染图表，禁止自行引入 `mermaid` 或在 `.mdx` 中直接调用 `mermaid.render`。
+
+4. **图表职责边界**：图表用于表达流程、结构、决策关系等概念，文字解释仍应写在 `.mdx` 正文中。不要在 `.mmd` 文件中写注释性说明（少量中文注释除外）。
+
+5. **命名约定**：`.mmd` 文件名应与图表内容对应，使用 kebab-case，例如 `fallback-flow.mmd`、`request-lifecycle.mmd`。
+
+---
+
+## 代码风格与工具要求
 - **代码块展示：** 优先使用 `@src/components/CodeDiff.tsx` 组件进行代码对比展示。
 
 - **源码提取规范（?raw 模式）：**
   - 使用 Vite 的 `?raw` 语法在构建时自动提取源码字符串，替代手写在模板字符串中的代码示例。
-  - Bad/Good Code 应提取为独立的 `.tsx` / `.css` 文件，统一放在 `demos/` 子目录下：
-    ```
-    pages/SomeTopic/
-    ├── index.tsx          # 主页面
-    ├── data.ts            # 纯数据（描述/原理/对比表等，不含代码字符串）
-    ├── LiveDemo.tsx       # 互动演示组件
-    └── demos/
-        ├── topic-name.bad.tsx    # ❌ 反面教材（仅用于 ?raw 提取，不会被编译执行）
-        └── topic-name.good.tsx   # ✅ 最佳实践（仅用于 ?raw 提取）
-    ```
+  - Bad/Good Code 应提取为独立的 `.tsx` / `.css` 文件，统一放在 `demos/` 子目录下。
   - 命名约定：反面教材使用 `.bad.tsx` 后缀，最佳实践使用 `.good.tsx` 后缀。
   - `.bad.tsx` 文件已被 Vite 的 `?raw` 导入，TypeScript 编译器通过 `tsconfig.json` 中的 `exclude` 排除，不会参与类型检查。
 
@@ -99,9 +262,34 @@
 
 ---
 
+## 教学文档生成规范
+
+当使用 `teach` 技能生成 HTML 教学文档时，应遵循以下要求：
+
+1. **内容源格式：** 生成的教学文档内容源应为 `.mdx` 文件，HTML 是最终渲染形态。概念讲解、文字说明、图表、代码对比均应在 `.mdx` 中组织。
+2. **结构要求：** 必须遵循本文档定义的 Five Dimensions 结构（兼容性）或性能优化六段式结构，确保知识点讲解完整。
+3. **实机演示：** 必须包含可交互的 `Live Demo` 或真实组件渲染，让用户可以亲手操作、观察差异。
+4. **组件解耦：** 文字性内容留在 `.mdx`，交互逻辑封装为独立 React 组件，在 `.mdx` 中 import 使用。
+5. **代码对比：** 使用 `CodeDiff` 组件展示 Bad/Good 代码，源码通过 `?raw` 从 `demos/` 提取。
+6. **参考文档：** 同步生成 `teach` 工作区下的 `./reference/*.html` 类型参考文档，压缩关键知识点，作为独立技术手册，便于用户后续快速查阅。参考文档不强制集成进 `react-interview` 主应用，保持独立、可打印。
+7. **教程中引用参考文档：** 在 `.mdx` 或生成的 HTML 教学文档中，当讲解到概念、术语、对比表等适合速查的内容时，应通过相对链接 `./reference/<filename>.html` 指向对应的参考文档。参考文档文件名应与知识点对应，例如 `flexbox-cheatsheet.html`、`event-loop-glossary.html`。
+
+---
+
+## 架构改进技能衔接
+
+当使用 `improve-codebase-architecture` 技能对教程页面或教学组件进行架构评审时：
+
+1. 评审应关注 `.mdx` 内容与 React 组件之间的边界是否清晰。
+2. 应检查 `data.ts` 是否仍包含大量文字说明，若存在则建议迁移至 `.mdx`。
+3. 应检查 `Live Demo` 组件是否具备良好接口（输入配置、输出状态），便于在 `.mdx` 中复用。
+4. 应检查 `CodeDiff` 调用的源码是否均来自 `demos/` 目录，避免代码字符串散落在 `.mdx` 或 `data.ts` 中。
+
+---
+
 ## 子应用路由集成
 
-所有子应用（如 `@micro-vue`）通过 **qiankun** 集成至本主应用。
+所有子应用（如 `@micro-vue`）均通过 **qiankun** 集成至本主应用。
 
 **操作要求：** 每当子应用中新增功能菜单或演示页面时，必须在本主应用中同步完成注册：
 
@@ -114,3 +302,4 @@
 
 - 本文件定义了主系统内的最高优先级规则，覆盖一切通用偏好。
 - 涉及跨系统协作、路由集成标准时，必须遵循根目录下的 `AGENTS.md`。
+- 旧页面在未被明确要求重构前，继续遵循其创建时的规范。

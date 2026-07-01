@@ -1,5 +1,6 @@
-﻿import { defineConfig, Plugin } from 'vite';
+import { defineConfig, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import mdx from '@mdx-js/rollup';
 import path from 'path';
 
 /**
@@ -99,6 +100,9 @@ export default defineConfig({
       babel: {
         plugins: [['babel-plugin-react-compiler']],
       },
+    }),
+    mdx({
+      providerImportSource: '@mdx-js/react',
     }),
     mockSSEPlugin(),
   ],

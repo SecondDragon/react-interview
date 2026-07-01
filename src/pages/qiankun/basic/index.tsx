@@ -11,7 +11,7 @@ import SectionMountContainer from './chapters/SectionMountContainer';
 
 const QiankunBasicPage: React.FC = () => {
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>
+    <div style={{ margin: '0 auto', padding: 24 }}>
       <Typography.Title>{pageData.title}</Typography.Title>
       <Typography.Paragraph type="secondary">{pageData.subtitle}</Typography.Paragraph>
 

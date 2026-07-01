@@ -1,0 +1,16 @@
+<!-- ✅ 最佳实践：所有入口资源写死绝对路径或协议相对 URL -->
+<!-- 适合资源完全托管到 CDN 的场景，换域名需要重新构建。 -->
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>子应用</title>
+    <link rel="stylesheet" href="https://cdn.example.com/sql/css/app.css" />
+    <link rel="icon" href="https://cdn.example.com/sql/favicon.ico" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="https://cdn.example.com/sql/js/app.js"></script>
+  </body>
+</html>
