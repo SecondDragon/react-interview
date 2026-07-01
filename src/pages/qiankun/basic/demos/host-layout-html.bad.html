@@ -1,0 +1,20 @@
+<!-- ❌ 反面教材：主应用没有预留挂载容器 -->
+<!-- qiankun 找不到 #micro-viewport，子应用无法被挂载到正确位置。 -->
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>主应用</title>
+  </head>
+  <body>
+    <!-- 主应用布局中只有菜单和主内容区，没有为子应用预留挂载点 -->
+    <div id="root">
+      <aside>侧边栏菜单</aside>
+      <main>
+        <h1>主应用内容</h1>
+        <!-- 这里应该有一个 <div id="micro-viewport"></div> 让 qiankun 挂载子应用 -->
+      </main>
+    </div>
+  </body>
+</html>
