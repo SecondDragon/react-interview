@@ -93,6 +93,7 @@ const ObserverPattern = lazy(() => import('../pages/design-patterns/observer/ind
 const SilentRefreshBasic = lazy(() => import('../pages/silent-refresh/basic'));
 const SilentRefreshProduction = lazy(() => import('../pages/silent-refresh/production'));
 const SilentRefreshExtended = lazy(() => import('../pages/silent-refresh/extended'));
+const QiankunBasicPage = lazy(() => import('../pages/qiankun/basic/index'));
 const SSEDemoPage = lazy(() => import('../pages/network/sse-demo'));
 const SSEReconnectNative = lazy(() => import('../pages/network/sse-reconnect-native'));
 const SSEReconnectFetch = lazy(() => import('../pages/network/sse-reconnect-fetch'));
@@ -255,6 +256,18 @@ export const dashboardRoutes: RouteConfig[] = [
         path: '/dashboard/react-api/use-transition',
         label: 'useTransition',
         element: <UseTransitionPage />,
+      },
+    ],
+  },
+  {
+    path: '/dashboard/qiankun',
+    label: 'qiankun 专题',
+    icon: <ApiOutlined />,
+    children: [
+      {
+        path: '/dashboard/qiankun/basic',
+        label: '乾坤基础',
+        element: <QiankunBasicPage />,
       },
     ],
   },
