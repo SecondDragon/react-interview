@@ -91,15 +91,15 @@ const IMEInput: React.FC = () => {
   const kernelDataSource = [
     {
       key: '1',
-      kernel: 'Chromium / Webkit (Chrome, Safari)',
-      sequence: 'input → compositionend',
-      behavior: '需在 End 中手动补触发',
+      kernel: 'Chromium / Blink / WebKit (Chrome, Edge, Safari)',
+      sequence: 'input → compositionend（现代内核的主流实现）',
+      behavior: 'input 代表 DOM 内容已变化，compositionend 代表输入法会话关闭，二者职责不同',
     },
     {
       key: '2',
       kernel: 'Gecko (Firefox)',
-      sequence: 'compositionend → input',
-      behavior: '自然触发',
+      sequence: 'compositionend → input（典型情况）',
+      behavior: '规范未强制顺序，不同平台/输入法组合可能出现差异',
     },
   ];
 
@@ -236,10 +236,18 @@ const IMEInput: React.FC = () => {
       {/* 二、 Bug 出现的底层原因 */}
       <Card title="二、 Bug 出现的底层原因" style={{ marginBottom: '24px' }}>
         <Paragraph>
-          <Text strong>缓冲区暴露：</Text>
-          现代浏览器为了响应速度，将 IME 的“虚拟缓冲区”变动也视为有效的 Input。更糟糕的是，W3C 对{' '}
-          <Text code>compositionend</Text> 和最后一次 <Text code>input</Text>{' '}
-          的触发顺序没有严格规定，导致了跨内核的时序混乱。
+          <Text strong>现代规范的设计：</Text>
+          W3C UI Events 规范对 <Text code>compositionend</Text> 和最后一次 <Text code>input</Text>{' '}
+          的触发顺序不再做强制规定，因为二者的语义本来就不同：
+          <Text code>input</Text> 事件代表 DOM 元素内容发生改变，
+          <Text code>compositionend</Text> 则代表<strong>输入法会话（IME Session）的关闭</strong>。
+          当用户按空格或数字键选词上屏时，内容先落地，所以 Chromium / Blink / 现代 WebKit 中通常先触发{' '}
+          <Text code>input</Text>，再触发 <Text code>compositionend</Text>。
+        </Paragraph>
+        <Paragraph>
+          <Text strong>事件时序不是按内核一刀切：</Text>
+          它由 Chromium 版本 × 操作系统 IME 管道（TSF / InputMethodKit / IBus / Fcitx）× 输入法框架 × 上屏方式共同决定。
+          因此同样基于 Chromium，Windows 与 Linux、空格上屏与数字选字都可能产生差异。
         </Paragraph>
         <Table
           dataSource={kernelDataSource}
@@ -252,7 +260,12 @@ const IMEInput: React.FC = () => {
 
       {/* 三、 Bug 如何解决 */}
       <Card title="三、 Bug 如何解决" style={{ marginBottom: '24px' }}>
-        <Paragraph>利用“标志位锁”拦截合成阶段的所有事件，并在合成结束时进行保底触发。</Paragraph>
+        <Paragraph>
+          现代浏览器优先推荐方案 A：直接监听 <Text code>input</Text> 并判断{' '}
+          <Text code>!e.nativeEvent.isComposing</Text>，只有在非合成阶段才执行业务逻辑。对于必须兼容 IE
+          兼容模式或部分老旧国产内核的场景，使用方案 B：<Text code>compositionstart</Text> /{' '}
+          <Text code>compositionend</Text> 标志位锁 + End 中手动补偿触发。
+        </Paragraph>
         <div
           style={{
             display: 'grid',
@@ -270,6 +283,11 @@ const IMEInput: React.FC = () => {
           />
         </div>
         <CodeDiff
+          code={IMEInputExamples.isComposingPlan}
+          type="success"
+          title="✅ 方案 A：原生 isComposing 属性（现代浏览器首选）"
+        />
+        <CodeDiff
           code={IMEInputExamples.debounceBad}
           type="error"
           title="❌ 误区 A：防抖（Debounce）"
@@ -277,7 +295,7 @@ const IMEInput: React.FC = () => {
         <CodeDiff
           code={IMEInputExamples.isComposingBad}
           type="error"
-          title="❌ 误区 B：依赖 isComposing 属性"
+          title="❌ 误区 B：依赖 isComposing 属性但不兜底"
         />
         <CodeDiff
           code={IMEInputExamples.naiveLockBad}
@@ -314,81 +332,84 @@ const IMEInput: React.FC = () => {
           style={{ marginTop: '16px' }}
         />
         <Alert
-          message="为什么依赖 isComposing 属性更危险？"
+          message="为什么依赖 isComposing 属性需要兜底？"
           description={
             <div>
               <Paragraph>
-                <Text code>e.nativeEvent.isComposing</Text> 看似完美：无需维护 Ref
-                状态，直接读取浏览器提供的合成标记。但它在
-                <strong>国内特殊内核环境下完全不可靠</strong>。
+                <Text code>e.nativeEvent.isComposing</Text>{' '}
+                是现代浏览器（Chrome、Firefox、Safari、Edge 以及国产浏览器极速模式）原生支持的属性，
+                在主流场景下可以直接判断输入是否处于 IME 合成阶段。但它在以下场景不可靠：
               </Paragraph>
               <ul>
                 <li>
-                  <Text strong>360安全浏览器、QQ浏览器、搜狗浏览器、微信内置浏览器、UC浏览器</Text>{' '}
-                  等国产双核浏览器，在兼容模式（IE 内核）或旧版 Chromium 内核中，
-                  <Text code>isComposing</Text> 属性可能始终返回 <Text code>false</Text>
-                  ，甚至直接不存在。
+                  <Text strong>IE 兼容模式：</Text>360安全浏览器、QQ浏览器、搜狗浏览器等国产双核浏览器在兼容模式下，
+                  <Text code>InputEvent</Text> 实现可能不完整，<Text code>isComposing</Text> 可能缺失或始终返回 false。
                 </li>
                 <li>
-                  这些浏览器为了兼容老旧网页或降低实现成本，对 <Text code>InputEvent</Text>{' '}
-                  的规范实现不完整，导致开发者误以为"加了判断就安全了"，实际上锁完全失效。
+                  <Text strong>老旧或定制内核：</Text>统信 UOS、麒麟 OS 早期版本、微信 XWeb 等部分环境基于旧版 Chromium 或定制 WebKit，
+                  对 <Text code>InputEvent</Text> 的规范实现存在偏差，<Text code>isComposing</Text> 可能无法正确反映合成状态。
                 </li>
                 <li>
-                  相比之下，<Text code>compositionstart</Text> / <Text code>compositionend</Text>{' '}
-                  事件虽然也有时序差异，但触发基本稳定，配合 Ref 标志位是工业级唯一可靠方案。
+                  <Text strong>Polyfill 或事件封装：</Text>如果项目中存在自定义事件系统或旧版 React 合成事件封装，
+                  事件对象可能不是真正的 <Text code>InputEvent</Text>，导致该属性不可用。
                 </li>
               </ul>
+              <Paragraph>
+                <Text strong>结论：</Text>现代浏览器中优先使用 <Text code>isComposing</Text>；
+                但在需要兼容 IE 兼容模式或老旧国产内核时，必须配合{' '}
+                <Text code>compositionstart</Text> / <Text code>compositionend</Text> 标志位锁作为兜底。
+              </Paragraph>
             </div>
           }
-          type="error"
+          type="warning"
           showIcon
           style={{ marginTop: '16px' }}
         />
         <Alert
-          message={`为什么"只解锁不补偿"的方案在信创浏览器上致命？`}
+          message={`为什么"只解锁不补偿"的方案在部分浏览器环境下不可靠？`}
           description={
             <div>
               <Paragraph>
-                这个方案看起来和工业级实现几乎一样：都有 <Text code>isComposing</Text> 锁，都监听{' '}
+                这个方案看起来和完整实现几乎一样：都有锁，都监听{' '}
                 <Text code>compositionstart</Text> / <Text code>compositionend</Text> /{' '}
                 <Text code>input</Text>。唯一的区别是：
                 <strong>
                   它在 <Text code>compositionend</Text> 中只解锁，不主动调用业务逻辑
                 </strong>
-                ，而是天真地依赖浏览器在解锁后自动再发一次 <Text code>input</Text>。
+                ，而是依赖浏览器在解锁后自动再发一次 <Text code>input</Text>。
               </Paragraph>
-              <Paragraph strong>不同内核的时序差异决定了它的死刑：</Paragraph>
+              <Paragraph strong>不同内核的时序差异决定了它的风险：</Paragraph>
               <ul>
                 <li>
-                  <Text strong>Chromium / WebKit（Chrome、Safari、Edge、国内大部分浏览器）：</Text>
-                  时序是 <Text code>input → compositionend</Text>
+                  <Text strong>Chromium / Blink / WebKit（Chrome、Safari、Edge、国产浏览器极速模式）：</Text>
+                  典型时序是 <Text code>input → compositionend</Text>
                   。用户按下空格或数字键选字时，最后一个 <Text code>input</Text> 事件到来时{' '}
                   <Text code>isComposing</Text> 还是 <Text code>true</Text>，被锁拦截；随后{' '}
                   <Text code>compositionend</Text> 触发，锁打开，但浏览器
                   <strong>
-                    不会再补发一次 <Text code>input</Text>
+                    通常不会再补发一次 <Text code>input</Text>
                   </strong>
-                  。导致<strong>最后一个汉字永远无法触发搜索</strong>。
+                  。导致<strong>最后一个汉字可能无法触发搜索</strong>。
                 </li>
                 <li>
                   <Text strong>Gecko（Firefox）：</Text>
-                  时序是 <Text code>compositionend → input</Text>。<Text code>compositionend</Text>{' '}
+                  典型时序是 <Text code>compositionend → input</Text>。<Text code>compositionend</Text>{' '}
                   先解锁，然后 <Text code>input</Text> 正常触发。这个方案在 Firefox
-                  下恰好能工作——但这只是侥幸，不是设计。
+                  下通常能工作——但这只是统计规律，不是规范保证。
                 </li>
                 <li>
-                  <Text strong>信创浏览器（统信 UOS、麒麟系统等国产操作系统自带浏览器）：</Text>
-                  这些浏览器通常基于老旧 Chromium（如 80~90 版本）或深度定制的 WebKit，对{' '}
-                  <Text code>composition</Text> 事件的实现极不规范：有的{' '}
-                  <Text code>compositionend</Text> 根本不触发；有的触发时{' '}
+                  <Text strong>老旧内核 / 国产定制环境（统信 UOS、麒麟 OS、微信 XWeb 等）：</Text>
+                  这些环境可能基于老旧 Chromium 或深度定制的 WebKit，对{' '}
+                  <Text code>composition</Text> 事件的实现存在偏差：有的{' '}
+                  <Text code>compositionend</Text> 不触发；有的触发时{' '}
                   <Text code>e.target.value</Text> 尚未更新；有的触发多次；有的触发后
                   <strong>
                     不补发任何 <Text code>input</Text>
                   </strong>
-                  。依赖"解锁后等 input"在信创环境下是完全不可靠的赌博。
+                  。依赖"解锁后等 input"在这些环境下是不可靠的赌博。
                 </li>
               </ul>
-              <Paragraph strong>工业级完整实现为什么能兼容所有内核？</Paragraph>
+              <Paragraph strong>完整实现为什么能覆盖绝大多数主流内核？</Paragraph>
               <ul>
                 <li>
                   <strong>不赌浏览器的人品：</strong>在 <Text code>compositionend</Text> 中
@@ -396,19 +417,20 @@ const IMEInput: React.FC = () => {
                   ，而不是被动等待浏览器发 <Text code>input</Text>。
                 </li>
                 <li>
-                  <strong>Firefox 双触发去重：</strong>Firefox 下会触发两次（
+                  <strong>Firefox 双触发去重：</strong>Firefox 下可能触发两次（
                   <Text code>compositionend</Text> 中一次 + 后续的 <Text code>input</Text>{' '}
                   中一次）。通过 <Text code>AbortController</Text> 和请求 ID 进行物理取消 +
                   逻辑校验，确保只有最后一次生效。
                 </li>
                 <li>
                   <strong>Chromium 不丢失：</strong>最后一个 <Text code>input</Text> 被锁拦截，但{' '}
-                  <Text code>compositionend</Text> 中补偿触发，完美抹平时序差异。
+                  <Text code>compositionend</Text> 中补偿触发，抹平时序差异。
                 </li>
                 <li>
-                  <strong>信创浏览器兜底：</strong>只要 <Text code>compositionend</Text>{' '}
-                  触发（哪怕时序混乱、哪怕只触发一次），业务逻辑一定会被执行，不会因为浏览器漏发{' '}
-                  <Text code>input</Text> 而完全失效。
+                  <strong>特殊环境兜底：</strong>只要 <Text code>compositionend</Text>{' '}
+                  触发（哪怕时序混乱、哪怕只触发一次），业务逻辑就会被执行，不会因为浏览器漏发{' '}
+                  <Text code>input</Text> 而完全失效。若 <Text code>compositionend</Text>{' '}
+                  本身不触发，则需要额外兜底策略。
                 </li>
               </ul>
             </div>
@@ -454,8 +476,14 @@ const IMEInput: React.FC = () => {
         style={{ marginBottom: '24px' }}
       >
         <Paragraph>
-          这种方案不仅解决了数据污染，更重要的是它通过“物理拦截”确保了 React
-          的渲染周期不会打断输入法的内部状态，是金融级输入框的标配。
+          现代浏览器首选方案 A：监听 <Text code>input</Text> 并判断{' '}
+          <Text code>!e.nativeEvent.isComposing</Text>，可直接在内容落地的瞬间执行业务逻辑，无需维护 Ref
+          状态。Live Demo 为了演示“锁”的物理拦截效果，仍采用方案 B（标志位锁），这样读者可以直观看到拼音碎片如何被阻止进入业务值。
+        </Paragraph>
+        <Paragraph>
+          方案 B 的价值在于兼容 IE 兼容模式、老旧国产内核等 <Text code>isComposing</Text>{' '}
+          不可靠的环境，同时通过 <Text code>compositionend</Text> 中的补偿触发避免 Blink / WebKit
+          中最后一字丢失的问题。
         </Paragraph>
         <Divider />
         <IMEDemo />
@@ -465,18 +493,30 @@ const IMEInput: React.FC = () => {
       <Card title="五、 Bug 能解决的核心原理" style={{ background: '#f0f5ff' }}>
         <ul>
           <li>
-            <Text strong>isComposing 标志位：</Text>
-            通过 <Text code>compositionstart</Text> 将锁闭合，在此期间的所有 <Text code>input</Text>{' '}
-            事件均被 return，停止向下分发。
+            <Text strong>input 与 compositionend 的语义差异：</Text>
+            <Text code>input</Text> 表示 DOM 内容已改变，
+            <Text code>compositionend</Text> 表示输入法会话关闭。在 Chromium / Blink / 现代 WebKit
+            中，选词上屏时通常是内容先落地（input），输入法再通知结束（compositionend）。
           </li>
           <li>
-            <Text strong>时序对齐 (保底触发)：</Text>在 <Text code>compositionend</Text>{' '}
-            触发时，意味着汉字已经确定。此时手动调用一次业务逻辑（如搜索），可以完美抹平 Chromium
-            内核下 input 先于 end 触发导致的“最后一字丢失”问题。
+            <Text strong>isComposing 原生属性（方案 A）：</Text>
+            现代浏览器的 <Text code>InputEvent</Text> 直接提供{' '}
+            <Text code>isComposing</Text> 标志，可以最优雅地区分“合成中”和“已确定”。
+          </li>
+          <li>
+            <Text strong>isComposing 标志位锁（方案 B）：</Text>
+            通过 <Text code>compositionstart</Text> 将锁闭合，在此期间的所有 <Text code>input</Text>{' '}
+            事件被拦截；在 <Text code>compositionend</Text> 中解锁并主动补偿触发一次业务逻辑，覆盖{' '}
+            <Text code>isComposing</Text> 不可靠的环境。
+          </li>
+          <li>
+            <Text strong>时序对齐（保底触发）：</Text>
+            在 <Text code>compositionend</Text> 中手动调用业务逻辑，可以抹平 Chromium / Blink 中{' '}
+            <Text code>input</Text> 先于 <Text code>compositionend</Text> 导致的“最后一字可能丢失”问题。
           </li>
           <li>
             <Text strong>AbortController 竞态控制：</Text>
-            结合网络层的取消机制，确保只有最后一次确定的输入（而非中间过程）能生效，从根本上解决回包乱序。
+            结合网络层的取消机制，确保只有最后一次确定的输入（而非中间过程）能生效，解决回包乱序和多次触发问题。
           </li>
         </ul>
       </Card>
