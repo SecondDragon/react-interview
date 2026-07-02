@@ -67,7 +67,7 @@ const LiveDemo: React.FC = () => {
 
       <Divider />
 
-      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+      <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
         <div>
           <Typography.Text strong>{liveDemoData.inputs[0].label}：</Typography.Text>
           <Tooltip title="例如 /sql/ 或 https://sql.example.com/sql/">

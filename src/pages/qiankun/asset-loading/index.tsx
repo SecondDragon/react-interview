@@ -17,7 +17,7 @@ const QiankunAssetLoadingPage: React.FC = () => {
 
       <Divider />
 
-      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+      <Space orientation="vertical" size="large" style={{ width: '100%' }}>
         <SectionWebpackOutput />
         <Divider />
         <SectionDeploymentPath />

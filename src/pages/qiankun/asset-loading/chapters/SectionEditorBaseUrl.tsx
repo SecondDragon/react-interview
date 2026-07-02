@@ -10,7 +10,7 @@ const SectionEditorBaseUrl: React.FC = () => {
     <section>
       <Typography.Title level={3}>{editorBaseUrlData.title}</Typography.Title>
 
-      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+      <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
         <div>
           <Typography.Title level={4}>一、现象/问题</Typography.Title>
           <Typography.Paragraph>
@@ -26,9 +26,11 @@ const SectionEditorBaseUrl: React.FC = () => {
 
         <div>
           <Typography.Title level={4}>二、底层原因</Typography.Title>
-          <Space direction="vertical" size="small" style={{ width: '100%' }}>
+          <Space orientation="vertical" size="small" style={{ width: '100%' }}>
             {editorBaseUrlData.cause.map((item, index) => (
-              <Typography.Paragraph key={index} dangerouslySetInnerHTML={{ __html: item }} />
+              <Typography.Paragraph key={index}>
+                <span dangerouslySetInnerHTML={{ __html: item }} />
+              </Typography.Paragraph>
             ))}
           </Space>
         </div>

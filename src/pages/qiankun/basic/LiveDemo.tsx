@@ -40,7 +40,7 @@ const LiveDemo: React.FC = () => {
     <Card title={liveDemoData.title}>
       <Typography.Paragraph>{liveDemoData.description}</Typography.Paragraph>
 
-      <Space direction="vertical" style={{ width: '100%' }}>
+      <Space orientation="vertical" style={{ width: '100%' }}>
         {liveDemoData.switches.map((item) => (
           <div key={item.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>{item.label}</span>

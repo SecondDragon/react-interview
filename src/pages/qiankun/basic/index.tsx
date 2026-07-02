@@ -17,7 +17,7 @@ const QiankunBasicPage: React.FC = () => {
 
       <Divider />
 
-      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+      <Space orientation="vertical" size="large" style={{ width: '100%' }}>
         <SectionIntro />
 
         <LiveDemo />
