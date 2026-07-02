@@ -1,0 +1,37 @@
+flowchart LR
+    subgraph P1["🔵 阶段一：Mount（正常）"]
+        direction TB
+        A1["① createStyleElement()<br/>创建 style 标签"] --> A2["② appendChild<br/>沙箱代理拦截，注入容器"]
+        A2 --> A3["③ insertRule(cssText)<br/>规则写入 CSSStyleSheet"]
+        A3 --> A4["🎉 页面正常显示"]
+    end
+
+    subgraph P2["🟡 阶段二：Unmount（切换走）"]
+        direction TB
+        B1["① qiankun 清理容器<br/>移除 style 标签"] --> B2["② style 脱离文档<br/>变为 detached 状态"]
+        B2 --> B3["③ this.tag 仍指向<br/>detached 元素（非 null）"]
+        B3 --> B4["④ hasInjected()<br/>永远返回 true"]
+    end
+
+    subgraph P3["🔴 阶段三：Remount（切回来）"]
+        direction TB
+        C1["① React 重新渲染<br/>hasInjected() = true"] --> C2["② 跳过 style 标签重建"]
+        C2 --> C3{"③ 注入方式"}
+        C3 -->|"CSSOM 模式"| C4["tag.sheet.insertRule()<br/>写入 detached sheet"]
+        C4 --> C5["💀 规则脱离渲染管道<br/>组件有类名无样式"]
+        C3 -->|"textContent 模式"| C6["getTag() 检查 isConnected<br/>发现 disconnected"]
+        C6 --> C7["置空 tag，重建标签<br/>writeSheet() 批量恢复"]
+        C7 --> C8["✅ 样式自动恢复"]
+    end
+
+    P1 --> P2 --> P3
+    A4 -.->|"状态传递"| B1
+    B4 -.->|"状态传递"| C1
+
+    style A4 fill:#f6ffed,stroke:#52c41a
+    style B4 fill:#fff7e6,stroke:#fa8c16,stroke-width:2px
+    style C5 fill:#fff1f0,stroke:#f5222d,stroke-width:2px
+    style C8 fill:#f6ffed,stroke:#52c41a,stroke-width:2px
+    style P1 fill:#f6ffed55,stroke:#52c41a
+    style P2 fill:#fff7e655,stroke:#fa8c16
+    style P3 fill:#fff1f055,stroke:#f5222d

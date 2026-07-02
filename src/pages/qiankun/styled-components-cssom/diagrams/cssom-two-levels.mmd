@@ -1,0 +1,17 @@
+graph TD
+    A["🔵 &lt;style&gt; 标签"] --> B["📄 DOM 层面<br/>textContent / innerHTML"]
+    A --> C["🧠 CSSOM 层面<br/>element.sheet"]
+    B --> B1["文本节点存储 CSS 规则<br/>随标签移动、复制、持久化"]
+    B --> B2["被 remove/re-append 后文本仍保持"]
+    C --> C1["CSSStyleSheet 对象（内存中）"]
+    C --> C2["可通过 insertRule() 直接写入"]
+    C --> C3["不依赖 textContent 存在"]
+    C1 --> C4["⚠️ 被 remove + re-append 后<br/>.sheet 重置为空对象"]
+    B1 --> C1
+    B1 -.->|"浏览器自动 parse<br/>textContent 生成"| C1
+    C3 -.->|"textContent 保持不变"| B1
+
+    style B fill:#e6f7ff,stroke:#1890ff
+    style C fill:#fff7e6,stroke:#fa8c16
+    style C4 fill:#fff1f0,stroke:#f5222d
+    style B2 fill:#f6ffed,stroke:#52c41a

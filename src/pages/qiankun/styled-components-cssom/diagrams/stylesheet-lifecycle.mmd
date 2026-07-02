@@ -1,0 +1,43 @@
+flowchart TD
+    START["🚀 styled-components<br/>Styled 组件首次渲染"]
+    CHECK{"StyleSheet.hasInjected()<br/>this.tag !== null ?"}
+
+    START --> CHECK
+    CHECK -->|"false（初始状态）"| CREATE["createStyleElement()<br/>创建 &lt;style&gt; 标签"]
+    CREATE --> APPEND["document.head.appendChild(style)"]
+    APPEND --> CACHE["this.tag = style<br/>缓存标签引用"]
+    CACHE --> INJECT
+
+    CHECK -->|"true（已注入）"| NAMES{"this.names 是否<br/>已有该组件 ID ?"}
+    NAMES -->|"无（新组件）"| GETTAG["调用 getTag()"]
+    NAMES -->|"有（旧组件）"| SKIP["跳过注入<br/>认为样式已存在"]
+    SKIP -->|"⚠️ 在 qiankun<br/>remount 场景中<br/>这是致命误判"| LOST["❌ 组件类名存在<br/>CSS 规则不存在"]
+
+    GETTAG --> TAGCHECK{"检查模式"}
+    TAGCHECK -->|"CSSOM 模式"| CSSOMTAG{"this.tag<br/>isConnected ?"}
+    CSSOMTAG -->|"不检查"| REUSE["复用旧标签<br/>（可能已 detached）"]
+    REUSE --> INJECT["写入 CSS 规则"]
+    
+    TAGCHECK -->|"textContent 模式"| TEXTCHECK{"this.tag<br/>isConnected ?"}
+    TEXTCHECK -->|"false（已 disconnected）"| RESET["this.tag = null<br/>清空引用"]
+    RESET --> CREATE
+    TEXTCHECK -->|"true（仍在文档中）"| INJECT
+
+    INJECT --> MODECHECK{"注入方式 ?"}
+    MODECHECK -->|"CSSOM"| CSSOMWRITE["tag.sheet.insertRule()<br/>写入 CSSStyleSheet"]
+    CSSOMWRITE --> CSSOMRESULT{"标签在文档中 ?"}
+    CSSOMRESULT -->|"在"| OK["✅ 样式生效"]
+    CSSOMRESULT -->|"detached"| CSSOMLOST["❌ 写入 detached sheet<br/>无渲染效 → 样式丢失"]
+
+    MODECHECK -->|"textContent"| TEXTWRITE["tag.textContent += cssText<br/>追加 DOM 文本"]
+    TEXTWRITE --> TEXTRESULT{"标签在文档中 ?"}
+    TEXTRESULT -->|"在"| OK2["✅ 浏览器 re-parse → 生效"]
+    TEXTRESULT -->|"detached"| TEXTDETACH["文本写入 detached 元素"]
+    TEXTDETACH -->|"下次 getTag()<br/>触发 isConnected 检查"| RESET
+
+    style LOST fill:#fff1f0,stroke:#f5222d,stroke-width:3px
+    style CSSOMLOST fill:#fff1f0,stroke:#f5222d,stroke-width:3px
+    style SKIP fill:#fff7e6,stroke:#fa8c16
+    style OK fill:#f6ffed,stroke:#52c41a
+    style OK2 fill:#f6ffed,stroke:#52c41a
+    style RESET fill:#e6f7ff,stroke:#1890ff

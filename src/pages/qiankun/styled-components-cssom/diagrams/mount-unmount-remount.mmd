@@ -1,0 +1,30 @@
+sequenceDiagram
+    autonumber
+    participant SC as styled-components<br/>StyleSheet 单例
+    participant DOM as 浏览器 DOM
+    participant QC as qiankun 沙箱
+
+    Note over SC,QC: === 第一次 Mount ===
+    QC->>SC: mount() 触发渲染
+    SC->>SC: this.tag = null 初始状态
+    SC->>SC: createStyleElement()
+    SC->>DOM: document.head.appendChild(style)
+    QC-->>DOM: 沙箱代理拦截，注入子应用容器
+    SC->>SC: this.tag = style
+    SC->>SC: insertRule(cssText) 写入 CSSStyleSheet
+    Note over SC: 页面正常显示
+
+    Note over SC,QC: === Unmount 用户切换页面 ===
+    QC->>QC: unmount() 清理子应用容器
+    QC->>DOM: 移除 style 标签
+    DOM-->>SC: style 标签变为 detached
+    Note over SC: this.tag 仍指向 detached 元素
+    Note over SC: hasInjected() 返回 true
+
+    Note over SC,QC: === Remount 用户切回 ===
+    QC->>SC: mount() 触发重新渲染
+    SC->>SC: hasInjected() this.tag != null = true
+    Note over SC: 跳过标签重建
+    SC->>DOM: tag.sheet.insertRule(cssText)
+    Note over DOM: 规则写入 detached CSSStyleSheet
+    Note over DOM: 无渲染效，白屏

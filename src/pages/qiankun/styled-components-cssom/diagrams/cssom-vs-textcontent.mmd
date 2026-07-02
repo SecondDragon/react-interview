@@ -1,0 +1,34 @@
+flowchart LR
+    START["⚡ styled-components<br/>注入样式"]
+
+    subgraph MODE1["🔴 CSSOM Injection 模式（默认）"]
+        direction TB
+        A1["① Mount<br/>创建 &lt;style&gt; 标签"] --> A2["insertRule()<br/>写入 CSSStyleSheet"]
+        A2 --> A3["② Unmount<br/>&lt;style&gt; 被 remove"]
+        A3 --> A4["③ Remount<br/>hasInjected() = true<br/>跳过重建"]
+        A4 --> A5["tag.sheet.insertRule()"]
+        A5 --> A6["⚠️ 规则进入 detached<br/>CSSStyleSheet 对象"]
+        A6 --> A7["❌ 无渲染效<br/>样式永久丢失"]
+    end
+
+    subgraph MODE2["🟢 textContent 模式（disableCSSOMInjection）"]
+        direction TB
+        B1["① Mount<br/>创建 &lt;style&gt; 标签"] --> B2["textContent += cssText<br/>文本追加到 DOM"]
+        B2 --> B3["② Unmount<br/>&lt;style&gt; 被 remove"]
+        B3 --> B4["③ Remount<br/>getTag() 检查 isConnected"]
+        B4 --> B5["检测到 disconnected<br/>→ 置空 tag"]
+        B5 --> B6["重建新标签<br/>writeSheet() 批量恢复"]
+        B6 --> B7["✅ 样式自动恢复"]
+    end
+
+    START --> A1
+    START --> B1
+    A3 -.->|"同样被移除"| B3
+
+    style A6 fill:#fff1f0,stroke:#f5222d
+    style A7 fill:#fff1f0,stroke:#f5222d,stroke-width:3px
+    style B5 fill:#fff7e6,stroke:#fa8c16
+    style B6 fill:#fff7e6,stroke:#fa8c16
+    style B7 fill:#f6ffed,stroke:#52c41a,stroke-width:3px
+    style MODE1 fill:#fff1f055,stroke:#f5222d
+    style MODE2 fill:#f6ffed55,stroke:#52c41a

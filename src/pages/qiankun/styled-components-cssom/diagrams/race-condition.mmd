@@ -1,0 +1,35 @@
+sequenceDiagram
+    autonumber
+    participant Browser as 浏览器加载
+    participant Vue2 as Vue2 主应用
+    participant QK as qiankun
+    participant Sandbox as 沙箱代理
+    participant SubApp as 子应用 JS
+    participant SC as styled-components
+
+    Note over Browser,SC: 硬刷新或首次切换 → 加载子应用路由
+
+    Browser->>Vue2: 加载主应用 HTML
+    Vue2->>QK: 路由匹配，start()
+    QK->>QK: loadApp() 启动
+
+    par 时序A 幸运 样式正常
+        QK->>Sandbox: 1 初始化沙箱代理
+        Sandbox-->>QK: 沙箱就绪
+        QK->>SubApp: 2 fetch + eval 子应用 JS
+        SubApp->>SC: styled-components 初始化
+        SC->>Sandbox: appendChild(style)
+        Sandbox->>Sandbox: 代理正确，注入子应用容器
+    and 时序B 不幸 样式丢失
+        QK->>SubApp: 1 fetch + eval 子应用 JS 快
+        SubApp->>SC: styled-components 初始化
+        SC->>SC: appendChild(style)
+        Note over SC: 沙箱代理未就绪
+        Note over SC: 写入真实 document.head
+        QK->>Sandbox: 2 初始化沙箱代理
+        Sandbox->>Sandbox: 扫描真实 head
+        Sandbox->>Sandbox: 发现外来 style，从 DOM 移除
+        Note over SC: style 变为 detached
+        Note over SC: hasInjected 永远 true，不重建
+        Note over SC: insertRule 写 detached sheet，无渲染效
+    end

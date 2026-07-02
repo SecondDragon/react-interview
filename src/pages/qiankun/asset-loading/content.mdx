@@ -1,0 +1,375 @@
+import CodeDiff from '@/components/CodeDiff';
+import LiveDemo from './LiveDemo';
+import { Card, Table, Alert, Tag, Typography } from 'antd';
+import { webpackStageTable, workerComparisonTable, urlFormTable, universalTable } from './data';
+
+import webpackBad from './demos/webpack-config.bad.ts?raw';
+import webpackGood from './demos/webpack-config.good.ts?raw';
+import runtimeBad from './demos/publicpath-runtime.bad.ts?raw';
+import runtimeGood from './demos/publicpath-runtime.good.ts?raw';
+import runtimePublicPathBad from './demos/runtime-publicpath.bad.ts?raw';
+import runtimePublicPathGood from './demos/runtime-publicpath.good.ts?raw';
+import nginxConf from './demos/nginx-location.good.conf?raw';
+import htmlEntryBad from './demos/html-entry.bad.html?raw';
+import htmlEntryGood from './demos/html-entry.good.html?raw';
+import htmlEntryAbsolute from './demos/html-entry.absolute.html?raw';
+import webpackPublicPathGood from './demos/webpack-config.publicpath.good.ts?raw';
+import monacoEnvBad from './demos/monaco-environment.bad.ts?raw';
+import monacoEnvGood from './demos/monaco-environment.good.ts?raw';
+import workerContextBad from './demos/worker-context.bad.ts?raw';
+import workerContextGood from './demos/worker-context.good.ts?raw';
+import codemirrorBad from './demos/codemirror-config.bad.ts?raw';
+import codemirrorGood from './demos/codemirror-config.good.ts?raw';
+
+# qiankun 专题：子应用资源的加载
+
+<Typography.Paragraph type="secondary">从 webpack publicPath 到 Monaco Worker 的资源加载陷阱</Typography.Paragraph>
+
+---
+
+<Card title="一、webpack 产物与 publicPath" style={{ marginBottom: 24 }}>
+
+### 一、现象/问题
+
+- 本地开发时代码高亮、命令补全正常，部署到子应用路径后这些功能消失
+- 控制台报 404，资源路径是 `/js/xxx` 而不是 `/subapp/js/xxx`
+- 改了 publicPath 后，主资源包能加载，但 worker、grammar 文件还是 404
+- 不同环境（开发、测试、生产）需要反复改 publicPath
+
+### 二、底层原因
+
+webpack 打包时，代码里的动态加载路径（如 `import("./mode-sql")`）会被编译成基于 `__webpack_require__.p` 的 URL。
+
+`__webpack_require__.p` 就是 `output.publicPath`（或运行时 `__webpack_public_path__`）的值。如果它是空字符串或 `"/"`，产物会假设自己部署在当前页面路径或域名根路径。
+
+当子应用部署在 `"/subapp/"` 下，或者在 qiankun 里通过 HTML Entry 加载时，浏览器当前页面地址仍是主应用，导致动态 chunk 被拼到主应用路径上。
+
+#### `__webpack_public_path__` 为什么能生效？
+
+webpack 在构建时会把代码中的 `import("./mode-sql")` 改写成 `__webpack_require__.p` + `"js/chunk-mode-sql.js"`。在页面顶部设置 `__webpack_public_path__ = "https://sql.example.com/sql/"` 后，所有动态 chunk 的 URL 都会自动拼上这个前缀。
+
+<Table dataSource={webpackStageTable} columns={[
+  { title: '阶段', dataIndex: 'stage', key: 'stage' },
+  { title: '代码形式', dataIndex: 'code', key: 'code' },
+  { title: '最终请求 URL', dataIndex: 'resolvedUrl', key: 'resolvedUrl' },
+]} pagination={false} size="small" bordered style={{ marginBottom: 16 }} />
+
+### 三、如何解决
+
+**方案 1：** 构建时按环境配置 `output.publicPath`。
+
+<CodeDiff oldValue={webpackBad} newValue={webpackGood} leftTitle="❌ 反面教材" rightTitle="✅ 最佳实践" type="error" hideDiffMarkers={true} />
+
+**方案 2：** 运行时在子应用入口最顶部动态设置 `__webpack_public_path__`，让 qiankun 和独立运行共享同一套构建产物。
+
+<CodeDiff oldValue={runtimeBad} newValue={runtimeGood} leftTitle="❌ 反面教材" rightTitle="✅ 最佳实践" type="error" hideDiffMarkers={true} />
+
+### 四、为什么要这样解决
+
+- 未设置 `__webpack_public_path__`：`import("./mode-sql")` → 请求 `https://main.example.com/dashboard/qiankun/sql/js/chunk-mode-sql.js`（404）
+- 设置后：`import("./mode-sql")` → 请求 `https://sql.example.com/sql/js/chunk-mode-sql.js`（命中）
+
+<Alert type="info" message="结论" description="正确设置 publicPath 后，所有 webpack 动态 chunk 都会自动拼上正确前缀，无需在每个 import() 里手写完整 URL。" showIcon />
+
+### 五、核心原理
+
+- webpack 的 `__webpack_require__.p` 就是 **publicPath**
+- 所有 `import()`、动态加载的 chunk、图片、字体等 URL 都会拼上 `__webpack_require__.p`
+- 运行时 `__webpack_public_path__` 等价于把 `__webpack_require__.p` 改为指定值
+- 如果子应用被 qiankun 以 HTML Entry 方式加载，子应用内部的 `location` 仍然是主应用的 URL，因此静态 publicPath 容易错，需要运行时动态修正
+
+<Alert type="warning" message="注意事项" description={
+  <ul>
+    <li><code>publicPath</code> 可以是字符串、auto 或函数</li>
+    <li><code>auto</code> 会根据 <code>import.meta.url</code> 自动推断，但在某些旧浏览器或特殊部署下可能不准确</li>
+    <li>运行时 <code>__webpack_public_path__</code> 会覆盖构建时的 <code>output.publicPath</code></li>
+  </ul>
+} showIcon />
+
+</Card>
+
+<Card title="二、部署路径与 nginx 转发" style={{ marginBottom: 24 }}>
+
+### 一、现象/问题
+
+- 子应用独立部署正常，通过 nginx 转发到 /sql/ 后部分资源 404
+- 刷新页面或直接访问 /sql/list 时，HTML 能加载，但 CSS/JS 404
+- 改了 publicPath 后有些资源能加载，但有些还是从 "/" 请求
+
+### 二、底层原因
+
+**nginx** 转发改变了浏览器看到的 URL，但子应用代码里仍然按原始路径构建。如果 `publicPath` 是 "/" 或 `auto`，在 "/sql/" 路径下请求 `/js/xxx` 会被发到主应用根路径，而不是子应用。
+
+当浏览器地址栏是 `main.example.com/sql/` 时，**document.baseURI** 就是 `main.example.com/sql/`。Monaco 默认使用 `new Worker("./editor.worker.js")`，浏览器会相对于 `/sql/` 解析，得到 `/sql/editor.worker.js`。只要 nginx 把 `/sql/*` 正确转发到子应用真实资源路径，这个请求就会命中。
+
+这与 qiankun 直接加载独立域名子应用完全不同：后者浏览器地址是主应用路径，而 worker 文件在子应用域名下，所以必须靠 **getWorkerUrl** 强制指定绝对路径。
+
+### 三、如何解决
+
+**方案 1：** 运行时通过 `__webpack_public_path__` 动态修正资源前缀。
+
+<CodeDiff oldValue={runtimePublicPathBad} newValue={runtimePublicPathGood} leftTitle="❌ 反面教材" rightTitle="✅ 最佳实践" type="error" hideDiffMarkers={true} />
+
+**方案 2：** **nginx** 转发配置。由于 nginx 会把 `/sql/` 下的请求转发到子应用真实路径，Monaco 默认以当前页面路径 `/sql/editor.worker.js` 请求 Web Worker 时，nginx 会自动将其转发到子应用的 `editor.worker.js`，因此在这种部署模式下不一定需要手动配置 `MonacoEnvironment.getWorkerUrl`。
+
+<Alert type="warning" message="注意" description="这与 qiankun 直接加载独立域名子应用的场景不同：后者浏览器地址是主应用路径，worker 文件在子应用域名下，必须显式指定绝对 URL。" showIcon />
+
+<CodeDiff oldValue={"# 未配置 nginx 转发或转发路径错误\n# （此处仅作占位，实际对比 nginx 正确配置）"} newValue={nginxConf} leftTitle="❌ 反面教材" rightTitle="✅ 最佳实践" type="error" hideDiffMarkers={true} />
+
+### 四、为什么要这样解决
+
+- nginx 配置 `location /sql/` 转发到子应用
+- 子应用 `publicPath` 设置为 `/sql/`、`./` 或 `auto`
+- 运行时通过 `__webpack_public_path__` 动态设置
+
+### 五、核心原理
+
+- **nginx** 转发只是反向代理，浏览器请求的 URL 仍然是 `/sql/js/xxx`
+- 子应用必须知道自己的"外部可见路径"，才能正确拼接资源 URL
+- `__webpack_public_path__` 是 webpack **runtime** 的全局变量，可以覆盖构建时的 `output.publicPath`
+
+### 六、nginx 相对路径转发是"万能"的吗？
+
+nginx 相对路径转发是**最简单、最接近"万能"**的方案——前提是子应用可以被暴露到主应用域名的某个路径前缀下。
+
+在"同域路径前缀"前提下，浏览器地址栏和子应用的资源路径天然对齐，**document.baseURI** 就是 `/sql/`，Monaco、CodeMirror、CSS 字体/图片等依赖浏览器原生相对路径解析的资源默认行为就是正确的。
+
+如果因为品牌或独立域名要求不能走这个方案，才需要回退到 **getWorkerUrl** / **modeURL** / 绝对路径 / **CORS** 配置等方案。
+
+<Table dataSource={universalTable} columns={[
+  { title: '场景', dataIndex: 'scenario', key: 'scenario' },
+  { title: '是否适合', dataIndex: 'suitable', key: 'suitable' },
+  { title: '说明', dataIndex: 'reason', key: 'reason' },
+]} pagination={false} size="small" bordered style={{ marginBottom: 16 }} />
+
+<Alert type="warning" message="注意事项" description={
+  <ul>
+    <li><code>location /sql/</code> 末尾的斜杠会影响 <code>proxy_pass</code> 的路径拼接</li>
+    <li>如果子应用使用 history 路由，nginx 需要配置 <code>try_files</code> 回退到 <code>index.html</code></li>
+    <li>qiankun 环境可以通过 <code>window.__INJECTED_PUBLIC_PATH_BY_QIANKUN__</code> 获取注入路径</li>
+    <li>nginx 转发后，浏览器请求的 <code>/sql/xxx</code> 会被转发到子应用真实路径，因此 Monaco 默认的 worker 路径（如 <code>/sql/editor.worker.js</code>）也会命中，无需额外配置 <strong>getWorkerUrl</strong></li>
+  </ul>
+} showIcon />
+
+</Card>
+
+<Card title="互动演示：资源路径对比器" style={{ marginBottom: 24, border: '2px solid #1890ff' }}>
+
+输入子应用部署路径和 Monaco worker 文件名，查看在独立运行、qiankun 嵌入、nginx 转发三种场景下资源 URL 的差异。
+
+<LiveDemo />
+
+</Card>
+
+<Card title="三、qiankun HTML Entry 如何改变资源 base" style={{ marginBottom: 24 }}>
+
+### 一、现象/问题
+
+- 子应用独立访问（如 https://sql.example.com/sql/）完全正常，嵌入主应用后 CSS 背景图、字体图标、动态加载的 chunk 404
+- 子应用 HTML 里的 `<script src="./js/app.js">` 被解析成了主应用域下的 `/js/app.js`
+- 在独立域名下能加载的 JS 资源，嵌入后却从主应用的 /dashboard/qiankun/... 路径请求
+
+### 二、底层原因
+
+qiankun 默认使用 **HTML Entry**：它会 fetch 子应用入口 HTML，解析出 `<script src>`、`<link href>`、`<style>`、`<img src>` 等，然后插入主应用的 container。浏览器解析相对路径的 base 始终是 **document.baseURI**，也就是当前页面地址。qiankun 嵌入后，当前页面地址仍是主应用，因此子应用 HTML 中的相对路径会基于主应用路径解析。
+
+子应用 JS 内部用 `new URL("./worker.js", import.meta.url)` 或 `document.currentScript` 推断路径时，也会拿到主应用域作为错误 base。
+
+### 三、如何解决
+
+下面给出 4 种方案，按侵入性从低到高排列。
+
+**方案 1：静态 HTML 标签使用绝对路径或协议相对 URL**
+
+在子应用构建产物 `index.html` 中，把相对路径改成以子应用真实域名为基准的绝对路径或协议相对 URL。
+
+<CodeDiff oldValue={htmlEntryBad} newValue={htmlEntryGood} leftTitle="❌ 相对路径" rightTitle="✅ 协议相对 URL" type="error" language="html" hideDiffMarkers={true} />
+
+**方案 2：webpack output.publicPath 配置绝对路径**
+
+构建时统一把 chunk 路径前缀指向子应用真实部署路径或 CDN，这样 JS 内部动态加载 `import()` 或按需 chunk 也会带上正确前缀。
+
+<CodeDiff code={webpackPublicPathGood} title="webpack.config.js：配置绝对 publicPath" type="success" language="typescript" />
+
+**方案 3：运行时通过 __webpack_public_path__ 动态设置**
+
+qiankun 加载子应用时会把 entry URL 注入到 `window.__INJECTED_PUBLIC_PATH_BY_QIANKUN__`。子应用入口 JS 最顶部读取该变量并赋值给 `__webpack_public_path__`，让 webpack 的 chunk 加载路径随环境变化。
+
+<CodeDiff code={runtimePublicPathGood} title="子应用入口：运行时设置 __webpack_public_path__" type="success" language="typescript" />
+
+**方案 4：HTML 标签全部使用绝对路径**
+
+如果子应用无法运行时设置 `__webpack_public_path__`，可以构建时把所有入口标签都写成绝对路径，并把 CSS 中 `url()` 也处理成绝对路径。最稳妥但维护成本最高。
+
+<CodeDiff code={htmlEntryAbsolute} title="index.html：所有资源写死绝对路径或协议相对 URL" type="success" language="html" />
+
+#### URL 形式对比表
+
+<Table dataSource={urlFormTable} columns={[
+  { title: '形式', dataIndex: 'form', key: 'form' },
+  { title: '写法示例', dataIndex: 'example', key: 'example' },
+  { title: '独立运行解析结果', dataIndex: 'standalone', key: 'standalone' },
+  { title: 'qiankun 嵌入解析结果', dataIndex: 'qiankun', key: 'qiankun' },
+  { title: '适用场景', dataIndex: 'scenario', key: 'scenario' },
+]} pagination={false} size="small" bordered style={{ marginBottom: 16 }} />
+
+### 四、为什么要这样解决
+
+- 使用绝对路径或 `//` 协议相对 URL
+- 运行时动态设置 `__webpack_public_path__`
+- 对 CSS 中的相对路径进行处理或使用 CDN
+
+### 五、核心原理
+
+- 浏览器解析相对路径的 base 是 **document.baseURI**，而不是资源来源的 HTML；qiankun 把子应用 HTML 插入主应用后，base 仍然是主应用的
+- 子应用原来写在 HTML 里的 `<script src="./js/app.js">` 会被解析成主应用域下的 `/js/app.js`，而不是子应用域下的 `/sql/js/app.js`
+- `__webpack_public_path__` 修改的是 webpack 的 `__webpack_require__.p`，只在 webpack 模块系统内部生效；它不会自动修复 HTML 标签、CSS `url()`、原生 `new Worker()` 的 URL
+- 协议相对 URL `//` 省略协议但保留域名，不会被主应用 base 带偏，适合跨 HTTP/HTTPS 的固定域名资源
+- 这也是 webpack 官方推荐生产环境使用绝对路径或 CDN 的原因之一：它消除了"当前页面路径"对资源解析的依赖
+
+<Alert type="warning" message="注意事项" description={
+  <ul>
+    <li>qiankun 不会自动重写子应用资源 URL</li>
+    <li>HTML Entry 中 <code>&lt;base href&gt;</code> 标签可以影响相对路径解析，但也会带来副作用</li>
+    <li>CSS 中的相对路径不受 webpack <code>publicPath</code> 控制</li>
+    <li>协议相对 URL 在 <code>file://</code> 协议或某些严格安全策略下会失效，生产环境优先使用 HTTPS 绝对路径</li>
+  </ul>
+} showIcon />
+</Card>
+
+<Card title="四、Monaco worker 为什么走不通 publicPath" style={{ marginBottom: 24 }}>
+
+### 一、现象/问题
+
+- 改了 `__webpack_public_path__` 后，主包资源正常，但 Monaco 语法高亮、命令补全仍失效
+- 控制台看到 worker 文件 404
+- 有时 worker 能加载，但加载的是主应用根路径下的错误文件
+
+### 二、底层原因
+
+Monaco 的语法分析是在 **Web Worker** 中进行的。worker 文件通过 `new Worker(url)` 加载，这个 URL 的解析与主线程 webpack 的 `__webpack_public_path__` 完全无关：浏览器收到的是普通字符串 URL，会按 **document.baseURI** 解析。
+
+worker 被创建后，其内部执行 `importScripts()` 时运行在 worker 自己的全局上下文，也看不到主线程的 `__webpack_public_path__`。因此，即使主线程已经正确设置 publicPath，worker 及其依赖脚本仍可能从错误路径请求。
+
+#### 主线程请求 vs Web Worker 请求
+
+<Table dataSource={workerComparisonTable} columns={[
+  { title: '阶段', dataIndex: 'phase', key: 'phase' },
+  { title: '示例代码', dataIndex: 'code', key: 'code' },
+  { title: 'URL 如何确定', dataIndex: 'resolve', key: 'resolve' },
+  { title: 'publicPath 是否生效', dataIndex: 'publicPath', key: 'publicPath' },
+]} pagination={false} size="small" bordered style={{ marginBottom: 16 }} />
+
+### 三、如何解决
+
+**方案 1：** 配置 `MonacoEnvironment.getWorkerUrl`，为 Monaco 创建 Web Worker 提供正确 URL。
+
+<CodeDiff oldValue={monacoEnvBad} newValue={monacoEnvGood} leftTitle="❌ 反面教材" rightTitle="✅ 最佳实践" type="error" hideDiffMarkers={true} />
+
+**方案 2：** 在 Web Worker 内部加载依赖时同样不要依赖主线程的 `__webpack_public_path__`，而是使用绝对路径或基于 Worker 文件自身 URL 计算的路径。
+
+<CodeDiff oldValue={workerContextBad} newValue={workerContextGood} leftTitle="❌ 反面教材" rightTitle="✅ 最佳实践" type="error" hideDiffMarkers={true} />
+
+### 四、为什么要这样解决
+
+- 主线程：`import("./mode-sql")` → webpack 编译成 `__webpack_require__.e("mode-sql")` → 最终请求 `__webpack_require__.p` + "js/mode-sql.chunk.js"；`__webpack_public_path__` 设置的就是 `__webpack_require__.p`
+- Worker：`new Worker("./editor.worker.js")` → 浏览器直接解析为当前页面 base + "./editor.worker.js"；`__webpack_public_path__` 不参与
+- Worker 内部：`self.importScripts("./sql.js")` → 浏览器基于 Worker 文件 URL 解析；同样与 `__webpack_public_path__` 无关
+
+<Alert type="info" message="结论" description="__webpack_public_path__ 只能救主线程的 webpack chunk，救不了原生 new Worker() 和 importScripts() 的 URL 解析。" showIcon />
+
+### 五、核心原理
+
+- HTML/主线程中的动态 import（如 `import("./mode-sql")`）会被 webpack 改写为 `__webpack_require__.p` + chunkId
+- Web Worker 的创建 URL 由 `new Worker(url)` 时的字符串决定，这是浏览器原生 API，不走 webpack 的模块系统
+- Worker 创建后运行在一个独立全局上下文，`self.importScripts()` 加载其他脚本时基于 worker 文件所在 URL 解析，主线程的 `__webpack_public_path__` 不会传递给它
+
+<Alert type="warning" message="注意事项" description={
+  <ul>
+    <li>Monaco 的 worker 路径必须指向真实可访问的 <code>.js</code> 文件</li>
+    <li>worker 文件最好和主应用同源，避免 <strong>COEP/CORP</strong> 等跨域安全策略限制</li>
+    <li>可以使用 <code>monaco-editor-webpack-plugin</code> 或 <code>@monaco-editor/loader</code> 简化配置，但本质仍是提供正确的 worker URL</li>
+  </ul>
+} showIcon />
+
+</Card>
+
+<Card title="五、CodeMirror 的 baseUrl 与 Monaco 的 getWorkerUrl" style={{ marginBottom: 24 }}>
+
+### 一、现象/问题
+
+- CodeMirror 的 mode、theme、addon 动态加载失败，嵌入子应用后也 404
+- 命令补全、语法高亮消失
+- 控制台显示 mode/sql.js 404
+
+### 二、底层原因
+
+CodeMirror 的 **modeURL** 默认是 "%N.js"，加载时会按当前页面路径拼接。在子应用路径下，它错误地去主应用根路径下找 `mode/sql.js`。这与 Monaco 的问题本质相同：都是"运行时按需加载资源"的库，绕过了 webpack 的 **publicPath**。
+
+### 三、如何解决
+
+通过 `CodeMirror.modeURL` 和 `CodeMirror.themeURL` 显式指定资源基础路径，避免依赖浏览器默认相对路径解析。
+
+<CodeDiff oldValue={codemirrorBad} newValue={codemirrorGood} leftTitle="❌ 反面教材" rightTitle="✅ 最佳实践" type="error" hideDiffMarkers={true} />
+
+### 四、为什么要这样解决
+
+**CodeMirror** 和 **Monaco** 这类编辑器库都是运行时按需加载资源，它们的加载逻辑不经过 webpack 的 **publicPath**。只有显式配置它们的 base URL，才能确保子应用在任何部署路径下都能找到对应的 mode、theme 和 addon 文件。
+
+<Alert type="info" message="核心结论" description="编辑器资源加载失败时，优先检查是否显式设置了 modeURL / themeURL / getWorkerUrl，而不是反复调整 webpack publicPath。" showIcon />
+
+### 五、核心原理
+
+- CodeMirror 和 Monaco 都是"运行时按需加载资源"的库，不是 webpack 打包后全部内联
+- 它们的加载逻辑绕过了 webpack 的 **publicPath**，需要开发者自己维护 base URL
+- 这也是为什么只改 `publicPath` 或 `__webpack_public_path__` 不足以解决编辑器资源问题
+
+<Alert type="warning" message="注意事项" description={
+  <ul>
+    <li>CodeMirror 5 和 CodeMirror 6 的资源加载方式不同，配置方式也不同</li>
+    <li>可以把 CodeMirror 资源放到 CDN 并用绝对路径，减少子应用路径变化的影响</li>
+    <li>Mode 文件加载是异步的，需要在 mode 加载完成后再启用对应语法高亮</li>
+  </ul>
+} showIcon />
+
+</Card>
+
+<Card title="六、边框/图标/字体等资源丢失">
+
+### 一、现象/问题
+
+- 改用 nginx 相对路径转发后，代码高亮和命令补全恢复了，但边框样式偶尔丢失
+- 图标字体显示成方框
+- 背景图片不显示
+
+### 二、底层原因
+
+CSS 中的 `background: url("./border.png")` 或 `@font-face { src: url("./iconfont.woff") }` 是相对路径。这些路径在独立运行时基于子应用路径正确，但在 qiankun 中基于主应用路径解析，导致 404。有时 CDN 或浏览器缓存会让问题偶尔出现，偶尔正常，导致排查困难。
+
+### 三、如何解决
+
+- 使用绝对路径或 CDN 路径
+- 对 CSS 中的相对资源路径做后处理
+- 使用 CSS 变量或 base64 内联小图标
+
+### 四、为什么要这样解决
+
+使用绝对路径或 CDN 路径，能彻底摆脱主应用 **document.baseURI** 的干扰；对 CSS 资源做构建时后处理，可以避免手动维护大量路径；base64 内联小图标能减少网络往返，但会增加 bundle 体积，需要权衡。
+
+<Alert type="info" message="结论" description="在 qiankun 嵌入场景下，CSS 中的相对路径是最容易遗漏的坑，统一使用绝对路径或 CDN 是最稳的兜底方案。" showIcon />
+
+### 五、核心原理
+
+- CSS 资源路径解析由浏览器负责，base 是 CSS 文件所在 URL
+- 如果 CSS 被 qiankun 从 HTML 中提取后插入主应用，base 可能变为主应用域
+- 字体、图片、SVG 等"非 JS 资源"最容易被忽略，也最难排查
+
+<Alert type="warning" message="注意事项" description={
+  <ul>
+    <li>CSS 中的 <code>url()</code> 解析基于 CSS 文件的 URL，而不是当前 HTML 页面</li>
+    <li>postcss 的 public-path 插件可以在构建时统一处理 CSS 资源路径</li>
+    <li>字体文件建议使用 <code>font-display: swap</code>，避免阻塞渲染</li>
+  </ul>
+} showIcon />
+
+</Card>

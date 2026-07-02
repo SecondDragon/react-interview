@@ -1,0 +1,480 @@
+import CodeDiff from '@/components/CodeDiff';
+import LiveDemo from './LiveDemo';
+import MermaidViewer from '@/components/MermaidViewer';
+import {Card, Table, Alert, Tag, Typography} from 'antd';
+import {
+  phenomenonTable,
+  cssomComparisonTable,
+  injectionLifecycle,
+  mountUnmountRemount,
+  raceConditionTable,
+  whyProdOnlyList,
+} from './data';
+
+import mountBad from './demos/qiankun-mount.bad.tsx?raw';
+import mountGood from './demos/qiankun-mount.good.tsx?raw';
+
+import cssomTwoLevelsSource from './diagrams/cssom-two-levels.mmd?raw';
+import mountUnmountRemountSource from './diagrams/mount-unmount-remount.mmd?raw';
+import cssomVsTextcontentSource from './diagrams/cssom-vs-textcontent.mmd?raw';
+import raceConditionSource from './diagrams/race-condition.mmd?raw';
+import stylesheetLifecycleSource from './diagrams/stylesheet-lifecycle.mmd?raw';
+import reproductionPathSource from './diagrams/reproduction-path.mmd?raw';
+
+
+# qiankun 专题：子应用样式丢失与 CSSOM 注入
+
+<Typography.Paragraph type="secondary">styled-components 在 qiankun 沙箱中样式丢失的根因分析与 disableCSSOMInjection
+  修复方案</Typography.Paragraph>
+
+---
+
+## 一、问题现象：子应用样式随机丢失
+
+在主应用（Vue 2）中通过 qiankun 嵌入多个 React 子应用，各子应用使用 styled-components 做样式管理。上线后发现两个典型的样式丢失场景。
+
+<Table dataSource={phenomenonTable} pagination={false} size="small" bordered
+       columns={[
+         {title: '场景', dataIndex: 'scene', key: 'scene'},
+         {title: '症状', dataIndex: 'symptoms', key: 'symptoms'},
+         {title: '频率', dataIndex: 'frequency', key: 'frequency'},
+         {title: '恢复方式', dataIndex: 'recovery', key: 'recovery'},
+       ]}
+       style={{marginBottom: 16}}
+/>
+
+### 场景一：主子应用切换后样式丢失
+
+1. 用户从主应用的菜单 A 页面切换到子应用 B（正常显示，样式正确）
+2. 用户切回主应用的另一个页面 C
+3. 再次切回子应用 B——**组件在，但样式没了**
+
+现场特征：
+- DOM 中存在组件渲染产物，且保留了 styled-components 生成的类名（如 `sc-bdVaJa`）
+- head 中找不到对应的 CSS 规则
+- 刷新页面后样式恢复
+
+### 场景二：首次从主应用切到子应用
+
+1. 用户在主应用菜单中<strong>第一次</strong>点击进入某个子应用页面
+2. 没有反复切换——就是单纯的首次加载——就出现白屏/无样式
+3. 刷新页面后恢复正常
+
+> 此场景与「场景三：直接 URL 进入」共享同一个根因——qiankun 沙箱初始化与子应用 JS 加载之间的竞态条件。详见下文第五章的「硬刷新的竞态条件」分析和时序图。
+
+### 场景三：直接 URL 进入后样式丢失
+
+1. 用户直接在浏览器地址栏输入子应用的 URL（或 Ctrl+F5 硬刷新）
+2. 有时能正常加载样式，有时不能，无规律
+3. 一次刷新不行，需要刷新 2-3 次才恢复
+
+### 排查中排除的方向
+
+<Alert type="warning" message="以下尝试均无效（生产环境依旧随机丢样式）："
+       description={
+         <ul style={{marginBottom: 0}}>
+           <li>qiankun 的 <code>experimentalStyleIsolation</code> 开关均无效</li>
+           <li>qiankun 的 <code>sandbox</code>：<code>true</code> / <code>&#123; loose:
+             true &#125;</code> / <code>false</code> 三种模式均无效
+           </li>
+           <li>所有问题只在生产环境出现，本地开发完全正常</li>
+         </ul>
+       }
+/>
+
+---
+
+## 二、问题分析过程：五步从现象到根因
+
+{analysisSteps.map((s, i) => (
+<Card key={i} size="small" title={`${s.step}：${s.title}`} style={{marginBottom: 12}}>
+  <Typography.Text>{s.detail}</Typography.Text>
+</Card>
+))}
+
+### 完整复现路径图
+
+<MermaidViewer source={reproductionPathSource}/>
+
+<Alert type="info"
+       message="结论：问题不在 qiankun 的样式隔离策略，而在 styled-components 的 StyleSheet 单例与 qiankun DOM 清理之间的生命周期不同步。"
+       style={{marginTop: 16}}/>
+
+---
+
+## 三、CSSOM 核心原理：浏览器如何处理 CSS
+
+要理解为什么 CSSOM Injection 会在 qiankun 中失效，必须先理解浏览器内部的两套 CSS 处理方式。浏览器将 CSS 同时维护在两个层面：**CSS Object Model（CSSOM，内存**中的结构化 CSS 对象），和**DOM 中的纯文本** `<style>` 节点。两者相互关联但生命周期不同。
+
+### CSSOM 是什么
+
+- **CSSOM（CSS Object Model）** 是浏览器将 CSS 规则解析后在内存中构建的树状数据结构
+- 每个 `<style>` 标签和 `<link>` 样式表在内部都有一个对应的 `CSSStyleSheet` 对象（通过 `element.sheet` 属性可访问）
+- `CSSStyleSheet` 本质是一个有序的 CSS 规则列表，每条规则对应一个 `CSSRule` 对象
+- CSSOM 和 DOM 是平行的：DOM 管理 HTML 结构，CSSOM 管理样式规则
+- 虽然 `CSSStyleSheet` 通常由 `<style>` 标签的 `textContent` 自动解析生成，但它也是一个独立的对象——可以通过 JS 的 `insertRule()` / `deleteRule()` API 直接操作
+- **这意味着：CSSStyleSheet 的内容不一定和 `<style>` 标签的 textContent 一致——它是独立的**
+
+<Card style={{background: '#f6ffed', marginBottom: 16}}>
+  <Typography.Text strong>📐 两个层面 vs 一个元素：</Typography.Text>
+  <pre style={{fontSize: 13, fontFamily: 'monospace', lineHeight: 1.8, margin: '12px 0 0'}}>
+{`<style> 标签（DOM 元素）
+  │
+  ├── DOM 层面：textContent、innerHTML
+  │     存储在 <style>xxx</style> 的文本节点中
+  │     被 remove/append/re-parent 时文本跟随移动
+  │
+  └── CSSOM 层面：element.sheet
+        一个独立的 CSSStyleSheet 对象
+        可通过 insertRule() / deleteRule() 操作
+        被 remove/append 后 .sheet 可能被重置`}
+  </pre>
+</Card>
+
+<MermaidViewer source={cssomTwoLevelsSource}/>
+
+### CSSStyleSheet.insertRule()——CSSOM注入
+
+这是 styled - components 默认使用的注入方式。`insertRule(rule, index)` 将 CSS 规则 ** 直接写入 CSSStyleSheet 对象 **，完全绕过`<style>` 标签的 textContent。
+
+-调用后，`CSSStyleSheet.cssRules` 数组新增一个元素，`<style>` 标签的 textContent 不变
+- 在 DevTools 的 Elements 面板中，`<style>` 标签显示为空（或只有注释），但 Styles 面板中可以看到对应的 CSS 规则
+- * * 优点 **：避免了一整块文本的字符串解析（浏览器不需要重新 parse 整个 textContent）
+- * * 缺点 **：规则以结构化形式存在于`CSSStyleSheet` 对象中，与`<style>` 标签的文本内容解耦
+
+<Card style={{background: '#fff7e6', marginBottom: 16}}>
+  <Typography.Text strong>💡 CSSOM 模式关键代码：</Typography.Text>
+  <pre style={{fontSize: 13, fontFamily: 'monospace', lineHeight: 1.8, margin: '12px 0 0'}}>
+{`// styled-components 内部简化伪码
+inject(cssText) {
+  if (!this.tag) {
+    this.tag = document.createElement('style');
+    document.head.appendChild(this.tag);
+  }
+  // 通过 CSSStyleSheet 对象写入，不触碰 textContent
+  this.tag.sheet.insertRule(cssText, this.tag.sheet.cssRules.length);
+  // 此时 this.tag.textContent 仍然为空！
+}`}
+  </pre>
+</Card>
+
+### textContent 模式 —— 文本注入
+
+通过`styleTag.textContent += cssText` 追加 CSS 规则文本。
+
+-浏览器重新解析 textContent，重建整个`CSSStyleSheet`（等同于替换）
+-在 DevTools 的 Elements 面板中可以直接看到所有 CSS 规则文本
+- * * 优点 **：CSS 规则作为 DOM 文本存在，随`<style>` 标签一同移动、复制、持久化
+- * * 缺点 **：每次追加都可能触发一次完整的 CSS 文本解析（现代浏览器已高度优化，差异微乎其微）
+
+<Card style={{background: '#e6f7ff', marginBottom: 16}}>
+  <Typography.Text strong>💡 textContent 模式关键代码：</Typography.Text>
+  <pre style={{fontSize: 13, fontFamily: 'monospace', lineHeight: 1.8, margin: '12px 0 0'}}>
+{`// styled-components 内部简化伪码
+inject(cssText) {
+  if (!this.tag || !this.tag.isConnected) {
+    // isConnected 检查！标签不在文档中 → 重建
+    this.tag = document.createElement('style');
+    document.head.appendChild(this.tag);
+  }
+  this.tag.textContent += cssText;  // 文本追加到 DOM
+}`}
+  </pre>
+</Card>
+
+### 两种注入模式的本质差异
+
+<Table dataSource={cssomComparisonTable} pagination={false} size="small" bordered
+       columns={[
+         {title: '对比维度', dataIndex: 'aspect', key: 'aspect', width: 180},
+         {title: 'CSSOM Injection（默认）', dataIndex: 'cssom', key: 'cssom'},
+         {title: 'textContent 模式', dataIndex: 'textContent', key: 'textContent'},
+       ]}
+       style={{marginBottom: 16}}
+/>
+
+<MermaidViewer source={cssomVsTextcontentSource}/>
+
+### ⚡ 致命一击：detached 的`<style>` 标签
+
+<Alert type="error" message="这是理解 qiankun 问题的核心知识点" style={{marginBottom: 16}}/>
+
+styled - components 的`StyleSheet` 单例在 CSSOM 模式下有一个循环依赖的盲区：
+
+1. ** 创建依赖 ** `hasInjected()` —— 检查`this.tag !== null` 决定是否重建`<style>`
+2. ** 写入依赖 ** `this.tag.sheet.insertRule()` —— 通过 CSSStyleSheet 对象追加规则
+
+当 qiankun 卸载子应用、从 DOM 中移除`<style>` 标签后：
+
+-`this.tag` 仍指向被移除的 DOM 元素（引用还在，不是 null）
+-`hasInjected()` 返回 true → <strong>永远不会重建标签</strong>
+- `this.tag.sheet` 仍然是一个合法的`CSSStyleSheet` 对象——`insertRule()` 不报错、规则正常存储
+- 但这个 sheet 所依附的`<style>` 元素已经脱离文档的渲染树（detached）
+-<strong>存储在 detached sheet 中的规则完全不参与浏览器渲染</strong>
+
+<Card style={{background: '#fff1f0'}}>
+  <pre style={{fontSize: 13, fontFamily: 'monospace', lineHeight: 1.8, margin: 0}}>
+{`// 验证：detached sheet 的 insertRule 不报错但无渲染效
+const style = document.createElement('style');
+document.head.appendChild(style);
+style.sheet.insertRule('.a { color: red }', 0);
+console.log(style.sheet.cssRules.length); // → 1
+
+// 模拟 qiankun 卸载 —— 从 DOM 中移除
+document.head.removeChild(style);
+console.log(style.sheet.cssRules.length); // → 1  （sheet 还在！）
+
+// 尝试写入新规则
+style.sheet.insertRule('.b { color: blue }', 1);
+console.log(style.sheet.cssRules.length); // → 2  （写入成功！）
+// 但页面上的元素没有任何样式变化 —— sheet 已脱离渲染管道
+// styled-components 的 hasInjected() = true → 永久不会重建`}
+  </pre>
+</Card>
+
+---
+
+## 四、styled - components 的 StyleSheet 机制详解
+
+### 全局单例 StyleSheet
+
+-styled - components 内部维护一个`StyleSheet` 类的全局单例（通过 ES Module 模块级变量实现）
+-整个 JS 运行时生命周期内只创建一次，不会因组件重新渲染而重建
+- 职责：创建 / 管理`<style>` DOM 标签、跟踪已注入的 CSS 规则、处理规则的增量注入 / 回收
+
+<Card style={{background: '#f6ffed', marginBottom: 16}}>
+  <pre style={{fontSize: 13, fontFamily: 'monospace', lineHeight: 1.8, margin: 0}}>
+{`class StyleSheet {
+  tag: HTMLStyleElement | null = null;  // ← 当前活跃 <style> 标签
+  names: Set<string> = new Set();       // ← 已注入的组件 ID
+
+  hasInjected() {
+    return Boolean(this.tag);
+    // ⚠️ 只检查引用是否为 null，不检查 isConnected
+    // ⚠️ 不检查 tag.sheet 是否存在、cssRules 是否为空
+  }
+}`}
+  </pre>
+</Card>
+
+### 样式注入的完整生命周期
+
+{
+  injectionLifecycle.map((item, i) => (
+    <Card key={i} size="small" title={item.phase} style={{marginBottom: 8}}>
+      <Typography.Text>{item.desc}</Typography.Text>
+    </Card>
+  ))
+}
+
+<MermaidViewer source={stylesheetLifecycleSource}/>
+
+### CSSOM vs textContent 的 getTag() 伪码对比
+
+<Card style={{background: '#fff7e6', marginBottom: 16}}>
+  <Typography.Text strong>CSSOM 模式的 getTag() —— 致命缺陷：</Typography.Text>
+  <pre style={{fontSize: 13, fontFamily: 'monospace', lineHeight: 1.8, margin: '8px 0 0'}}>
+{`getTag() {
+  if (!this.tag) {                    // 只检查 null
+    this.tag = createStyleElement();
+    document.head.appendChild(this.tag);
+  }
+  return this.tag;                    // 引用还在 → 不重建 → 可能已 detached
+}`}
+  </pre>
+</Card>
+
+<Card style={{background: '#e6f7ff', marginBottom: 16}}>
+  <Typography.Text strong>textContent 模式的 getTag() —— 能自愈：</Typography.Text>
+  <pre style={{fontSize: 13, fontFamily: 'monospace', lineHeight: 1.8, margin: '8px 0 0'}}>
+{`getTag() {
+  if (this.tag && !this.tag.isConnected) {  // ← 检查 isConnected!
+    this.tag = null;                        // 发现 disconnected → 置空
+  }
+  if (!this.tag) {                          // 走重建流程
+    this.tag = createStyleElement();
+    document.head.appendChild(this.tag);
+    this.writeSheet();                      // 批量写入所有已知样式文本
+  }
+  return this.tag;
+}`}
+  </pre>
+</Card>
+
+### hasInjected() 的致命误判
+
+-核心实现：`return Boolean(this.tag)` 或`return this.tag !== null`
+- 只关心 JS 层面的引用是否存在——**不关心 DOM 层面的连接状态 **
+-在 qiankun 场景下：`this.tag` 指向被清出 DOM 的 detached`<style>` 元素——引用还在 → 返回 true → 跳过标签重建
+- * * 在 CSSOM 模式下 **：`this.tag.sheet.insertRule()` 规则进入 detached CSSStyleSheet → 无渲染效 → 永久丢失
+- * * 在 textContent 模式下 **：`getTag()` 的`isConnected` 检查兜底 → 发现 disconnected → 重建 + 批量恢复
+
+---
+
+<LiveDemo/>
+
+
+## 五、qiankun 沙箱与样式注入的冲突全景
+
+### Mount → Unmount → Remount 三步冲突
+
+{
+  mountUnmountRemount.map((item, i) => (
+    <Card
+      key={i}
+      title={item.step}
+      style={{marginBottom: 16, borderColor: i === 2 ? '#f5222d' : undefined}}
+    >
+      <ul style={{marginBottom: 0}}>
+        {item.effects.map((e, j) => <li key={j} style={{marginBottom: 4}}>{e}</li>)}
+      </ul>
+    </Card>
+  ))
+}
+
+<MermaidViewer source={mountUnmountRemountSource}/>
+
+### 硬刷新（及首次切换）的竞态条件
+
+<Alert type="info"
+       message="此竞态不仅发生在硬刷新时。首次从主应用菜单点击进入子应用——即使没有反复切换——同样可能触发。因为 qiankun 每次加载子应用时都会独立初始化沙箱，竞态条件在每次首次加载时都存在。"
+       style={{marginBottom: 16}}/>
+
+这是理解"为什么刷新（或首次切换）也偶尔丢失样式"的关键。`qiankun.loadApp()` 内部有两条并行路径：
+
+1. ** 沙箱代理初始化 **（Proxy 创建、容器设置）
+2. ** 子应用 JS 加载执行 **（fetch HTML Entry → 提取脚本 → eval）
+
+两条路径的完成顺序是不确定的，产生两种时序：
+
+<Table dataSource={raceConditionTable} pagination={false} size="small" bordered
+       columns={[
+         {title: '时序', dataIndex: 'key', key: 'key', width: 60},
+         {title: '执行顺序', dataIndex: 'timing', key: 'timing'},
+         {title: '结果', dataIndex: 'result', key: 'result'},
+         {title: 'CSSOM 模式', dataIndex: 'cssom', key: 'cssom'},
+         {title: 'textContent 模式', dataIndex: 'textContent', key: 'textContent'},
+       ]}
+       style={{marginBottom: 16}}
+/>
+
+**时序 B 详解 **（样式丢失时的路径）：
+
+<Card size="small" style={{marginBottom: 16, borderColor: '#f5222d'}}>
+  <ol style={{marginBottom: 0}}>
+    <li>子应用 JS 先执行完 → styled-components 初始化 → 创建 &lt;style&gt; 标签</li>
+    <li><strong>appendChild 落到真实的 document.head</strong>（沙箱代理还未就绪）</li>
+    <li>沙箱代理初始化完成 → "检测到"真实 head 中有外来 &lt;style&gt; 标签</li>
+    <li>作为"污染"<strong>从 DOM 中移除</strong></li>
+    <li>styled-components 的 <code>this.tag</code> 指向 detached 元素 → <code>hasInjected()</code> 永远 true → 不重建
+    </li>
+    <li>后续 <code>insertRule()</code> 写入 detached sheet → 无渲染效 → 样式丢失 ❌</li>
+  </ol>
+</Card>
+
+<Alert type="warning"
+       message="这就是'刷新需要好几次才正常'的根本原因——纯粹的竞态条件，受网络延迟、CDN 速度、CPU 负载的随机影响。"/>
+
+<MermaidViewer source={raceConditionSource}/>
+
+### 为什么只在生产环境出现
+
+<ul>
+  {whyProdOnlyList.map((item, i) => <li key={i}>{item}</li>)}
+</ul>
+
+---
+
+## 六、disableCSSOMInjection 方案完整解析
+
+### 是什么
+
+styled - components 从 v5 开始提供`StyleSheetManager` 组件的`disableCSSOMInjection` 属性。设为`true` 后，完全停止使用`CSSStyleSheet.insertRule()`（CSSOM API），**将所有 CSS 规则以纯文本形式写入`<style>` 标签的 textContent **。
+
+### 为什么能解决 —— 三层解释
+
+<Card title="第一层：物理位置不同" size="small" style={{marginBottom: 12}}>
+  <ul>
+    <li>CSSOM 模式：规则存在于 CSSStyleSheet 对象（内存），标签被移除后 sheet 仍有效但脱离渲染管道，写入无效</li>
+    <li>textContent 模式：规则存在于标签的文本节点（DOM），文本不会因元素被移动/重新 parent 而丢失</li>
+  </ul>
+</Card>
+
+<Card title="第二层：getTag() 的 isConnected 检查" size="small" style={{marginBottom: 12}}>
+  <ul>
+    <li>textContent 模式在获取标签时，发现 this.tag 不满足 isConnected → 主动置空 → 重建标签 → 批量恢复</li>
+    <li>CSSOM 模式没有此项检查 —— 只要 this.tag 的 JS 引用存在，就永远不重建</li>
+  </ul>
+</Card>
+
+<Card title="第三层：写回机制的不同行为" size="small" style={{marginBottom: 16}}>
+  <ul>
+    <li>CSSOM：<code>tag.sheet.insertRule()</code> → 规则进入 CSSStyleSheet。若 sheet 已 detached/空，写入无渲染效</li>
+    <li>textContent：<code>tag.textContent +=</code> → 规则进入 DOM 文本。标签被移除后 getTag() 触发重建 → writeSheet()
+      批量恢复全部样式
+    </li>
+  </ul>
+</Card>
+
+### 实施方案
+
+<CodeDiff
+  oldValue={mountBad}
+  newValue={mountGood}
+  leftTitle="❌ 反面教材（默认 CSSOM 模式）"
+  rightTitle="✅ 最佳实践（disableCSSOMInjection）"
+  type="error"
+  hideDiffMarkers={true}
+/>
+
+<Alert type="warning" message="注意事项"
+       style={{marginTop: 16}}
+       description={
+         <ul style={{marginBottom: 0}}>
+           <li>根据 styled-components 版本（v5 或 v6）不同，属性名或路径可能有轻微差异</li>
+           <li>该设置不影响 styled-components 其他功能（主题、动态样式、SSR 等）</li>
+           <li>对性能的影响微乎其微——textContent 追加触发的是增量 CSS 解析，现代浏览器已充分优化</li>
+           <li>多个子应用各自包裹自己的 StyleSheetManager，互不干扰</li>
+           <li>如果子应用中还使用了 antd 等其他 CSS-in-JS 库，需一并检查其注入模式</li>
+         </ul>
+       }
+/>
+
+---
+
+## 七、核心原理总结
+
+### 根因一句话
+
+<Alert type="error"
+       message="CSSOM Injection 将 CSS 规则存入 CSSStyleSheet 内存对象而非 DOM 文本节点。该对象在 qiankun 沙箱的 DOM 操作链路中会因 <style> 标签被 remove/re-append 而失效或清空，而 styled-components 的 StyleSheet 单例不会感知这种失效。textContent 模式将规则存为 DOM 文本，具备天然的'可再生'能力。"
+       style={{marginBottom: 24}}
+/>
+
+### 为什么其他方案无效
+
+- * * experimentalStyleIsolation **：qiankun 的 CSS scope 机制（给子应用样式加前缀选择器），操作的是 CSS 选择器而非样式注入过程
+- * * sandbox **：沙箱开关只影响 qiankun 是否创建独立的全局变量沙箱，不影响 styled - components StyleSheet 单例生命周期
+- 核心问题始终是：**styled - components 的单例不知道自己注入的`<style>` 已被移除 **
+
+### 最重要的一条认知
+
+<Alert type="info"
+       message="在微前端 + CSS-in-JS 的组合中，DOM 节点与 JS 对象之间的引用一致性是样式可靠性的基石。任何'把样式存进 JS 对象而不存进 DOM 文本'的方案，在遇到 DOM 被外部（如 qiankun 沙箱）无通知地操作时，都会面临'状态分裂'的风险——JS 层面认为样式已注入，DOM 层面实际上已丢失。"
+       style={{marginBottom: 24}}
+/>
+
+### 通用教训
+
+-选择 CSS - in -JS 方案时，如需要嵌入微前端架构，优先选择将样式以 DOM 文本形式存储的模式
+- 如果必须使用 CSSOM 注入模式（styled - components 默认），确保子应用 mount 生命周期中显式重置 StyleSheet 状态
+- * * 排查技巧 **：开 DevTools → Elements → 找`<style>` 标签 → textContent 为空 = CSSOM 模式，textContent 有内容 = textContent 模式
+- 如果 style 标签的 textContent 为"空但有 CSS 规则生效"→ CSSOM 模式且连接正常；如果 textContent 为空且无样式 → CSSOM 模式的 sheet 已断裂
+
+<Card title="✅ 最终收益" style={{background: '#f6ffed', marginTop: 24}}>
+  <ul style={{marginBottom: 0}}>
+    <li>彻底解决了子应用在 qiankun 中偶发性样式丢失的问题</li>
+    <li>对 CSSOM、styled-components 内部机制和浏览器渲染管道有了系统性理解</li>
+    <li>为未来其他微前端 + CSS-in-JS 组合问题提供了排查框架</li>
+  </ul>
+</Card>
