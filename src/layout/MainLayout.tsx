@@ -217,25 +217,36 @@ const MainLayout: React.FC = () => {
             }))}
           />
         </TabsContainer>
+        <SimpleBarWrapper>
+          <SimpleBar scrollableNodeProps={{ref:contentRef}}  style={{ padding: '16px 12px 18px 16px',height: '100%' }}>
+            <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: 360 }}><Spin size="large" /></div>}>
+              <Outlet />
+            </Suspense>
+            <div
+              id="micro-viewport"
+              style={{ width: '100%', height: '100%', display: isSubAppRoute ? 'block' : 'none' }}
+            />
+          </SimpleBar>
+        </SimpleBarWrapper>
 
-        <Content
-          ref={contentRef}
-          style={{
-            padding: '16px 12px 18px 16px',
-            margin: 0,
-            flex: 1,
-            overflowY: 'auto',
-            position: 'relative',
-          }}
-        >
-          <Suspense fallback={<Spin size="large" />}>
-            <Outlet />
-          </Suspense>
-          <div
-            id="micro-viewport"
-            style={{ width: '100%', height: '100%', display: isSubAppRoute ? 'block' : 'none' }}
-          />
-        </Content>
+
+        {/*<Content*/}
+        {/*  ref={contentRef}*/}
+        {/*  style={{*/}
+        {/*    padding: '16px 12px 18px 16px',*/}
+        {/*    margin: 0,*/}
+        {/*    flex: 1,*/}
+        {/*    overflowY: 'auto',*/}
+        {/*    position: 'relative',*/}
+        {/*  }}*/}
+        {/*>*/}
+
+        {/*  */}
+        {/*  */}
+        {/*  */}
+
+        {/* */}
+        {/*</Content>*/}
       </Layout>
       {/*<DraggablePhoneBar />*/}
     </Layout>
@@ -244,6 +255,31 @@ const MainLayout: React.FC = () => {
 
 export default MainLayout;
 const SimpleBarMenuWrapper = styled.div`
+  flex: 1;
+  overflow: hidden;
+
+  .simplebar-track {
+    &.simplebar-vertical {
+      width: 6px;
+    }
+    &.simplebar-horizontal {
+      height: 6px;
+    }
+  }
+
+  .simplebar-scrollbar {
+    &::before {
+      background-color: rgba(0, 0, 0, 0.18);
+      border-radius: 3px;
+      left: 1px;
+      right: 1px;
+    }
+  }
+`;
+
+
+
+const SimpleBarWrapper = styled.div`
   flex: 1;
   overflow: hidden;
 

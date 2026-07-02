@@ -17,6 +17,13 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html {
+  /*html { overflow: hidden } 告诉浏览器：无论如何都别在 body 层级产生原生滚动条。
+  这个应用的所有滚动都由 SimpleBar 在 100vh 固定布局内部管理，body 永远不需要原生滚动条。
+  加上这行后，浏览器在 SimpleBar 初始化完成前就不会短暂显示原生滚动条，闪动自然消失。*/
+  overflow: hidden;
+}
+
 body {
   margin: 0;
   min-width: 320px;
