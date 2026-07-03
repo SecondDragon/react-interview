@@ -338,11 +338,11 @@ export const dashboardRoutes: RouteConfig[] = [
         label: '并发渲染(Task Slicing)',
         element: <ConcurrentRenderPage />,
       },
-      {
-        path: '/dashboard/performance/big-json-parse',
-        label: '大数据量 JSON 解析优化',
-        element: <BigJsonParsePage />,
-      },
+      // {
+      //   path: '/dashboard/performance/big-json-parse',
+      //   label: '大数据量 JSON 解析优化',
+      //   element: <BigJsonParsePage />,
+      // },
       {
         path: '/dashboard/performance/reverse-chat-virtual-list',
         label: '反向虚拟聊天列表',

@@ -218,7 +218,10 @@ const MainLayout: React.FC = () => {
           />
         </TabsContainer>
         <SimpleBarWrapper>
-          <SimpleBar scrollableNodeProps={{ref:contentRef}}  style={{ padding: '16px 12px 18px 16px',height: '100%' }}>
+          <div
+            ref={contentRef}
+            style={{ height: '100%', overflowY: 'auto', padding: '16px 6px 18px 16px',scrollbarGutter:"stable" }}
+          >
             <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: 360 }}><Spin size="large" /></div>}>
               <Outlet />
             </Suspense>
@@ -226,7 +229,7 @@ const MainLayout: React.FC = () => {
               id="micro-viewport"
               style={{ width: '100%', height: '100%', display: isSubAppRoute ? 'block' : 'none' }}
             />
-          </SimpleBar>
+          </div>
         </SimpleBarWrapper>
 
 
@@ -241,11 +244,17 @@ const MainLayout: React.FC = () => {
         {/*  }}*/}
         {/*>*/}
 
-        {/*  */}
-        {/*  */}
-        {/*  */}
+        {/*  <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: 360 }}><Spin size="large" /></div>}>*/}
+        {/*    <Outlet />*/}
+        {/*  </Suspense>*/}
+        {/*  <div*/}
+        {/*    id="micro-viewport"*/}
+        {/*    style={{ width: '100%', height: '100%', display: isSubAppRoute ? 'block' : 'none' }}*/}
+        {/*  />*/}
 
-        {/* */}
+
+
+
         {/*</Content>*/}
       </Layout>
       {/*<DraggablePhoneBar />*/}
