@@ -41,7 +41,7 @@ const ReverseChatVirtualList: React.FC = () => {
   }, []);
 
   return (
-    <div style={{ padding: 24 }}>
+    <div style={{ display:"flex",flexDirection:"column",height:"100%", }}>
       <Card
         title={
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -58,7 +58,7 @@ const ReverseChatVirtualList: React.FC = () => {
             </div>
           </div>
         }
-        style={{ height: 'calc(100vh - 140px)', display: 'flex', flexDirection: 'column' }}
+        style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
         bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden' }}
       >
         {showSearch && (
