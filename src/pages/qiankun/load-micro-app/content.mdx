@@ -1,0 +1,105 @@
+import CodeDiff from '@/components/CodeDiff';
+import LiveDemo from './LiveDemo';
+import { Table, Typography, Divider, Alert } from 'antd';
+import { comparisonTable, statusTable } from './data';
+
+import basicLoad from './demos/basic-load.tsx?raw';
+import updateProps from './demos/update-props.tsx?raw';
+import unmountMicroApp from './demos/unmount-micro-app.tsx?raw';
+import inlineVsRoute from './demos/inline-mounted-vs-route.tsx?raw';
+import loadInModal from './demos/load-in-modal.tsx?raw';
+import parallelInstances from './demos/parallel-instances.tsx?raw';
+import statusCheck from './demos/status-check.tsx?raw';
+
+# qiankun 专题：loadMicroApp
+
+<Typography.Paragraph type="secondary">手动加载子应用的 API 使用场景、生命周期状态与完整用法</Typography.Paragraph>
+
+---
+
+## 一、引言
+
+你已经学会了 `registerMicroApps` 按路由挂载子应用。但有些场景不是路由驱动的：
+
+- 在**弹窗/抽屉**中临时加载一个工具型子应用（如 SQL 查询器、图片编辑器）
+- 在**同一个页面内同时挂载多个子应用实例**（如左右并排对比两个数据面板）
+- 需要**精细控制子应用的挂载/卸载时机**
+
+`loadMicroApp` 就是为这些场景设计的。它直接返回一个 `app` 实例，你可以手动调用 `mount`、`unmount`、`update`。
+
+---
+
+## 二、与 registerMicroApps 的区别
+
+<Table dataSource={comparisonTable.dataSource} columns={comparisonTable.columns} pagination={false} size="small" bordered />
+
+<CodeDiff oldValue={inlineVsRoute} newValue={inlineVsRoute} leftTitle="" rightTitle="✅ 内嵌 vs 路由驱动对比" type="error" hideDiffMarkers={true} />
+
+---
+
+## 三、使用场景
+
+### 场景 1：基本加载
+
+<CodeDiff oldValue={basicLoad} newValue={basicLoad} leftTitle="" rightTitle="✅ 基本加载" type="error" hideDiffMarkers={true} />
+
+### 场景 2：弹窗中加载
+
+最常见的场景：用户点击"高级查询"按钮，弹出一个 Modal，里面加载子应用作为富内容。
+
+<CodeDiff oldValue={loadInModal} newValue={loadInModal} leftTitle="" rightTitle="✅ 弹窗中加载" type="error" hideDiffMarkers={true} />
+
+### 场景 3：动态更新 props
+
+子应用 mount 后，外部状态变化需要通知子应用时，使用 `app.update`。
+
+<CodeDiff oldValue={updateProps} newValue={updateProps} leftTitle="" rightTitle="✅ 更新 props" type="error" hideDiffMarkers={true} />
+
+### 场景 4：手动卸载
+
+`app.unmount()` 提供比路由切换更精细的卸载控制。
+
+<CodeDiff oldValue={unmountMicroApp} newValue={unmountMicroApp} leftTitle="" rightTitle="✅ 手动卸载" type="error" hideDiffMarkers={true} />
+
+### 场景 5：并行多实例
+
+qiankun 最强大的特性之一：同一个子应用可以在不同容器中同时存在多个实例。
+
+<CodeDiff oldValue={parallelInstances} newValue={parallelInstances} leftTitle="" rightTitle="✅ 并行多实例" type="error" hideDiffMarkers={true} />
+
+### 场景 6：状态检查
+
+`loadMicroApp` 返回的 app 实例有 `getStatus()` 方法，返回子应用当前生命周期状态。
+
+<CodeDiff oldValue={statusCheck} newValue={statusCheck} leftTitle="" rightTitle="✅ 状态检查" type="error" hideDiffMarkers={true} />
+
+---
+
+## 四、生命周期状态
+
+qiankun 子应用的状态流转：
+
+```
+NOT_LOADED → LOADING_SOURCE_CODE → NOT_BOOTSTRAPPED → BOOTSTRAPPING
+    → NOT_MOUNTED → MOUNTING → MOUNTED → UNMOUNTING → NOT_MOUNTED
+```
+
+<Table dataSource={statusTable.dataSource} columns={statusTable.columns} pagination={false} size="small" bordered />
+
+---
+
+## 五、API 参考
+
+| 方法 | 说明 | 返回值 |
+|---|---|---|
+| `loadMicroApp(config)` | 手动加载一个子应用 | `LoadableApp` 实例 |
+| `app.mount()` | 手动挂载 | `Promise<void>` |
+| `app.unmount()` | 手动卸载 | `Promise<void>` |
+| `app.update({ props })` | 更新传入子应用的 props | `Promise<void>` |
+| `app.getStatus()` | 获取当前生命周期状态 | `string` |
+
+---
+
+## 六、Live Demo：手动加载演示器
+
+<LiveDemo />
