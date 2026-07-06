@@ -119,8 +119,8 @@ export function useProWaterfall(
     // ---------------------------------------------------------
     // 第二步：核心布局计算 + 空间索引登记 (The Build Phase)
     // ---------------------------------------------------------
-    for (let i = startIndex; i < items.length; i++) {
-      const item = items[i];
+    for (let dataIdx = startIndex; dataIdx < items.length; dataIdx++) {
+      const item = items[dataIdx];
 
       // 1. 经典瀑布流逻辑：找出目前最短的那一列
       let minHeight = currentColumnHeights[0];
@@ -150,13 +150,13 @@ export function useProWaterfall(
       const startChunk = Math.floor(top / CHUNK_SIZE);
       const endChunk = Math.floor((top + itemHeight) / CHUNK_SIZE);
 
-      // 把这张卡片的索引 i 登记到它经过的所有房间里
+      // 把这张卡片的索引 dataIdx 登记到它经过的所有房间里
       // 这里大概率会有重复,但我们并不在乎,因为后面我们实际计算的时候 其实是会给它去重的。
       for (let c = startChunk; c <= endChunk; c++) {
         if (!currentChunks.has(c)) {
           currentChunks.set(c, new Set());
         }
-        currentChunks.get(c)!.add(i);
+        currentChunks.get(c)!.add(dataIdx);
       }
       // console.log('currentChunks',currentChunks)
       // 5. 更新该列的水位线高度
@@ -194,7 +194,7 @@ export function useProWaterfall(
       for (let c = startChunk; c <= endChunk; c++) {
         const chunkSet = currentChunks.get(c);
         if (chunkSet) {
-          chunkSet.forEach((idx) => visibleIndicesSet.add(idx));
+          chunkSet.forEach((dataIdx) => visibleIndicesSet.add(dataIdx));
         }
       }
 

@@ -20,7 +20,7 @@ const renderFlattenRoutes = (routes: RouteConfig[]): React.ReactNode[] => {
   const result: React.ReactNode[] = [];
   routes.forEach((route) => {
     // 只有带有 element 且不是微前端前缀的普通路由才在这里生成 React Route
-    if (route.element && !route.path.includes('micro-')) {
+    if (route.element && !route.path.startsWith('/dashboard/micro-')) {
       const relativePath = route.path.startsWith('/dashboard/')
         ? route.path.substring('/dashboard/'.length)
         : route.path;

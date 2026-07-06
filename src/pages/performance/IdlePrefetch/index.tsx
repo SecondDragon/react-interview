@@ -1,8 +1,8 @@
 import Content from './content.mdx';
 import React from 'react';
 
-const VirtualTablePage: React.FC = () => {
+const IdlePrefetchPage: React.FC = () => {
   return <Content />;
 };
 
-export default VirtualTablePage;
+export default IdlePrefetchPage;

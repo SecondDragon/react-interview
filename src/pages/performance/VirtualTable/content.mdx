@@ -1,0 +1,268 @@
+import { Alert, Card, Divider, List, Steps, Table, Tag, Typography } from 'antd';
+import CodeDiff from '@/components/CodeDiff';
+import LiveDemo from './LiveDemo';
+import badCode from './demos/virtual-table.bad.tsx?raw';
+import goodCode from './demos/virtual-table.good.tsx?raw';
+import { principleSteps, scenarioList, featureComparison } from './data';
+
+# 性能优化：超大数据量虚拟表格
+
+<Typography.Paragraph type="secondary">
+  当表格数据量达到数千甚至上万行时，直接渲染所有 DOM 会导致页面卡死。本方案结合 <Typography.Text strong>TanStack Table</Typography.Text>（逻辑管控）与 <Typography.Text strong>TanStack Virtual</Typography.Text>（视觉分窗），实现在万级数据量下保持 60fps 流畅滚动。
+</Typography.Paragraph>
+
+---
+
+## 一、性能问题出现的现象
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Paragraph>
+    假设你正在开发一个后台管理系统中的订单列表页，一次性从后端获取了 10000 条数据。如果不加任何优化，页面会出现以下问题：
+  </Typography.Paragraph>
+
+  <List
+    dataSource={[
+      '页面白屏时间长达数百毫秒，浏览器卡死',
+      '滚动时帧率骤降，页面掉帧严重，操作极度不跟手',
+      '内存占用飙升，低端设备可能直接崩溃',
+      '勾选全选按钮时，页面会冻结 1-2 秒',
+    ]}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color="red">⚠</Tag> {item}
+      </List.Item>
+    )}
+  />
+
+  <Alert
+    message="直观感受"
+    description="打开浏览器的 Performance 面板，你会看到连续超过 50ms 的 Long Task 阻塞了主线程。在 Chrome DevTools 中甚至可以观察到 GPU 内存持续增长。"
+    type="warning"
+    showIcon
+    style={{ marginTop: 16 }}
+  />
+</Card>
+
+---
+
+## 二、性能问题出现的底层原因
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Title level={5}>1. DOM 节点过多导致布局风暴（Layout Thrashing）</Typography.Title>
+  <Typography.Paragraph>
+    当浏览器一次性创建 10000+ 个 <Typography.Text code>{'<tr>'}</Typography.Text> 节点时，需要为每个节点计算布局信息。每做一次样式变更或滚动，浏览器都会触发 reflow 重新计算所有节点位置。这个过程的计算量随节点数线性增长，导致主线程被长时间占用。
+  </Typography.Paragraph>
+
+  <Typography.Title level={5}>2. React Reconciliation 瓶颈</Typography.Title>
+  <Typography.Paragraph>
+    React 的 diff 算法虽然高效，但它的比较复杂度与虚拟 DOM 树大小成正比。当整个表格包含 10000+ 行时，即使只更新一个复选框状态，React 也需要遍历所有行来比较是否需要更新 DOM。这就是为什么勾选"全选"会卡顿——因为 React 正在对比 10000+ 个 <Typography.Text code>row</Typography.Text> 的 props。
+  </Typography.Paragraph>
+
+  <Typography.Title level={5}>3. 滚动事件高频触发导致重绘</Typography.Title>
+  <Typography.Paragraph>
+    滚动事件以每秒约 60 次的频率触发，每一次触发都可能触发浏览器的 repaint/reflow。如果每一帧都需要操作大量 DOM，帧绘制时间会超过 16.67ms（60fps 的预算），导致掉帧和视觉卡顿。
+  </Typography.Paragraph>
+</Card>
+
+---
+
+## 三、这种优化方法一般在开发中适合在哪些场景中使用
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Paragraph>
+    虚拟滚动（Virtual Scrolling）特别适合以下场景：
+  </Typography.Paragraph>
+
+  <List
+    dataSource={scenarioList}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color="blue">✓</Tag> {item}
+      </List.Item>
+    )}
+  />
+
+  <Divider />
+
+  <Alert
+    message="不适合的场景"
+    description={
+      <ul>
+        <li>数据量较小（&lt; 200 行）的表格——引入虚拟化的收益不大，反而增加复杂度</li>
+        <li>每行高度不固定且无法预估——行高波动过大时需要频繁重新计算，开销反而更大</li>
+        <li>需要打印或导出为 PDF 的场景——虚拟化只保留视口内 DOM，打印时需要特殊处理</li>
+      </ul>
+    }
+    type="info"
+    showIcon
+  />
+</Card>
+
+---
+
+## 四、为什么要这样解决且新增互动演示 (Live Demo)
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Title level={5}>权衡分析</Typography.Title>
+
+  <Typography.Paragraph>
+    TanStack Table + TanStack Virtual 的组合方案，相比其他方案有以下取舍：
+  </Typography.Paragraph>
+
+  <List
+    dataSource={[
+      {
+        label: '✅ 收益一：DOM 数量恒定',
+        desc: '无论数据量是 1 万还是 10 万，真实渲染的 DOM 都恒定在"视口高度 ÷ 行高 + overscan"的数量级（通常 15-30 个）。',
+      },
+      {
+        label: '✅ 收益二：勾选和状态管理解耦',
+        desc: 'TanStack Table 把勾选状态维护在 JS 对象中，不依赖 DOM。即使用户快速滚动，勾选的记录也能精确保留。',
+      },
+      {
+        label: '✅ 收益三：滚动性能接近原生',
+        desc: '虚拟滚动的核心原理是用 translateY 控制位置，避免使用 scrollTop 操作整个容器内容，减少了大量重排。',
+      },
+      {
+        label: '⚠ 代价：需要额外的依赖和学习成本',
+        desc: '需要引入 @tanstack/react-table 和 @tanstack/react-virtual 两个包，开发者需要理解虚拟化的核心概念（如 overscan、estimateSize）。',
+      },
+    ]}
+    renderItem={(item) => (
+      <List.Item>
+        <Typography.Paragraph style={{ marginBottom: 0 }}>
+          <Typography.Text strong>{item.label}</Typography.Text>
+          <br />
+          <Typography.Text type="secondary">{item.desc}</Typography.Text>
+        </Typography.Paragraph>
+      </List.Item>
+    )}
+  />
+
+  <Divider />
+
+  <Typography.Title level={5}>互动演示</Typography.Title>
+
+  <Typography.Paragraph>
+    下面的表格使用 TanStack Table + TanStack Virtual 实现，你可以亲手操作：
+  </Typography.Paragraph>
+
+  <ul>
+    <li>**勾选体验**：点击全选勾选框或单行勾选框，感受即使 1 万 + 行数据也毫无卡顿</li>
+    <li>**快速滚动**：按住滚动条快速拖动，观察 DOM 数量始终保持在视口范围</li>
+    <li>**无限加载**：滚动到底部，数据会自动续载更多条目</li>
+  </ul>
+
+  <Card
+    title={<span>互动演示 <Tag color="blue">Live Demo</Tag></span>}
+    style={{ marginTop: 16 }}
+  >
+    <LiveDemo />
+  </Card>
+</Card>
+
+---
+
+## 五、代码演示
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Paragraph>
+    下面通过 <Typography.Text code>CodeDiff</Typography.Text> 对比两种实现方式的代码差异。左侧是没有虚拟化的"全量渲染"方案，右侧是结合 TanStack Table + TanStack Virtual 的优化方案。
+  </Typography.Paragraph>
+
+  <CodeDiff
+    oldValue={badCode}
+    newValue={goodCode}
+    leftTitle="❌ 反面教材：全量渲染"
+    rightTitle="✅ 最佳实践：虚拟化渲染"
+    type="error"
+    hideDiffMarkers={true}
+    language="tsx"
+  />
+</Card>
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Title level={5}>功能对比</Typography.Title>
+  <Table
+    dataSource={featureComparison}
+    columns={[
+      { title: '对比维度', dataIndex: 'dimension', key: 'dimension' },
+      { title: '未优化（全量渲染）', dataIndex: 'without', key: 'without' },
+      { title: '优化后（虚拟滚动）', dataIndex: 'with', key: 'with' },
+    ]}
+    pagination={false}
+    bordered
+    size="small"
+  />
+</Card>
+
+---
+
+## 六、核心原理解释
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Title level={5}>虚拟滚动的运行流程</Typography.Title>
+  <Typography.Paragraph>
+    当你滚动表格时，<Typography.Text code>useVirtualizer</Typography.Text> 内部经历以下五个步骤：
+  </Typography.Paragraph>
+
+  <Steps
+    direction="vertical"
+    current={-1}
+    items={principleSteps}
+  />
+
+  <Divider />
+
+  <Typography.Title level={5}>关键细节：为什么用 translateY 而不是 scrollTop</Typography.Title>
+  <Typography.Paragraph>
+    很多开发者会疑惑：为什么要把所有虚拟行放在一个 <Typography.Text code>position: relative</Typography.Text> 容器里，然后用 <Typography.Text code>translateY</Typography.Text> 定位？直接用 <Typography.Text code>scrollTop</Typography.Text> 控制行的位置不行吗？
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    答案在于浏览器的渲染机制。当使用 <Typography.Text code>transform: translateY</Typography.Text> 时，浏览器会将该元素提升为**合成层（Compositing Layer）**，后续的位置变化只触发合成阶段的重新定位，而**不会触发 Layout（重排）和 Paint（重绘）**。这意味着每次滚动更新行位置时，性能开销极小。
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    相反，如果通过修改 <Typography.Text code>marginTop</Typography.Text> 或 <Typography.Text code>top</Typography.Text> 来定位，每次变化都会触发重排，性能会差很多。
+  </Typography.Paragraph>
+
+  <Divider />
+
+  <Typography.Title level={5}>Overscan 的权衡</Typography.Title>
+  <Typography.Paragraph>
+    <Typography.Text code>overscan</Typography.Text> 控制视口外额外渲染的行数。设置较大的值（如 300）可以防止快速滚动时出现白屏，但会多渲染一些 DOM。设置较小的值（如 5）可以减少冗余渲染，但快速滚动时可能出现短暂的白屏。
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    在 <Typography.Text code>Live Demo</Typography.Text> 中我们设置 <Typography.Text code>overscan: 300</Typography.Text>，因为数据量较大且每行很轻量，保险起见多渲染一些更流畅。生产环境中可以根据滚动速度和行高复杂度灵活调整。
+  </Typography.Paragraph>
+
+  <Divider />
+
+  <Typography.Title level={5}>TanStack Table 与 TanStack Virtual 的分工</Typography.Title>
+  <Typography.Paragraph>
+    两者的分工是整个架构的精髓：
+  </Typography.Paragraph>
+  <List
+    dataSource={[
+      {
+        label: 'TanStack Table',
+        desc: '负责"逻辑层"——数据模型、列定义、排序、过滤、勾选状态管理等。它不关心 DOM 如何渲染，只维护一个 JS 状态树。',
+      },
+      {
+        label: 'TanStack Virtual',
+        desc: '负责"展示层"——计算出当前视口应该显示哪些行。它不关心数据内容，只关心行索引和位置。',
+      },
+    ]}
+    renderItem={(item) => (
+      <List.Item>
+        <Typography.Paragraph style={{ marginBottom: 0 }}>
+          <Typography.Text strong>{item.label}</Typography.Text>
+          <br />
+          <Typography.Text type="secondary">{item.desc}</Typography.Text>
+        </Typography.Paragraph>
+      </List.Item>
+    )}
+  />
+  <Typography.Paragraph style={{ marginTop: 16 }}>
+    两者的结合点是一个简单的数组索引：<Typography.Text code>{'const row = rows[virtualRow.index]'}</Typography.Text>。TanStack Table 提供所有行的数据，TanStack Virtual 告诉 React "只看渲染这几行"，于是 React 只需要遍历几行而不是上万行。
+  </Typography.Paragraph>
+</Card>

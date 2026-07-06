@@ -1,0 +1,26 @@
+sequenceDiagram
+    participant User as 用户操作
+    participant React as React 运行时
+    participant Scheduler as Scheduler 调度器
+    participant DOM as 浏览器 DOM
+
+    User->>React: 触发状态更新（如输入事件）
+    React->>Scheduler: 判断更新优先级
+
+    alt 紧急更新 (InputDiscreteLane)
+        React->>React: 同步渲染
+        React->>DOM: 立即提交更新
+        DOM-->>User: 即时反馈
+    else 过渡更新 (TransitionLane / startTransition)
+        React->>Scheduler: 注册低优先级调度任务
+        Scheduler->>React: 开始时间切片渲染
+        Note over React,Scheduler: 每处理一个 fiber 节点<br/>调用 shouldYield() 检查
+        User->>React: 新高优先级输入事件插入
+        React->>Scheduler: 暂停当前 transition 渲染
+        Note over React: 保存 workInProgress 树进度
+        React->>Scheduler: 处理高优先级输入事件
+        React->>DOM: 高优先级更新立即提交
+        Scheduler->>React: 通过 scheduleCallback 重新调度
+        Note over React: 丢弃旧 workInProgress<br/>基于最新 state 重新创建
+        React->>DOM: 完成 transition 渲染并提交
+    end

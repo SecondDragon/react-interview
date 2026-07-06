@@ -1,0 +1,477 @@
+import { Alert, Card, Divider, List, Steps, Table, Tag, Typography, Space, Tabs } from 'antd';
+import CodeDiff from '@/components/CodeDiff';
+import LiveDemo from './LiveDemo';
+import badCode from './demos/idle-prefetch.bad.tsx?raw';
+import goodCode from './demos/idle-prefetch.good.tsx?raw';
+import {
+  prefetchComparison,
+  approachComparison,
+  scenarioList,
+  principleSteps,
+  webpackExampleCode,
+  vitePrefetchSource,
+} from './data';
+
+# 性能优化：闲时预取加载 (Idle Prefetch)
+
+<Alert
+  message="前置知识"
+  description="本专题假设你已理解 React.lazy 路由懒加载的基本原理（代码拆分、按需下载）。如果你还不熟悉，建议先阅读相关章节。"
+  type="info"
+  showIcon
+  style={{ marginBottom: 16 }}
+/>
+
+<Typography.Paragraph type="secondary">
+  React.lazy 帮我们把首屏体积降下来了，但用户点击导航时依旧要等 JS 下载完成才能渲染。
+  <Typography.Text strong>闲时预取</Typography.Text> 的答案是：既然用户大概率会访问，为什么不趁着浏览器空闲先下载好？
+</Typography.Paragraph>
+
+---
+
+## 一、性能问题出现的现象
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Paragraph>
+    当使用 <Typography.Text code>React.lazy</Typography.Text> 对路由做了代码拆分后，首屏加载确实变快了。
+    但在实际使用中，你可能会遇到以下场景：
+  </Typography.Paragraph>
+
+  <List
+    dataSource={[
+      '用户从"系统概览"点击到"大数据虚拟表格"页面，看到 Loading 旋转图标持续 1-2 秒',
+      '高频操作用户每天要打开 10 次报表页面，每次都要等待同样的加载时间',
+      '明明网络状况良好，但页面切换总感觉"慢半拍"，体验不够流畅',
+      '在弱网环境下，用户点击导航后页面长时间白屏，容易误以为应用崩溃',
+    ]}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color="red">⚠</Tag> {item}
+      </List.Item>
+    )}
+  />
+
+  <Alert
+    message="本质矛盾"
+    description="路由懒加载减少了首屏的加载量，但把加载成本转移到了用户交互的时刻。在用户点击和页面渲染之间，插入了一段不可控的网络等待时间。"
+    type="warning"
+    showIcon
+    style={{ marginTop: 16 }}
+  />
+</Card>
+
+---
+
+## 二、性能问题出现的底层原因
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Title level={5}>1. React.lazy 的"懒"是真正的"不加载"</Typography.Title>
+  <Typography.Paragraph>
+    <Typography.Text code>React.lazy(() => import('./HeavyPage'))</Typography.Text> 中的 <Typography.Text code>import()</Typography.Text>
+    函数是惰性求值的——它只在组件首次渲染时才会被调用。也就是说，只要用户不点击导航到该路由，
+    对应的 JS chunk 就**永远不会被下载**。这是优点也是缺点：首屏干净了，但用户点击时的网络延迟无可避免。
+  </Typography.Paragraph>
+
+  <Typography.Title level={5}>2. JS 解析与执行的同步阻塞</Typography.Title>
+  <Typography.Paragraph>
+    浏览器下载完 JS chunk 后，还需要经过解析（Parse）、编译（Compile）、执行（Execute）三个阶段，
+    这些都在主线程上同步进行。对于重型页面（ECharts、Monaco Editor 等），一个 chunk 可能达到几百 KB，
+    解析执行耗时可能达到几百毫秒。这段时间内，用户界面完全被阻塞。
+  </Typography.Paragraph>
+
+  <Typography.Title level={5}>3. 网络延迟的不确定性</Typography.Title>
+  <Typography.Paragraph>
+    无论你使用 CDN 还是部署在同一机房，网络请求始终存在延迟。在高延迟网络（如移动端 4G）下，
+    即使是几十 KB 的小 chunk，也可能耗费 500ms 以上。如果 chunk 体积较大（如 200KB+），
+    在弱网环境下用户等待 3-5 秒是常有的事。
+  </Typography.Paragraph>
+
+  <Divider />
+
+  <Typography.Title level={5}>懒加载 vs 闲时预取：加载时序对比</Typography.Title>
+
+  <Table
+    dataSource={prefetchComparison}
+    columns={[
+      { title: '对比维度', dataIndex: 'dimension', key: 'dimension' },
+      { title: '普通懒加载', dataIndex: 'noPrefetch', key: 'noPrefetch' },
+      { title: '闲时预取', dataIndex: 'withPrefetch', key: 'withPrefetch' },
+    ]}
+    pagination={false}
+    bordered
+    size="small"
+  />
+</Card>
+
+---
+
+## 三、这种优化方法一般在开发中适合在哪些场景中使用
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Paragraph>
+    闲时预取不是银弹，它适用于"用户大概率会访问，但不在首屏"的页面。以下场景收益最大：
+  </Typography.Paragraph>
+
+  <List
+    dataSource={scenarioList}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color="blue">✓</Tag> {item}
+      </List.Item>
+    )}
+  />
+
+  <Divider />
+
+  <Alert
+    message="不适合的场景"
+    description={
+      <ul>
+        <li>用户几乎不会访问的页面（如管理员专用设置页）——预取浪费带宽</li>
+        <li>首屏页面本身——应该用 React.lazy 的首屏优化策略，而不是预取</li>
+        <li>权限受限的页面——预取可能导致未授权用户下载不应访问的代码</li>
+      </ul>
+    }
+    type="info"
+    showIcon
+  />
+
+  <Divider />
+
+  <Typography.Title level={5}>决策建议</Typography.Title>
+  <Typography.Paragraph>
+    一般建议只对以下路由开启闲时预取：菜单层级较深且用户日常操作频繁触及的页面（如二级菜单报表页）、
+    体积较大但用户几乎每天都会打开的重型组件页面。总预取数量控制在 5-10 个以内，避免在空闲时段过度消耗带宽。
+  </Typography.Paragraph>
+</Card>
+
+---
+
+## 四、为什么要这样解决 & 互动演示 (Live Demo)
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Title level={5}>权衡分析</Typography.Title>
+
+  <Typography.Paragraph>
+    闲时预取的核心理念是"用带宽换体验"——我们牺牲了可能的带宽浪费，换取了用户导航时的秒开体验。
+    这是一种典型的预判型优化，关键在于选择正确的预取目标。
+  </Typography.Paragraph>
+
+  <List
+    dataSource={[
+      {
+        label: '✅ 收益：导航响应时间降至零',
+        desc: '预取完成后，用户点击时 import() 直接命中 HTTP 缓存，瞬间完成加载',
+      },
+      {
+        label: '✅ 收益：不牺牲首屏性能',
+        desc: '所有预取操作都在 requestIdleCallback 中执行，完全不阻塞主线程渲染',
+      },
+      {
+        label: '✅ 收益：极低的开发成本',
+        desc: '只需在路由配置中加一行 idlePrefetch: true，框架自动处理遍历与调度',
+      },
+      {
+        label: '⚠ 代价：可能浪费带宽',
+        desc: '如果用户最终没有访问被预取的页面，下载的 JS chunk 就浪费了',
+      },
+      {
+        label: '⚠ 代价：CDN 计费',
+        desc: '对使用 CDN 按流量计费的项目，额外的预取请求会增加 CDN 费用',
+      },
+    ]}
+    renderItem={(item) => (
+      <List.Item>
+        <Typography.Paragraph style={{ marginBottom: 0 }}>
+          <Typography.Text strong>{item.label}</Typography.Text>
+          <br />
+          <Typography.Text type="secondary">{item.desc}</Typography.Text>
+        </Typography.Paragraph>
+      </List.Item>
+    )}
+  />
+
+  <Divider />
+
+  <Typography.Title level={5}>互动演示</Typography.Title>
+
+  <Typography.Paragraph>
+    下面的面板模拟了闲时预取的效果。4 个页面中前 2 个标记了 <Typography.Text code>idlePrefetch: true</Typography.Text>，
+    点击按钮触发模拟的"闲时预取"后，它们会秒开；未标记的页面则需要等待模拟的网络延迟。
+  </Typography.Paragraph>
+
+  <LiveDemo />
+</Card>
+
+---
+
+## 五、代码演示
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Title level={5}>方案对比：闲时预取的两种实现方式</Typography.Title>
+
+  <Typography.Paragraph>
+    本项目（Vite）采用 <Typography.Text strong>IdlePrefetch 组件</Typography.Text> 运行时方案，
+    而 Webpack 项目则可以使用 <Typography.Text strong>魔法注释</Typography.Text> 实现类似效果。
+    下面分别展示两种方案，并对比其差异。
+  </Typography.Paragraph>
+
+  <Divider />
+
+  <Typography.Title level={5}>方案一：普通懒加载（反面教材）</Typography.Title>
+
+  <Typography.Paragraph>
+    传统的 <Typography.Text code>React.lazy</Typography.Text> 做法，没有任何预取机制。
+    用户点击后才开始下载 JS，延迟完全暴露。
+  </Typography.Paragraph>
+
+  <CodeDiff
+    oldValue={badCode}
+    newValue={goodCode}
+    leftTitle="❌ 反面教材：普通懒加载"
+    rightTitle="✅ 最佳实践：闲时预取（Vite 方案）"
+    type="error"
+    hideDiffMarkers={true}
+    language="tsx"
+  />
+</Card>
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Title level={5}>方案二：Webpack 魔法注释方案</Typography.Title>
+
+  <Typography.Paragraph>
+    如果你使用 Webpack 工具链，可以通过 <Typography.Text code>{'/* webpackPrefetch: true */'}</Typography.Text>
+    注释实现相同的效果。Webpack 会在构建时自动为对应 chunk 生成 <Typography.Text code>{'<link rel="prefetch">'}</Typography.Text>
+    标签注入到 HTML 中，由浏览器在空闲时下载。
+  </Typography.Paragraph>
+
+  <Alert
+    message="注意"
+    description="本项目使用 Vite（基于 Rollup），不支持 webpack 魔法注释语法。下方代码仅供了解 Webpack 生态下的实现方式。"
+    type="warning"
+    showIcon
+    style={{ marginBottom: 16 }}
+  />
+
+  <Card
+    title="Webpack 魔法注释示例"
+    size="small"
+    variant="borderless"
+    style={{ background: '#f6f8fa' }}
+  >
+    <pre style={{ margin: 0, fontSize: 13, lineHeight: 1.6 }}>
+      <code>{webpackExampleCode}</code>
+    </pre>
+  </Card>
+
+  <Divider />
+
+  <Typography.Title level={5}>生成效果</Typography.Title>
+
+  <Typography.Paragraph>
+    上述标记编译后，Webpack 会在页面的 <Typography.Text code>{'<head>'}</Typography.Text> 中自动注入：
+  </Typography.Paragraph>
+
+  <Card
+    size="small"
+    variant="borderless"
+    style={{ background: '#f6f8fa' }}
+  >
+    <pre style={{ margin: 0, fontSize: 13, lineHeight: 1.6 }}>
+      <code>{`<!-- webpackPrefetch: true → 浏览器空闲时下载 -->
+<link rel="prefetch" as="script" href="/static/js/ReportPage.chunk.js">
+<link rel="prefetch" as="script" href="/static/js/DataTable.chunk.js">
+
+<!-- webpackPreload: true → 立即并行下载 -->
+<link rel="preload" as="script" href="/static/js/SettingsPage.chunk.js">`}</code>
+    </pre>
+  </Card>
+
+  <Typography.Paragraph style={{ marginTop: 16 }}>
+    浏览器看到 <Typography.Text code>{'<link rel="prefetch">'}</Typography.Text> 标签后，
+    会在网络空闲时下载对应资源，放入 HTTP 缓存中，且<strong>只下载不解析</strong>，不占用主线程。
+  </Typography.Paragraph>
+</Card>
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Title level={5}>两种方案对比</Typography.Title>
+
+  <Table
+    dataSource={approachComparison}
+    columns={[
+      { title: '对比维度', dataIndex: 'approach', key: 'approach' },
+      { title: '机制', dataIndex: 'mechanism', key: 'mechanism' },
+      { title: '配置方式', dataIndex: 'config', key: 'config' },
+      { title: '优点', dataIndex: 'pros', key: 'pros' },
+      { title: '缺点', dataIndex: 'cons', key: 'cons' },
+    ]}
+    pagination={false}
+    bordered
+    size="small"
+  />
+</Card>
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Title level={5}>IdlePrefetch 组件源码</Typography.Title>
+
+  <Typography.Paragraph>
+    这是本项目中实现的核心 <Typography.Text code>IdlePrefetch</Typography.Text> 组件的完整源码。
+    它接收路由树，递归遍历收集 <Typography.Text code>idlePrefetch: true</Typography.Text> 的 <Typography.Text code>importFn</Typography.Text>，
+    在 <Typography.Text code>requestIdleCallback</Typography.Text> 中执行预取：
+  </Typography.Paragraph>
+
+  <Card
+    size="small"
+    variant="borderless"
+    style={{ background: '#f6f8fa' }}
+  >
+    <pre style={{ margin: 0, fontSize: 13, lineHeight: 1.6, overflow: 'auto' }}>
+      <code>{vitePrefetchSource}</code>
+    </pre>
+  </Card>
+</Card>
+
+---
+
+## 六、核心原理解释
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Title level={5}>闲时预取的运行流程</Typography.Title>
+
+  <Typography.Paragraph>
+    从用户进入应用到点击导航，闲时预取经历了以下 5 个步骤：
+  </Typography.Paragraph>
+
+  <Steps
+    direction="vertical"
+    current={-1}
+    items={principleSteps}
+  />
+
+  <Divider />
+
+  <Typography.Title level={5}>
+    <Typography.Text code>prefetch</Typography.Text> vs <Typography.Text code>preload</Typography.Text> 的本质区别
+  </Typography.Title>
+
+  <Typography.Paragraph>
+    很多开发者容易混淆这两个概念。它们的核心差异在于<strong>优先级和时机</strong>：
+  </Typography.Paragraph>
+
+  <List
+    dataSource={[
+      {
+        label: '<link rel="prefetch">',
+        desc: '浏览器空闲时下载（低优先级），适合大概率将来会用到的资源。即使不下载也不影响当前页面功能。',
+      },
+      {
+        label: '<link rel="preload">',
+        desc: '与父文档并行下载（高优先级），适合当前页面马上就要用到的关键资源（如首屏字体、关键 CSS）。',
+      },
+      {
+        label: 'webpackPrefetch: true',
+        desc: '构建时生成 <link rel="prefetch">，由浏览器自身调度空闲下载，不占主线程。',
+      },
+      {
+        label: 'IdlePrefetch（requestIdleCallback）',
+        desc: '运行时通过 JS 调度，在浏览器空闲帧执行 import()。注意：import() 触发后会占用主线程解析模块。',
+      },
+    ]}
+    renderItem={(item) => (
+      <List.Item>
+        <Typography.Paragraph style={{ marginBottom: 0 }}>
+          <Typography.Text code strong>{item.label}</Typography.Text>
+          <br />
+          <Typography.Text type="secondary">{item.desc}</Typography.Text>
+        </Typography.Paragraph>
+      </List.Item>
+    )}
+  />
+
+  <Divider />
+
+  <Typography.Title level={5}>
+    <Typography.Text code>requestIdleCallback</Typography.Text> 的工作原理
+  </Typography.Title>
+
+  <Typography.Paragraph>
+    浏览器的主线程以每帧约 16.67ms（60fps）的节奏工作。在一帧中，浏览器需要完成：输入事件处理 → JS 执行 → Style 计算 → Layout → Paint → Composite。
+    如果上述任务完成后还有剩余时间，<Typography.Text code>requestIdleCallback</Typography.Text> 的回调就会被执行。
+  </Typography.Paragraph>
+
+  <Typography.Paragraph>
+    这一帧的剩余时间可以通过 <Typography.Text code>deadline.timeRemaining()</Typography.Text> 获取。
+    同时，可以通过 <Typography.Text code>timeout</Typography.Text> 参数设置"防饿死"机制——如果在指定时间内一直没有空闲帧，浏览器也会强制执行回调。
+  </Typography.Paragraph>
+
+  <Divider />
+
+  <Typography.Title level={5}>关键细节：为什么 import() 预取不如 <Typography.Text code>{'<link rel="prefetch">'}</Typography.Text> 轻量</Typography.Title>
+
+  <Typography.Paragraph>
+    Webpack 的 <Typography.Text code>{'/* webpackPrefetch: true */'}</Typography.Text> 生成的是 <Typography.Text code>{'<link rel="prefetch">'}</Typography.Text> 标签，
+    浏览器只会<strong>下载</strong>资源到缓存，<strong>不会解析和执行</strong>。这非常轻量，几乎不消耗 CPU。
+  </Typography.Paragraph>
+
+  <Typography.Paragraph>
+    而我们的 <Typography.Text code>IdlePrefetch</Typography.Text> 组件在 <Typography.Text code>requestIdleCallback</Typography.Text> 中执行的是 <Typography.Text code>import()</Typography.Text>，
+    这会触发 JS 模块的完整加载流程：下载 → 解析 → 编译 → 执行。虽然模块的头文件很小（动态导入的 chunk 入口），
+    但在主线程上仍然有解析开销。这是 Vite 生态下无法避免的——Vite 没有 <Typography.Text code>webpackPrefetch</Typography.Text> 等效的构建期解决方案。
+  </Typography.Paragraph>
+
+  <Typography.Paragraph>
+    不过，这个解析开销相比用户点击时的同步等待要小得多——因为预取时主线程可能处于空闲状态，
+    此时解析模块不会影响用户体验。这就是"用空闲 CPU 换未来体验"的核心思想。
+  </Typography.Paragraph>
+
+  <Divider />
+
+  <Typography.Title level={5}>完整的架构图</Typography.Title>
+
+  <Typography.Paragraph>
+    下图展示了"路由懒加载 + 闲时预取"在整个应用架构中的位置：
+  </Typography.Paragraph>
+
+  <Card
+    size="small"
+    variant="borderless"
+    style={{ background: '#f6f8fa' }}
+  >
+    <pre style={{ margin: 0, fontSize: 13, lineHeight: 1.6 }}>
+      <code>{`用户进入应用
+    │
+    ▼
+┌─────────────────────────────────────────┐
+│   路由层 (React Router)                  │
+│   React.lazy → import() 按需下载 chunk   │
+│   Suspense fallback → 加载中的 UI        │
+│         │                               │
+│         ▼                               │
+│   🆕 IdlePrefetch ← dashboardRoutes     │
+│   └─ requestIdleCallback                 │
+│      └─ 遍历 idlePrefetch: true 的 route │
+│         └─ 执行 importFn() 预取 chunk    │
+│            → 浏览器 HTTP 缓存            │
+└─────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────────┐
+│   页面内部 (组件层)                       │
+│   SmartIdleLoad / TransitionIdleLoad     │
+│   → 闲时渲染重型内容 (CPU 优化)          │
+│   ComplexChart / Monaco Editor / ...     │
+└─────────────────────────────────────────┘
+
+        三种优化层次:
+        ① 路由懒加载  → 网络层面：按需下载
+        ② 闲时预取    → 网络层面：空闲时提前下载
+        ③ 闲时渲染    → CPU 层面：空闲时再挂载`}</code>
+    </pre>
+  </Card>
+
+  <Typography.Paragraph style={{ marginTop: 16 }}>
+    可以看出，闲时预取填补了"路由懒加载"和"闲时渲染"之间的空白。
+    路由懒加载负责减少首屏体积，闲时预取负责提前下载用户未来需要的资源，
+    闲时渲染负责在 CPU 空闲时执行重型组件的挂载。三者层次分明，形成完整优化链路。
+  </Typography.Paragraph>
+</Card>

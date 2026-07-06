@@ -1,0 +1,49 @@
+sequenceDiagram
+    participant Code as 用户代码
+    participant API as startTransition
+    participant Config as ReactCurrentBatchConfig
+    participant Hooks as dispatchSetState
+    participant Lane as Lane 引擎
+    participant Root as scheduleUpdateOnFiber
+    participant Sched as Scheduler 调度器
+    participant WLoop as workLoopConcurrent
+
+    Code->>API: startTransition(() => { setSearchQuery("数") })
+
+    API->>Config: transition = { name: 'Pending' }
+    Note over Config: 全局变量标记<br/>"当前在 transition 中"
+
+    API->>Hooks: dispatchSetState(fiber, queue, "数")
+    Hooks->>Lane: requestUpdateLane(fiber)
+    Lane->>Config: ReactCurrentBatchConfig.transition 非 null ?
+    Config-->>Lane: YES（是一个对象）
+    Lane->>Lane: claimNextTransitionLane()
+    Note over Lane: 返回 TransitionLane1 = 0b10000
+    Lane-->>Hooks: lane = TransitionLane1
+
+    Hooks->>Hooks: 创建 Update { lane, action: "数" }
+    Hooks->>Hooks: enqueueUpdate() 追加到 searchQuery 队列
+
+    Hooks->>Root: scheduleUpdateOnFiber(root, TransitionLane1)
+    Root->>Root: markRootUpdated(root, lane)
+    Root->>Root: lanesToSchedulerPriority(TransitionLane1)
+    Note over Root: TransitionLane → NormalPriority<br/>(超时时间 5000ms)
+    Root->>Sched: scheduleCallback(NormalPriority, workLoop)
+
+    Note over Sched: 任务队列中小顶堆排序<br/>NormalPriority 排在<br/>UserBlocking 和 Immediate 之后
+
+    Sched-->>Sched: 浏览器空闲 → 触发回调
+    Sched->>WLoop: performConcurrentWorkOnRoot(root)
+    WLoop->>Root: getNextLanes() → TransitionLane1
+    Note over WLoop: renderLanes = TransitionLane1<br/>→ 透传到所有 Fiber 节点
+    WLoop->>WLoop: beginWork(HeavyList Fiber)
+    Note over WLoop: HeavyList({ query: "数" })<br/>filter("数") 同步执行 ~8-12ms
+    WLoop->>WLoop: shouldYield() → 检查 5ms 预算
+
+    Note over WLoop,Sched: —— 用户突然输入新字符 ——
+
+    Code->>Root: 新输入事件 → SyncLane 插入
+    Root->>Sched: 更高优先级任务到达
+    Sched->>WLoop: shouldYield() → true
+    WLoop->>Root: prepareFreshStack(root)
+    Note over Root: workInProgress = null<br/>旧 WIP 树丢弃（GC）<br/>基于最新 state 重建

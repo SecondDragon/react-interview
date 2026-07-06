@@ -25,6 +25,10 @@ export interface RouteConfig {
   closable?: boolean;
   children?: RouteConfig[];
   hideInMenu?: boolean;
+  /** 标记该路由需要在闲时预加载 JS 资源 */
+  idlePrefetch?: boolean;
+  /** 闲时预取时调用的 import() 函数 */
+  importFn?: () => Promise<unknown>;
 }
 
 // 懒加载组件
@@ -43,16 +47,23 @@ const WaterfallProfessional = lazy(() => import('../pages/performance/Waterfall/
 const WaterfallUltimate = lazy(() => import('../pages/performance/Waterfall/Ultimate'));
 const WaterfallUltimate2 = lazy(() => import('../pages/performance/Waterfall/Ultimate2'));
 const IdleLoadPage = lazy(() => import('../pages/performance/IdleLoad/index'));
-const HoverPreloadPage = lazy(() => import('../pages/performance/HoverPreload/index'));
-const VirtualTablePage = lazy(() => import('../pages/performance/VirtualTable/index'));
-const NoStableHeightVirtualListPage = lazy(
-  () => import('../pages/performance/NoStableHeightVirtualList/index')
-);
+const IdlePrefetchPageImporter = () => import('../pages/performance/IdlePrefetch/index');
+const IdlePrefetchPage = lazy(IdlePrefetchPageImporter);
+const hoverPreloadImporter = () => import('../pages/performance/HoverPreload/index');
+const HoverPreloadPage = lazy(hoverPreloadImporter);
+const virtualTableImporter = () => import('../pages/performance/VirtualTable/index');
+const VirtualTablePage = lazy(virtualTableImporter);
+const noStableHeightVirtualListImporter = () => import('../pages/performance/NoStableHeightVirtualList/index');
+const NoStableHeightVirtualListPage = lazy(noStableHeightVirtualListImporter);
 const VirtuosoListPage = lazy(() => import('../pages/performance/VirtuosoList/index'));
-const ConcurrentRenderPage = lazy(() => import('../pages/performance/ConcurrentRender/index'));
+const concurrentRenderImporter = () => import('../pages/performance/ConcurrentRender/index');
+const ConcurrentRenderPage = lazy(concurrentRenderImporter);
 const BigJsonParsePage = lazy(() => import('../pages/performance/BigJsonParse/index'));
 const ReverseChatVirtualListPage = lazy(
   () => import('../pages/performance/ReverseChatVirtualList/index')
+);
+const SimpleVirtualTablePage = lazy(
+  () => import('../pages/performance/SimpleVirtualTable/index')
 );
 const DynamicFormPage = lazy(() => import('../pages/components-encapsulation/DynamicForm/index'));
 const ProDynamicFormPage = lazy(
@@ -66,7 +77,8 @@ const VhUnit = lazy(() => import('../pages/compatibility/mobile/VhUnit/index'));
 const SafeArea = lazy(() => import('../pages/compatibility/mobile/SafeArea/index'));
 const IMEInput = lazy(() => import('../pages/compatibility/IMEInput/index'));
 const ScrollbarStyle = lazy(() => import('../pages/compatibility/ScrollbarStyle/index'));
-const FontFamily = lazy(() => import('../pages/compatibility/FontFamily/index'));
+const fontFamilyImporter = () => import('../pages/compatibility/FontFamily/index');
+const FontFamily = lazy(fontFamilyImporter);
 const DateParsing = lazy(() => import('../pages/compatibility/DateParsing/index'));
 const KeyboardOverlap = lazy(() => import('../pages/compatibility/mobile/KeyboardOverlap/index'));
 const MobileAdaptation = lazy(() => import('../pages/compatibility/mobile/MobileAdaptation/index'));
@@ -86,11 +98,13 @@ const UndefinedVsNull = lazy(() => import('../pages/js-basics/undefined-vs-null/
 const ModuleSystems = lazy(() => import('../pages/js-basics/module-systems/index'));
 
 // 设计模式专题
-const DesignPatternsOverview = lazy(() => import('../pages/design-patterns/overview/index'));
+const designPatternsOverviewImporter = () => import('../pages/design-patterns/overview/index');
+const DesignPatternsOverview = lazy(designPatternsOverviewImporter);
 const ObserverPattern = lazy(() => import('../pages/design-patterns/observer/index'));
 
 // 网络请求专题
-const SilentRefreshBasic = lazy(() => import('../pages/silent-refresh/basic'));
+const silentRefreshBasicImporter = () => import('../pages/silent-refresh/basic');
+const SilentRefreshBasic = lazy(silentRefreshBasicImporter);
 const SilentRefreshProduction = lazy(() => import('../pages/silent-refresh/production'));
 const SilentRefreshExtended = lazy(() => import('../pages/silent-refresh/extended'));
 const QiankunBasicPage = lazy(() => import('../pages/qiankun/basic/index'));
@@ -172,6 +186,8 @@ export const dashboardRoutes: RouteConfig[] = [
         path: '/dashboard/compatibility/font-family',
         label: '跨平台字体栈',
         element: <FontFamily />,
+        importFn: fontFamilyImporter,
+        idlePrefetch: true,
       },
       {
         path: '/dashboard/compatibility/date-parsing',
@@ -319,19 +335,32 @@ export const dashboardRoutes: RouteConfig[] = [
         element: <IdleLoadPage />,
       },
       {
+        path: '/dashboard/performance/idle-prefetch',
+        label: '闲时预取加载',
+        element: <IdlePrefetchPage />,
+        importFn: IdlePrefetchPageImporter,
+        idlePrefetch: true,
+      },
+      {
         path: '/dashboard/performance/hover-preload',
         label: 'Hover 预加载优化',
         element: <HoverPreloadPage />,
+        importFn: hoverPreloadImporter,
+        idlePrefetch: true,
       },
       {
         path: '/dashboard/performance/virtual-table',
         label: '虚拟滚动大数据表格',
         element: <VirtualTablePage />,
+        importFn: virtualTableImporter,
+        idlePrefetch: true,
       },
       {
         path: '/dashboard/performance/no-stable-height-virtual-list',
         label: '不定高虚拟列表',
         element: <NoStableHeightVirtualListPage />,
+        importFn: noStableHeightVirtualListImporter,
+        idlePrefetch: true,
       },
       {
         path: '/dashboard/performance/virtuoso-list',
@@ -362,6 +391,8 @@ export const dashboardRoutes: RouteConfig[] = [
         path: '/dashboard/performance/concurrent-render',
         label: '并发渲染(Task Slicing)',
         element: <ConcurrentRenderPage />,
+        importFn: concurrentRenderImporter,
+        idlePrefetch: true,
       },
       // {
       //   path: '/dashboard/performance/big-json-parse',
@@ -372,6 +403,11 @@ export const dashboardRoutes: RouteConfig[] = [
         path: '/dashboard/performance/reverse-chat-virtual-list',
         label: '反向虚拟聊天列表',
         element: <ReverseChatVirtualListPage />,
+      },
+      {
+        path: '/dashboard/performance/simple-virtual-table',
+        label: '自研虚拟滚动表格',
+        element: <SimpleVirtualTablePage />,
       },
     ],
   },
@@ -481,6 +517,8 @@ export const dashboardRoutes: RouteConfig[] = [
             path: '/dashboard/network/silent-refresh/basic',
             label: '基础篇：Promise 链替换',
             element: <SilentRefreshBasic />,
+            importFn: silentRefreshBasicImporter,
+            idlePrefetch: true,
           },
           {
             path: '/dashboard/network/silent-refresh/production',

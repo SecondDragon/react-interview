@@ -1,368 +1,347 @@
-# SimpleBar 滚动条完全指南
+# SimpleBar 嵌套布局：问题追溯与架构决策
 
-> 适用场景：当你需要**滚动条不占布局空间**（悬浮在内容上方）时，SimpleBar 是原生 `overflow: auto` 的最佳替代方案。
-
----
-
-## 一、SimpleBar 是什么？
-
-SimpleBar 是一个**纯 JS 驱动的自定义滚动条库**。它不依赖任何框架，提供了 React / Vue / Angular 的封装。
-
-**核心思路只有一句话：**
-
-> 隐藏浏览器的原生滚动条 → 在内容上方绝对定位画一个假的滚动条 → JS 实时同步位置。
-
-因为假滚动条是 `position: absolute`，所以**它不占据任何布局空间** —— 这就是它和原生滚动条最本质的区别。
+> 本文档记录 react-interview 主应用布局中 `SimpleBar` 的两轮改造过程、出现的问题以及背后的深层原因。
 
 ---
 
-## 二、DOM 结构与工作流程
+## 一、初始状态
 
-### 2.1 SimpleBar 生成的完整 DOM 树
+在未修改之前，`MainLayout` 的内容区使用一个原生 `<div>` 作为滚动容器：
+
+```tsx
+// 原始的 MainLayout 内容区（被注释掉的旧代码）
+<Content
+  ref={contentRef}
+  style={{
+    padding: '16px 12px 18px 16px',
+    margin: 0,
+    flex: 1,
+    overflowY: 'auto',
+    position: 'relative',
+  }}
+>
+  <Outlet />
+</Content>
+```
+
+这个方案的问题：
+
+1. 路由切换时，内容区高度可能瞬间超过视口，而 `html`/`body` 没有 `overflow: hidden`
+2. 浏览器检测到 `body` 溢出 → 显示原生全局滚动条
+3. 等 SimpleBar 在瀑布流等页面内初始化完成 → 全局滚动条消失
+4. 6px 宽度变化（`App.css` 中 `::-webkit-scrollbar { width: 6px }`）→ 页面闪动
+
+---
+
+## 二、第一轮改造：布局层也套 SimpleBar
+
+为了解决全局滚动条闪动，第一反应是把布局层的滚动容器也替换成 SimpleBar，让整个页面所有滚动都由 SimpleBar 管理：
+
+```tsx
+// 简化示意图
+<Layout style={{ height: '100vh', overflow: 'hidden' }}>
+  <Sider>...</Sider>
+  <Layout>
+    <Header>...</Header>
+    <TabsContainer>...</TabsContainer>
+    <SimpleBarWrapper>
+      <SimpleBar style={{ height: '100%' }}>
+        <Suspense>
+          <Outlet />
+            ├── 普通页面（正常 ✅）
+            └── 瀑布流页面
+                  └── <SimpleBar onScroll={...}>
+                        └── 瀑布流内容
+      </SimpleBar>
+    </SimpleBarWrapper>
+  </Layout>
+</Layout>
+```
+
+### 问题：瀑布流全部失效
+
+所有 4 个瀑布流组件出现了相同症状：
+
+- 滚动无响应，只显示顶部少量卡片
+- 无限加载失效，永远不会加载新数据
+
+---
+
+## 三、问题深层分析
+
+### 3.1 SimpleBar 的内部结构
+
+`<SimpleBar>` 并非一个普通的 DOM 元素，它在渲染时生成多层 DOM：
 
 ```
-<SimpleBar>                                          ← 1. 你写的 React 组件（最外层容器）
-  <div class="simplebar-wrapper">                     ← 2. 「溢出观察层」
-    <div class="simplebar-height-auto-observer-wrapper">  ← 3. 「高度变化监听器」（用于检测内容高度变化）
-      <div class="simplebar-height-auto-observer" />
-    </div>
-    <div class="simplebar-mask">                      ← 4. 「遮罩层」
-      <div class="simplebar-offset">                  ← 5. 「偏移层」（为滚动条预留视觉空间）
-        <div class="simplebar-content-wrapper">       ← 6. 「真正的滚动容器」
-            ↑ 这里有原生的 overflow: auto
-            ↑ 但滚动条被 scrollbar-width: none 隐藏了
-          <div class="simplebar-content">             ← 7. 「内容容器」
-            {/* 你的 children 放在这里 */}
-          </div>
+<SimpleBar>                             → className="simplebar-wrapper"
+  <div class="simplebar-mask">          → 遮罩层
+    <div class="simplebar-offset">      → 偏移容器
+      <div class="simplebar-content-wrapper" ref={scrollableNodeRef}>
+        ← 这就是 scrollableNodeProps 绑定的节点
+        ← 拥有 overflow: auto，是真正的滚动容器
+        ← 这里是所有 children 被渲染的位置
+        <div class="simplebar-content">
+          ← 实际的 children 内容
         </div>
       </div>
     </div>
-    <div class="simplebar-track simplebar-vertical">  ← 8. 「竖向滚动条轨道」position: absolute
-      <div class="simplebar-scrollbar" />              ← 9. 「滚动条滑块」
-    </div>
-    <div class="simplebar-track simplebar-horizontal">← 10.「横向滚动条轨道」position: absolute
-      <div class="simplebar-scrollbar" />
-    </div>
   </div>
+  <div class="simplebar-track horizontal">...</div>
+  <div class="simplebar-track vertical">...</div>
 </SimpleBar>
 ```
 
-### 2.2 工作流程
+关键事实：
+
+- `<SimpleBar>` 自身是一个**非溢出容器**（`overflow: hidden` 或不溢出）
+- `scrollableNode`（`simplebar-content-wrapper`）是实际的滚动容器
+- SimpleBar 的滚动事件**绑定在 `scrollableNode` 上**，**不会冒泡到外层**
+- 外层 SimpleBar 的 `scrollableNode` 先于内层创建，且物理上位于父级位置
+
+### 3.2 事件流截断
 
 ```
 用户滚动鼠标滚轮
-        │
-        ▼
-simplebar-content-wrapper（原生 overflow: auto）
-  原生滚动生效，scrollTop 变化
-        │
-        ▼
-SimpleBar JS 监听到 scroll 事件
-  读取 scrollTop / scrollHeight / clientHeight
-        │
-        ▼
-计算滑块位置：
-  scrollbarTop = (scrollTop / (scrollHeight - clientHeight)) × (trackHeight - scrollbarHeight)
-        │
-        ▼
-设置 .simplebar-scrollbar 的 transform: translateY(...)
-  滑块实时跟随内容滚动
+  ↓
+事件首先到达外层 SimpleBar 的 scrollableNode
+  ↓
+外层 scrollableNode 的 overflow:auto 检测到内容溢出 → scrollTop 改变
+  ↓
+wheel 事件被外层消费，不继续冒泡/传递
+  ↓
+内层 SimpleBar 的 scrollableNode 内容未溢出（高度受限）
+  → scrollTop 恒为 0
 ```
 
-### 2.3 关键类名总览
+如果用引水渠来比喻：
 
-| 类名 | 作用 | 可自定义什么 |
-|------|------|-------------|
-| `.simplebar-content-wrapper` | 真正的滚动容器，有 `overflow: auto` 但原生滚动条被隐藏 | 不建议直接修改 |
-| `.simplebar-track.simplebar-vertical` | 竖向假滚动条的"轨道" | `width`（控制滚动条粗细） |
-| `.simplebar-track.simplebar-horizontal` | 横向假滚动条的"轨道" | `height`（控制滚动条粗细） |
-| `.simplebar-scrollbar::before` | 滚动条"滑块"（通过伪元素绘制） | `background-color`（颜色）、`border-radius`（圆角） |
-| `.simplebar-scrollbar.simplebar-visible::before` | 滚动条正在被使用时 | `opacity`（透明度） |
-| `.simplebar-scrollbar.simplebar-hover::before` | 鼠标悬停在滚动条上 | `opacity`、`background-color` |
+```
+用户滚动 → 水渠（外层 SimpleBar）
+           ↕ 水全被这一层吸走了
+           灌溉渠（内层 SimpleBar）
+              ↕ 永远没水
+```
+
+### 3.3 `onScroll` 监听视角
+
+```tsx
+// 瀑布流代码
+const handleScroll = useCallback((e: React.UIEvent<HTMLElement>) => {
+  const currentScrollTop = e.currentTarget.scrollTop;
+  setScrollTop(currentScrollTop);
+}, []);
+
+// 渲染
+<SimpleBar scrollableNodeProps={{ onScroll: handleScroll }}>
+```
+
+| 变量 | 期望 | 嵌套后的实际值 |
+|------|------|---------------|
+| `e.currentTarget.scrollTop` | 随滚动变化 | 始终为 0 |
+| `setScrollTop` | 不断更新 | 初始值之后从未更新 |
+
+虚拟列表的核心判断：
+
+```tsx
+const isVisible =
+  pos.top + (pos.itemHeight || 0) > scrollTop - buffer &&
+  pos.top < scrollTop + windowHeight + buffer;
+```
+
+`scrollTop = 0` → 只有 `pos.top ∈ [0, windowHeight + buffer]` 的卡片可见 → 只渲染最顶部几项。
+
+### 3.4 IntersectionObserver 的隐式 root
+
+`IntersectionObserver` 不传 `root` 时，默认选取**最近的、可滚动的祖先元素**作为观察根。在内层 SimpleBar 场景中：
+
+```
+距离哨兵最近的可滚动祖先：
+  └─ 内层 SimpleBar 的 scrollableNode（期望 ✅）
+  
+但实际滚动行为：
+  └─ 内层 SimpleBar 的 scrollableNode 不滚动
+  └─ 哨兵始终不可见 → isIntersecting = false
+  └─ loadMoreData 不触发
+```
+
+兜底检查同样失效：
+
+```tsx
+const rect = sentinelRef.current.getBoundingClientRect();
+const windowHeight = window.innerHeight;
+if (rect.top <= windowHeight + 100) {
+  loadMoreRef.current();
+}
+```
+
+因为哨兵被嵌套在两层固定高度容器内，`getBoundingClientRect` 虽然返回相对于浏览器视口的坐标，但哨兵本身在物理布局上处于外层 SimpleBar 的可滚动区域深处，而外层 SimpleBar 内部又包裹了多层 DOM 结构，导致哨兵的位置计算异常。
+
+### 3.5 全局滚动条闪动（为什么之前在瀑布流页面特别明显）
+
+```
+路由切换到瀑布流页面
+  ↓
+瀑布流内容多、需要渲染大量 DOM → 渲染耗时
+  ↓
+body 内容高度 > 视口高度
+  ↓
+body 没有 overflow 限制 → 浏览器显示原生滚动条
+  ↓
+瀑布流的 SimpleBar JS 初始化完成 → 接管滚动
+  ↓
+原生滚动条消失（宽度减少 6px）
+  ↓
+页面宽度变化 → 卡片布局抖动
+```
 
 ---
 
-## 三、React 中使用 SimpleBar
 
-### 3.1 安装与导入
+```mermaid
+sequenceDiagram
+    participant User as 用户操作
+    participant Wrapper as SimpleBarWrapper<br/>(布局层, overflow:hidden)
+    participant Outer as 外层 SimpleBar<br/>(scrollableNode)
+    participant Route as Outlet
+    participant Inner as 内层 SimpleBar<br/>(scrollableNode, onScroll)
+    participant Sentinel as 哨兵元素
 
-```bash
-npm install simplebar-react simplebar
-```
+    Note over User,Sentinel: ⚠️ 用户想要滚动瀑布流
 
-```typescript
-import SimpleBar from 'simplebar-react';
-import 'simplebar-react/dist/simplebar.min.css';  // ← 必须导入！否则滚动条不会显示
-```
+    User->>Outer: ① 滚动鼠标滚轮
+    Outer->>Outer: ② scrollTop 改变<br/>内容滚动
+    Note over Outer: ③ wheel 事件被外层消费<br/>不冒泡也不传递到内层
 
-### 3.2 基础用法
+    Inner->>Inner: ④ scrollTop = 0<br/>从未改变
+    Inner->>Route: ⑤ onScroll 不触发
+    Route->>Route: ⑥ setScrollTop(0)<br/>永远是最初的值
 
-```tsx
-<SimpleBar style={{ height: '100%' }}>
-  <div>长内容...</div>
-</SimpleBar>
-```
+    Note over Route: ⑦ 虚拟列表判断可见性
+    Note over Route: scrollTop=0 → 只渲染顶部卡片
 
-**唯一要求：** SimpleBar 必须有**明确的高度约束**（`height`、`max-height`、或弹性布局中的 `flex: 1` + 外层 `overflow: hidden`）。
-
-### 3.3 常用 Props
-
-| Props | 类型 | 说明 |
-|-------|------|------|
-| `style` | `CSSProperties` | 最外层容器样式。必须有高度约束 |
-| `className` | `string` | 自定义类名 |
-| `autoHide` | `boolean`（默认 `true`）| 不滚时是否自动隐藏滚动条 |
-| `forceVisible` | `"x"` \| `"y"` \| `boolean` | 强制始终显示滚动条 |
-| `scrollableNodeProps` | 对象 | 透传给 `.simplebar-content-wrapper` 的 props。常见用法：绑定 `onScroll`、`ref` |
-| `ref` | `Ref` | 获取 SimpleBar 实例。`ref.current.getScrollElement()` 可获取滚动容器 DOM |
-
-### 3.4 绑定 onScroll 事件
-
-```tsx
-// 方式一：scrollableNodeProps（推荐）
-<SimpleBar
-  scrollableNodeProps={{ onScroll: (e) => console.log(e.currentTarget.scrollTop) }}
-  style={{ height: '100%' }}
->
-  <div>内容</div>
-</SimpleBar>
-```
-
-### 3.5 通过 ref 获取滚动信息
-
-```tsx
-const simpleBarRef = useRef<SimpleBar>(null);
-
-// 获取可视区域高度
-const viewportHeight = simpleBarRef.current?.el?.clientHeight;
-
-// 获取滚动容器 DOM（用于手动控制滚动位置）
-const scrollEl = simpleBarRef.current?.getScrollElement();
-scrollEl?.scrollTo({ top: 0, behavior: 'smooth' });
+    Sentinel->>Inner: ⑧ IntersectionObserver
+    Note over Inner: ⑨ 哨兵在固定容器内<br/>内容不溢出 → 不可见
+    Note over Inner: isIntersecting = false
+    Note over Sentinel: ⑩ loadMoreData 永远不触发
 ```
 
 ---
 
-## 四、CSS 自定义滚动条样式
+```mermaid
+flowchart LR
+    subgraph BEFORE["❌ 改造前：嵌套 SimpleBar"]
+        direction TB
+        L1["布局 SimpleBar<br/>scrollableNodeProps={{ref:contentRef}}"] --> L2["内容区固定高度"]
+        L2 --> L3["Outlet 渲染瀑布流页面"]
+        L3 --> L4["瀑布流 SimpleBar<br/>scrollableNodeProps={{onScroll}}"]
+        L4 --> L5["scrollTop = 0<br/>无法滚动 ❌"]
+    end
 
-SimpleBar 的滚动条由 CSS 渲染，通过覆盖以下类名即可完全控制外观。
+    subgraph AFTER["✅ 改造后：替换为普通滚动容器"]
+        direction TB
+        A1["布局 div<br/>ref={contentRef}<br/>overflowY: auto"] --> A2["Outlet 渲染瀑布流页面"]
+        A2 --> A3["瀑布流 SimpleBar<br/>scrollableNodeProps={{onScroll}}"]
+        A3 --> A4["scrollTop 正常更新 ✅<br/>IntersectionObserver 正常触发 ✅"]
+    end
 
-### 4.1 默认样式 vs 自定义样式
-
-默认的 `simplebar.min.css` 中：
-
-```css
-/* 默认轨道宽度 */
-.simplebar-track.simplebar-vertical { width: 11px; }
-
-/* 默认滑块 */
-.simplebar-scrollbar::before {
-  background: #000;       /* 纯黑 */
-  opacity: 0.5;           /* 半透明 */
-  transition: opacity 0.2s linear;
-}
-
-/* 悬停时更明显 */
-.simplebar-scrollbar.simplebar-hover::before { opacity: 0.8; }
+    BEFORE -->|"双重 SimpleBar<br/>= 瀑布流全坏"| AFTER
 ```
 
-### 4.2 完整自定义模板
+---
 
-以下是一个 "细 + 浅色" 风格的完整覆盖，可直接复制使用：
+```mermaid
+flowchart TD
+    subgraph LAYER_OUTER["外层"]
+        WB["SimpleBarWrapper<br/>flex: 1, overflow: hidden"]
+        WB --> OUTER_SCROLLABLE["外层 scrollableNode<br/>overflow: auto<br/>← 拦截所有滚动事件<br/>scrollTop 正常变化"]
+        OUTER_SCROLLABLE --> OUTER_CONTENT["外层内容<br/>高度 ≈ 视口高度"]
+    end
 
-```css
-/* 竖向轨道宽度 */
-.simplebar-track.simplebar-vertical {
-  width: 6px;
-}
+    subgraph LAYER_INNER["内层"]
+        OUTER_CONTENT --> INNER_BAR["瀑布流 SimpleBar"]
+        INNER_BAR --> INNER_SCROLLABLE["内层 scrollableNode<br/>overflow: auto<br/>← 没有事件到达<br/>scrollTop = 0"]
+        INNER_SCROLLABLE --> INNER_CONTENT["瀑布流内容容器<br/>position: relative<br/>height: containerHeight"]
+        INNER_CONTENT --> CARD1["卡片 A<br/>可见"]
+        INNER_CONTENT --> CARD2["卡片 B<br/>可见"]
+        INNER_CONTENT --> DOTS["⋯\n大量卡片\n⋯"]
+        INNER_CONTENT --> SENTINEL["哨兵元素<br/>IntersectionObserver<br/>isIntersecting = false"]
+    end
 
-/* 横向轨道高度 */
-.simplebar-track.simplebar-horizontal {
-  height: 6px;
-}
-
-/* 滑块颜色与圆角 */
-.simplebar-scrollbar::before {
-  background-color: rgba(0, 0, 0, 0.18);  /* 浅灰半透明 */
-  border-radius: 3px;                       /* 圆角 */
-  left: 1px;                                /* 左右各留 1px 间距 */
-  right: 1px;
-}
-
-/* 悬停时稍微加深 */
-.simplebar-scrollbar.simplebar-hover::before {
-  background-color: rgba(0, 0, 0, 0.3);
-}
-
-/* 正在拖拽时完全不透明 */
-.simplebar-scrollbar.simplebar-dragging::before {
-  background-color: rgba(0, 0, 0, 0.45);
-}
+    style OUTER_SCROLLABLE fill:#e6f7ff,stroke:#1890ff,stroke-width:2px
+    style INNER_SCROLLABLE fill:#fff1f0,stroke:#f5222d,stroke-width:2px
+    style CARD1 fill:#f6ffed,stroke:#52c41a
+    style CARD2 fill:#f6ffed,stroke:#52c41a
+    style SENTINEL fill:#fff7e6,stroke:#fa8c16
 ```
 
-### 4.3 本项目中的实现方式（styled-components）
+---
 
-在 `MainLayout.tsx` 中，通过 styled-components 的**后代选择器**来覆盖 SimpleBar 内部类名：
+## 四、最终方案
 
-```typescript
-const SimpleBarMenuWrapper = styled.div`
-  flex: 1;
+两步修复：
+
+### 4.1 `src/index.css`
+
+```css
+html {
   overflow: hidden;
-
-  .simplebar-track {
-    &.simplebar-vertical { width: 6px; }
-    &.simplebar-horizontal { height: 6px; }
-  }
-
-  .simplebar-scrollbar::before {
-    background-color: rgba(0, 0, 0, 0.18);
-    border-radius: 3px;
-    left: 1px;
-    right: 1px;
-  }
-`;
-
-// 使用：
-<SimpleBarMenuWrapper>
-  <SimpleBar style={{ height: '100%' }}>
-    <Menu ... />
-  </SimpleBar>
-</SimpleBarMenuWrapper>
-```
-
-**为什么用外层包裹 div 而不是直接给 SimpleBar 加 className？**
-
-因为 styled-components 生成的类名加在组件最外层 DOM 上，SimpleBar 在其内部子元素上使用了 `.simplebar-scrollbar` 等类名。通过外层 div 的后代选择器 `.simplebar-scrollbar::before`，可以穿透到 SimpleBar 内部去覆盖样式。
-
----
-
-## 五、Flexbox 布局配合 —— min-height: auto 陷阱
-
-### 5.1 问题
-
-在 flex 容器中直接使用 SimpleBar 时，内容超出却不会出现滚动条：
-
-```tsx
-// ❌ 不滚动！
-<div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-  <div style={{ height: 64 }}>标题栏</div>
-  <SimpleBar style={{ flex: 1 }}>
-    {/* 内容超过剩余空间，但滚动条不出现 */}
-  </SimpleBar>
-</div>
-```
-
-### 5.2 根因
-
-Flex 子项的默认 `min-height: auto` 阻止元素被压缩到比内容更矮。浏览器计算出的 SimpleBar 实际高度 = 内容高度（比如 2000px），没有溢出，所以不显示滚动条。
-
-### 5.3 解决方案
-
-用一个外层 div **打破 `min-height: auto`**（`overflow: hidden` 会创建 BFC，使 `min-height` 从 `auto` 变为 `0`）：
-
-```tsx
-// ✅ 正常滚动
-<div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-  <div style={{ height: 64 }}>标题栏</div>
-  <div style={{ flex: 1, overflow: 'hidden' }}>    {/* 打破 min-height: auto */}
-    <SimpleBar style={{ height: '100%' }}>           {/* 继承约束后的高度 */}
-      {/* 内容 */}
-    </SimpleBar>
-  </div>
-</div>
-```
-
-### 5.4 决策树：何时需要外层 div？
-
-```
-SimpleBar 外层是 flex 容器？
-  ├── 是 → SimpleBar 是 flex 子项（flex: 1）？
-  │     ├── 是 → 必须加外层 div（flex: 1 + overflow: hidden）
-  │     └── 否 → SimpleBar 有固定 height？→ 不需要
-  └── 否 → SimpleBar 有固定 height 或 max-height？→ 不需要
-```
-
----
-
-## 六、横向滚动条
-
-### 6.1 何时出现
-
-SimpleBar 的横向滚动条会在**内容宽度超过容器宽度**时自动出现，与原生 `overflow-x: auto` 行为一致。
-
-```
-内容宽度 > 容器宽度  →  .simplebar-track.simplebar-horizontal 自动显示
-内容宽度 ≤ 容器宽度  →  自动隐藏（autoHide: true 时）
-```
-
-### 6.2 控制横向滚动条显示
-
-```typescript
-// 强制始终显示横向滚动条
-<SimpleBar forceVisible="x" style={{ ... }}>
-  <div style={{ width: 2000 }}>很宽的内容</div>
-</SimpleBar>
-
-// 强制同时显示横向和竖向
-<SimpleBar forceVisible={true} style={{ ... }}>
-  ...
-</SimpleBar>
-
-// 禁止自动隐藏（始终留出轨道空间，但滑块不显示时是透明的）
-<SimpleBar autoHide={false} style={{ ... }}>
-  ...
-</SimpleBar>
-```
-
-### 6.3 自定义横向滚动条样式
-
-```css
-/* 横向轨道高度 */
-.simplebar-track.simplebar-horizontal {
-  height: 4px;
-  bottom: 2px;          /* 底部留一点间距 */
-}
-
-/* 横向滑块（同样通过 ::before 伪元素） */
-.simplebar-track.simplebar-horizontal .simplebar-scrollbar::before {
-  background-color: rgba(0, 0, 0, 0.15);
-  border-radius: 2px;
-  top: 1px;
-  bottom: 1px;
 }
 ```
 
-### 6.4 完整横向 + 竖向示例
+**为什么**：告诉浏览器永远不要在 `body` 层产生原生滚动条。这个应用的所有滚动都由 100vh 布局内部的 SimpleBar 管理，body 层不需要、也不应该出现原生滚动条。
+
+### 4.2 `src/layout/MainLayout.tsx`
 
 ```tsx
-<SimpleBar style={{ width: 300, height: 300 }}>
-  <div style={{ width: 800, height: 1200 }}>
-    {/* 内容既宽又高 → 同时出现横向和竖向滚动条，都不占布局空间 */}
+// 之前：嵌套 SimpleBar — 破坏所有内部 SimpleBar 页面
+<SimpleBarWrapper>
+  <SimpleBar scrollableNodeProps={{ref:contentRef}} style={{ ... }}>
+    <Outlet />
+  </SimpleBar>
+</SimpleBarWrapper>
+
+// 之后：普通滚动容器 — 不拦截滚动事件
+<SimpleBarWrapper>
+  <div ref={contentRef} style={{ height: '100%', overflowY: 'auto', padding: '...' }}>
+    <Outlet />
   </div>
-</SimpleBar>
+</SimpleBarWrapper>
+```
+
+**为什么**：普通 `<div>` 的滚动行为是原生的，它不会拦截或重新绑定 wheel 事件。内层瀑布流的 SimpleBar 可以正常接收到滚动事件。
+
+### 最终布局结构
+
+```
+Layout (height: 100vh, overflow: hidden)
+├── Sider (左侧菜单, 256px)
+│   └── SimpleBarMenuWrapper
+│       └── SimpleBar → Menu
+└── Layout (flex: 1)
+    ├── Header (64px, 顶部导航)
+    ├── TabsContainer (标签页)
+    └── SimpleBarWrapper (flex: 1, overflow: hidden)
+        └── div (overflowY: auto, contentRef)    ← 非瀑布流页由它滚动
+            └── Suspense > Outlet
+                ├── 普通 MDX 页面（正常）
+                └── 瀑布流页面
+                    └── SimpleBar (onScroll)      ← 瀑布流自己管自己
 ```
 
 ---
 
-## 七、常见问题排查
+## 五、关键认知
 
-| 现象 | 原因 | 解决 |
-|------|------|------|
-| 滚动条完全看不到 | 没导入 `simplebar-react/dist/simplebar.min.css` | 加上 `import 'simplebar-react/dist/simplebar.min.css'` |
-| 内容溢出但不出现滚动条（flex 中） | `min-height: auto` 导致高度没被约束 | 外层加 `<div style={{ flex: 1, overflow: 'hidden' }}>` |
-| 滚动条出现但无法拖动 | 未正确绑定 ref 或 CSS 冲突 | 检查是否有全局样式覆盖了 `.simplebar-scrollbar` |
-| 滚动条宽度没变化 | 样式优先级不够 | 使用 `!important` 或提高选择器优先级 |
-| 热更新启动报错 | Qiankun 重复 start | 加全局标志位 `window.qiankunStarted` |
-| 侧边栏收起/展开后滚动条错位 | SimpleBar 未收到尺寸变化通知 | 调用 `simpleBarRef.current?.recalculate()` |
+1. **SimpleBar 不是普通的 `<div>`**，它有自己的内部滚动容器（`scrollableNode`），会拦截并消费 wheel/scroll 事件
 
----
+2. **SimpleBar 嵌套必然导致内层滚动失效**，因为外层的 scrollableNode 截走了所有滚动事件，内层的 scrollableNode 永远收不到
 
-## 八、最佳实践总结
+3. **`IntersectionObserver` 不传 `root` 时使用最近的可滚动祖先**，这个隐式行为在内层 SimpleBar 不滚动时会导致哨兵永远不可见
 
-1. **CSS 必须导入**：`import 'simplebar-react/dist/simplebar.min.css'`
-2. **必须有高度约束**：`height: 100%` / `max-height: 400px` / 外层 `flex: 1 + overflow: hidden`
-3. **不要加 overflow**：SimpleBar 自己管理，外层也只需 `overflow: hidden`
-4. **自定义样式通过外层 wrapper 后代表选择器**：`.simplebar-track`、`.simplebar-scrollbar::before`
-5. **横向滚动条无需额外配置**：内容宽度超出时自动出现，样式同样可自定义
-6. **onScroll 用 `scrollableNodeProps`**：这是绑定到真正滚动容器上的正确方式
-7. **用于菜单/侧边栏/modal 等有限高度区域**：这些场景最适合 SimpleBar 的悬浮滚动条
+4. **`html { overflow: hidden }` 是"单层滚动"架构的必需品**：当应用使用 100vh 固定布局 + 内部滚动容器时，必须在 html/body 层阻止原生溢出，否则路由切换时的 DOM 渲染时序会导致全局滚动条闪烁
+
+5. **选择正确的抽象层级**：
+   - 布局层：不需要 SimpleBar，普通 `overflowY: auto` 足够
+   - 内容层（需要自定义滚动条的页面）：用 SimpleBar
+   - 两者之间：用 `overflow: hidden` 隔断，互不干扰

@@ -48,12 +48,12 @@ const fetchMockData = async (page: number, pageSize: number): Promise<WaterfallI
       }
       console.log(`第${page}页`, data);
       resolve(data);
-    }, 500);
+    }, 100);
   });
 };
 
 // 池子大小：根据屏幕大小和 6 列排版，通常 80 个插槽足够覆盖 3-4 屏
-const POOL_SIZE = 80;
+const POOL_SIZE = 120;
 
 const WaterfallUltimate: React.FC = () => {
   const [dataList, setDataList] = useState<WaterfallItem[]>([]);
@@ -74,7 +74,7 @@ const WaterfallUltimate: React.FC = () => {
   const { positions, containerHeight, itemWidth, getVisibleIndices } = useProWaterfall(
     dataList,
     containerWidth,
-    6,
+    4,
     16
   );
   const simpleBarRef = useRef(null);
@@ -92,7 +92,7 @@ const WaterfallUltimate: React.FC = () => {
       scrollTop,
       // eslint-disable-next-line react-hooks/refs
       simpleBarRef.current?.el?.clientHeight ?? window.innerHeight,
-      2000
+      3000
     );
     // console.log('visibleIndices', visibleIndices);
     // 2. 将这些索引映射到固定的 POOL 中
@@ -143,7 +143,7 @@ const WaterfallUltimate: React.FC = () => {
           const rect = sentinelRef.current.getBoundingClientRect();
           const windowHeight = window.innerHeight || document.documentElement.clientHeight;
 
-          if (rect.top <= windowHeight + 200) {
+          if (rect.top <= windowHeight + 300) {
             // 通过 ref 递归调用自己，完美绕过 eslint 对直接递归的限制
             loadMoreDataRef.current();
           }

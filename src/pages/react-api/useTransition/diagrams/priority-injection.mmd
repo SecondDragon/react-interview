@@ -1,0 +1,45 @@
+flowchart TD
+    subgraph USER["用户代码"]
+        INPUT["handleChange(e)"] --> INPUT_SYNC["setInputValue(e.target.value)<br/>← 在 startTransition 外部"]
+        INPUT --> ST["startTransition(() => {<br/>  setSearchQuery(value)<br/>})"]
+    end
+
+    subgraph API["startTransition 内部"]
+        ST --> SAVE["保存旧的 transition 值"]
+        SAVE --> SET_FLAG["设置全局标志<br/>ReactCurrentBatchConfig.transition<br/>= { name: 'Pending' }"]
+        SET_FLAG --> SCOPE["执行 scope 回调"]
+        SCOPE --> DISPATCH["dispatchSetState(fiber, queue, action)"]
+        DISPATCH --> REQUEST["requestUpdateLane(fiber)"]
+    end
+
+    subgraph DECISION["requestUpdateLane 判断逻辑"]
+        REQUEST --> CHECK_MODE{"fiber.mode<br/>& ConcurrentMode ?"}
+        CHECK_MODE -->|"NO"| SYNC_RET["return SyncLane"]
+
+        CHECK_MODE -->|"YES"| CHECK_TRANS{"ReactCurrentBatchConfig<br/>.transition !== null ?"}
+
+        CHECK_TRANS -->|"YES → 在 transition scope 内"| TRANS_RET["claimNextTransitionLane()<br/>→ TransitionLane1<br/>(0b0000000000000000000000000010000)"]
+
+        CHECK_TRANS -->|"NO"| CHECK_EVENT{"currentEventLane<br/>!== NoLane ?"}
+
+        CHECK_EVENT -->|"YES → 在事件处理中"| EVENT_RET["return currentEventLane<br/>→ InputDiscreteLane<br/>(0b0000000000000000000000000000010)"]
+
+        CHECK_EVENT -->|"NO"| SYNC_RET
+    end
+
+    subgraph INPUT_SIDE["同步更新（高优先级）"]
+        INPUT_SYNC --> INPUT_REQ["requestUpdateLane()"]
+        INPUT_REQ --> INPUT_EVENT["currentEventLane = InputDiscreteLane"]
+        INPUT_EVENT --> INPUT_RESULT["InputDiscreteLane<br/>UserBlockingPriority"]
+    end
+
+    subgraph TRANS_SIDE["过渡更新（低优先级）"]
+        TRANS_RET --> UPDATE_OBJ["创建 Update 对象<br/>{ lane: TransitionLane1,<br/>  action: '数' }"]
+        UPDATE_OBJ --> ENQUEUE["enqueueUpdate()<br/>追加到 Hook 队列"]
+        ENQUEUE --> SCHEDULE["scheduleUpdateOnFiber(root,<br/>TransitionLane1)"]
+    end
+
+    style SET_FLAG fill:#fff7e6,stroke:#fa8c16,stroke-width:2px
+    style CHECK_TRANS fill:#e6f7ff,stroke:#1890ff,stroke-width:2px
+    style TRANS_RET fill:#fff1f0,stroke:#f5222d,stroke-width:2px
+    style SCHEDULE fill:#f6ffed,stroke:#52c41a,stroke-width:2px

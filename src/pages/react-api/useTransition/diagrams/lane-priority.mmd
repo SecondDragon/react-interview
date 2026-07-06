@@ -1,0 +1,27 @@
+flowchart TD
+    Update[状态更新请求] --> LaneCheck{Lane 优先级比较}
+
+    LaneCheck -->|最高优先级| InputLane[InputDiscreteLane<br/>输入事件]
+    LaneCheck -->|普通优先级| DefaultLane[DefaultLane<br/>普通 setState]
+    LaneCheck -->|低优先级| TransitionLane[TransitionLane<br/>startTransition 包裹的更新]
+
+    InputLane --> SyncRender[同步立即渲染]
+    DefaultLane --> BatchRender[批量合并渲染]
+    TransitionLane --> SliceRender[可打断的时间切片渲染]
+
+    SliceRender --> Interrupt{有高优先级任务插入?}
+
+    Interrupt -->|Yes - InputDiscreteLane| Pause[暂停当前 transition]
+    Pause --> Save[保存 workInProgress 进度]
+    Save --> HighPri[处理高优先级更新]
+    HighPri --> Discard[丢弃过期 transition]
+    Discard --> Restart[基于最新状态重新调度]
+
+    Interrupt -->|No| Continue[继续时间切片]
+    Continue --> CheckNode[每处理一个 fiber 节点]
+    CheckNode --> ShouldYield{"shouldYield()"?}
+    ShouldYield -->|Yes - 帧时间不足 5ms| Yield[让出主线程]
+    Yield --> Resume[下一帧通过 scheduleCallback 恢复]
+    Resume --> CheckNode
+    ShouldYield -->|No| NextNode[处理下一个节点]
+    NextNode --> CheckNode

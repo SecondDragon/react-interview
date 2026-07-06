@@ -1,0 +1,723 @@
+import { Alert, Card, Collapse, Divider, List, Steps, Table, Tag, Typography } from 'antd';
+import CodeDiff from '@/components/CodeDiff';
+import MermaidViewer from '@/components/MermaidViewer';
+import LiveDemo from './LiveDemo';
+import transitionFlow from './diagrams/transition-flow.mmd?raw';
+import lanePriority from './diagrams/lane-priority.mmd?raw';
+import priorityInjection from './diagrams/priority-injection.mmd?raw';
+import laneFullDataflow from './diagrams/lane-full-dataflow.mmd?raw';
+import searchBad from './demos/search.bad.tsx?raw';
+import searchGood from './demos/search.good.tsx?raw';
+import tabBad from './demos/tab.bad.tsx?raw';
+import tabGood from './demos/tab.good.tsx?raw';
+import pendingBadgeBad from './demos/pending-badge.bad.tsx?raw';
+import pendingBadgeGood from './demos/pending-badge.good.tsx?raw';
+import pendingSkeletonBad from './demos/pending-skeleton.bad.tsx?raw';
+import pendingSkeletonGood from './demos/pending-skeleton.good.tsx?raw';
+import deferredBad from './demos/deferred.bad.tsx?raw';
+import deferredGood from './demos/deferred.good.tsx?raw';
+import pitfallSyncReadBad from './demos/pitfall-sync-read.bad.tsx?raw';
+import pitfallSyncReadGood from './demos/pitfall-sync-read.good.tsx?raw';
+import timeSlicingBad from './demos/time-slicing.bad.tsx?raw';
+import timeSlicingGood from './demos/time-slicing.good.tsx?raw';
+import principleVisualCode from './demos/principle-visual.tsx?raw';
+import {
+  UseTransitionMeta,
+  overviewFeatures,
+  basicTransitionScenarios,
+  basicTransitionProsCons,
+  pendingStateScenarios,
+  pendingStateProsCons,
+  comparisonColumns,
+  comparisonDataSource,
+  principleTimelineSteps,
+  principleStepMapping,
+  timeSlicingSteps,
+  interviewQuestions,
+} from './data';
+
+# useTransition — React 18 并发特性核心 Hook
+
+<Typography.Paragraph type="secondary">
+  {UseTransitionMeta.description}
+</Typography.Paragraph>
+
+---
+
+## API 总览
+
+<Card title="API 总览" style={{ marginBottom: '24px' }}>
+  <Typography.Paragraph>
+    <Typography.Text strong>定义：</Typography.Text>
+    useTransition 返回一个数组 [isPending, startTransition]。在 startTransition 回调中触发的状态更新会被标记为"过渡更新"，React 会在处理完紧急更新后再执行它，并且允许被打断和重启。
+  </Typography.Paragraph>
+
+  <List
+    dataSource={overviewFeatures}
+    renderItem={(feature) => (
+      <List.Item>
+        <Typography.Text code>{feature.name}</Typography.Text>
+        <Typography.Text type="secondary"> — {feature.desc}</Typography.Text>
+      </List.Item>
+    )}
+  />
+
+  <Alert
+    message="学习路径"
+    description="建议按顺序阅读：基础用法 → isPending 反馈 → useDeferredValue 对比 → 错误用法 → 实现原理。每个章节都包含可交互的 Live Demo。"
+    type="info"
+    showIcon
+    style={{ marginTop: '16px' }}
+  />
+</Card>
+
+---
+
+## 章节一：基础用法 <Tag color="blue">startTransition</Tag>
+
+<Card title="一、用法意图" style={{ marginBottom: '16px' }}>
+  <Typography.Paragraph>
+    当某个状态更新会导致大量重渲染、阻塞用户输入或动画时，可以把它放进 startTransition，让 React 先保证高优先级交互的流畅。
+  </Typography.Paragraph>
+  <Alert
+    message="核心原则"
+    description="受控输入等需要即时反馈的状态必须同步更新；只有依赖输入结果的过滤、搜索、视图切换才适合放入 transition。"
+    type="info"
+    showIcon
+  />
+</Card>
+
+<Card title="二、底层原理" style={{ marginBottom: '16px' }}>
+  <Typography.Paragraph style={{ whiteSpace: 'pre-wrap' }}>
+    React 18 的并发渲染允许更新拥有优先级。startTransition 会把内部的 setState 标记为 TransitionLane，优先级低于输入事件（InputDiscreteLane）和动画帧。因此即使用户继续输入，React 也会先完成输入响应，再抽空渲染 transition。
+  </Typography.Paragraph>
+
+  <Card title="Lane 优先级模型" type="inner" style={{ marginTop: '16px' }}>
+    <MermaidViewer source={lanePriority} />
+  </Card>
+</Card>
+
+<Card title="三、案例演示" style={{ marginBottom: '16px' }}>
+  <Collapse defaultActiveKey={['1', '2']}>
+    <Collapse.Panel
+      header={
+        <span>
+          <Tag color="purple" style={{ marginRight: 8 }}>案例 1</Tag>
+          搜索框过滤
+        </span>
+      }
+      key="1"
+    >
+      <Typography.Paragraph>
+        在搜索框输入时，如果下方列表数据量很大，同步更新 <Typography.Text code>searchQuery</Typography.Text> 会导致输入卡顿。把过滤逻辑放入 transition 后，输入框的响应会优先保证。
+      </Typography.Paragraph>
+      <CodeDiff
+        oldValue={searchBad}
+        newValue={searchGood}
+        leftTitle="❌ 同步更新"
+        rightTitle="✅ startTransition"
+        type="error"
+        hideDiffMarkers={true}
+        language="tsx"
+      />
+      <Card title={<span>互动演示 <Tag color="blue">Live Demo</Tag></span>} style={{ marginTop: '16px' }}>
+        <LiveDemo type="search" />
+      </Card>
+    </Collapse.Panel>
+
+    <Collapse.Panel
+      header={
+        <span>
+          <Tag color="purple" style={{ marginRight: 8 }}>案例 2</Tag>
+          Tab 切换
+        </span>
+      }
+      key="2"
+    >
+      <Typography.Paragraph>
+        点击 Tab 时，Tab 高亮应该立即反馈给用户，但复杂内容的渲染可以延迟。用 transition 把两者解耦，切换体验会更顺滑。
+      </Typography.Paragraph>
+      <CodeDiff
+        oldValue={tabBad}
+        newValue={tabGood}
+        leftTitle="❌ 同步切换"
+        rightTitle="✅ 高亮同步 + 内容 transition"
+        type="error"
+        hideDiffMarkers={true}
+        language="tsx"
+      />
+      <Card title={<span>互动演示 <Tag color="blue">Live Demo</Tag></span>} style={{ marginTop: '16px' }}>
+        <LiveDemo type="tab" />
+      </Card>
+    </Collapse.Panel>
+  </Collapse>
+</Card>
+
+<Card title="四、适用场景与权衡" style={{ marginBottom: '16px' }}>
+  <Divider titlePlacement="start">适合使用</Divider>
+  <List
+    dataSource={basicTransitionScenarios.suitable}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color="green">✓</Tag> {item}
+      </List.Item>
+    )}
+  />
+  <Divider titlePlacement="start">不适合使用</Divider>
+  <List
+    dataSource={basicTransitionScenarios.unsuitable}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color="red">✗</Tag> {item}
+      </List.Item>
+    )}
+  />
+  <Divider titlePlacement="start">优缺点</Divider>
+  <List
+    dataSource={basicTransitionProsCons}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color={item.type === 'pro' ? 'green' : 'red'}>
+          {item.type === 'pro' ? '优点' : '缺点'}
+        </Tag>{' '}
+        {item.text}
+      </List.Item>
+    )}
+  />
+</Card>
+
+---
+
+## 章节二：isPending 状态反馈 <Tag color="green">isPending</Tag>
+
+<Card title="一、用法意图" style={{ marginBottom: '16px' }}>
+  <Typography.Paragraph>
+    isPending 告诉开发者当前是否有过渡更新正在进行。利用它可以在等待渲染完成时展示 loading、骨架屏或禁用按钮，避免用户焦虑。
+  </Typography.Paragraph>
+</Card>
+
+<Card title="二、底层原理" style={{ marginBottom: '16px' }}>
+  <Typography.Paragraph style={{ whiteSpace: 'pre-wrap' }}>
+    startTransition 会返回一个布尔值 isPending。当 transition 开始时被置为 true，transition 渲染完成并提交后被置为 false。它和普通 loading 状态的区别在于：它由 React 并发调度自动管理，不需要手动 setLoading(true)/setLoading(false)。
+  </Typography.Paragraph>
+</Card>
+
+<Card title="三、案例演示" style={{ marginBottom: '16px' }}>
+  <Collapse defaultActiveKey={['1', '2']}>
+    <Collapse.Panel
+      header={
+        <span>
+          <Tag color="purple" style={{ marginRight: 8 }}>案例 1</Tag>
+          Pending 徽标
+        </span>
+      }
+      key="1"
+    >
+      <Typography.Paragraph>
+        用户点击按钮触发复杂计算时，如果没有反馈会怀疑是否点击成功。用 <Typography.Text code>isPending</Typography.Text> 可以自动展示"处理中"状态。
+      </Typography.Paragraph>
+      <CodeDiff
+        oldValue={pendingBadgeBad}
+        newValue={pendingBadgeGood}
+        leftTitle="❌ 无反馈"
+        rightTitle="✅ isPending 徽标"
+        type="error"
+        hideDiffMarkers={true}
+        language="tsx"
+      />
+      <Card title={<span>互动演示 <Tag color="blue">Live Demo</Tag></span>} style={{ marginTop: '16px' }}>
+        <LiveDemo type="pending-badge" />
+      </Card>
+    </Collapse.Panel>
+
+    <Collapse.Panel
+      header={
+        <span>
+          <Tag color="purple" style={{ marginRight: 8 }}>案例 2</Tag>
+          骨架屏
+        </span>
+      }
+      key="2"
+    >
+      <Typography.Paragraph>
+        切换复杂视图时，与其白屏等待，不如在 <Typography.Text code>isPending</Typography.Text> 期间展示骨架屏，提升用户感知性能。
+      </Typography.Paragraph>
+      <CodeDiff
+        oldValue={pendingSkeletonBad}
+        newValue={pendingSkeletonGood}
+        leftTitle="❌ 白屏等待"
+        rightTitle="✅ 骨架屏过渡"
+        type="error"
+        hideDiffMarkers={true}
+        language="tsx"
+      />
+      <Card title={<span>互动演示 <Tag color="blue">Live Demo</Tag></span>} style={{ marginTop: '16px' }}>
+        <LiveDemo type="pending-skeleton" />
+      </Card>
+    </Collapse.Panel>
+  </Collapse>
+</Card>
+
+<Card title="四、适用场景与权衡" style={{ marginBottom: '16px' }}>
+  <Divider titlePlacement="start">适合使用</Divider>
+  <List
+    dataSource={pendingStateScenarios.suitable}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color="green">✓</Tag> {item}
+      </List.Item>
+    )}
+  />
+  <Divider titlePlacement="start">不适合使用</Divider>
+  <List
+    dataSource={pendingStateScenarios.unsuitable}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color="red">✗</Tag> {item}
+      </List.Item>
+    )}
+  />
+  <Divider titlePlacement="start">优缺点</Divider>
+  <List
+    dataSource={pendingStateProsCons}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color={item.type === 'pro' ? 'green' : 'red'}>
+          {item.type === 'pro' ? '优点' : '缺点'}
+        </Tag>{' '}
+        {item.text}
+      </List.Item>
+    )}
+  />
+</Card>
+
+---
+
+## 章节三：与 useDeferredValue 对比与组合 <Tag color="purple">useDeferredValue</Tag>
+
+<Card title="一、用法意图" style={{ marginBottom: '16px' }}>
+  <Typography.Paragraph>
+    useDeferredValue 和 useTransition 都用于把更新变得"可延迟"，但使用场景不同。前者适合"值"的延迟，后者适合"事件处理函数中的状态更新"。
+  </Typography.Paragraph>
+</Card>
+
+<Card title="二、底层原理" style={{ marginBottom: '16px' }}>
+  <Typography.Paragraph style={{ whiteSpace: 'pre-wrap' }}>
+    useDeferredValue(value) 会返回一个延迟版本的 value。当 value 变化时，React 会先用旧值保持界面响应，再用新值在后台渲染。它内部也是通过 transition 实现的，因此享有同样的优先级调度能力。
+  </Typography.Paragraph>
+</Card>
+
+<Card title="三、对比表格" style={{ marginBottom: '16px' }}>
+  <Table
+    dataSource={comparisonDataSource}
+    columns={comparisonColumns}
+    pagination={false}
+    bordered
+    size="small"
+  />
+</Card>
+
+<Card title="四、组合用法" style={{ marginBottom: '16px' }}>
+  <Alert
+    message="组合思路"
+    description={'组合用法：父组件用 useTransition 控制\u201C何时提交搜索词\u201D，子组件用 useDeferredValue 延迟渲染列表。这样输入框始终保持即时响应，列表在后台平滑更新。'}
+    type="info"
+    showIcon
+  />
+</Card>
+
+<Card title="五、代码对比" style={{ marginBottom: '16px' }}>
+  <Typography.Paragraph>
+    下面展示同一个搜索场景：左侧直接用 input 值驱动列表渲染，右侧用 <Typography.Text code>useDeferredValue</Typography.Text> 延迟驱动列表渲染。
+  </Typography.Paragraph>
+  <CodeDiff
+    oldValue={deferredBad}
+    newValue={deferredGood}
+    leftTitle="❌ 直接驱动"
+    rightTitle="✅ useDeferredValue"
+    type="error"
+    hideDiffMarkers={true}
+    language="tsx"
+  />
+</Card>
+
+<Card
+  title={<span>六、互动演示 <Tag color="blue">Live Demo</Tag></span>}
+  style={{ marginBottom: '16px' }}
+>
+  <LiveDemo type="deferred" />
+</Card>
+
+<Card title="七、面试速记" style={{ background: '#f0f5ff', marginBottom: '16px' }}>
+  <List
+    dataSource={[
+      'useTransition 控制"何时更新"，useDeferredValue 控制"哪个值被消费"。',
+      '两者内部都走 TransitionLane，优先级低于输入事件。',
+      '事件回调里优先用 useTransition；从 props 派生延迟值时优先用 useDeferredValue。',
+    ]}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color="blue">Tip</Tag> {item}
+      </List.Item>
+    )}
+  />
+</Card>
+
+---
+
+## 章节四：错误用法与边界 <Tag color="red">避坑指南</Tag>
+
+<Card title="一、用法意图" style={{ marginBottom: '16px' }}>
+  <Typography.Paragraph>
+    transition 不是万能药。错误地包裹某些更新会导致状态不一致、输入不跟手或 DOM 读取错误。
+  </Typography.Paragraph>
+</Card>
+
+<Card title="二、常见踩坑" style={{ marginBottom: '16px' }}>
+  <List
+    dataSource={[
+      {
+        title: '在 transition 中同步读取 DOM',
+        bad: '调用 startTransition 后立刻 getBoundingClientRect，读到的是旧布局。',
+        good: '在 useEffect 中读取，或等 transition 完成后再读取。',
+      },
+      {
+        title: '把受控输入状态放进 transition',
+        bad: '在 onChange 里用 startTransition 设置 input value，导致输入延迟。',
+        good: '输入状态同步更新；只有依赖输入结果的过滤/搜索才放进 transition。',
+      },
+      {
+        title: '在 transition 中执行同步副作用',
+        bad: '在 startTransition 里直接操作 DOM 或调用 alert。',
+        good: '副作用放在 useEffect 或事件回调中同步执行。',
+      },
+    ]}
+    renderItem={(item) => (
+      <List.Item>
+        <div style={{ width: '100%' }}>
+          <Typography.Text strong>{item.title}</Typography.Text>
+          <div style={{ color: '#ff4d4f' }}>❌ {item.bad}</div>
+          <div style={{ color: '#52c41a' }}>✅ {item.good}</div>
+        </div>
+      </List.Item>
+    )}
+  />
+</Card>
+
+<Card title="三、代码对比：同步读取 DOM" style={{ marginBottom: '16px' }}>
+  <Typography.Paragraph>
+    在 transition 中调用 <Typography.Text code>setExpanded</Typography.Text> 后立刻读取 DOM，拿到的是旧高度；正确做法是在 <Typography.Text code>useEffect</Typography.Text> 中读取，等 React 提交新布局后再获取。
+  </Typography.Paragraph>
+  <CodeDiff
+    oldValue={pitfallSyncReadBad}
+    newValue={pitfallSyncReadGood}
+    leftTitle="❌ transition 内同步读取"
+    rightTitle="✅ useEffect 中读取"
+    type="error"
+    hideDiffMarkers={true}
+    language="tsx"
+  />
+</Card>
+
+<Card
+  title={<span>四、互动演示 <Tag color="blue">Live Demo</Tag></span>}
+  style={{ marginBottom: '16px' }}
+>
+  <LiveDemo type="pitfall-sync-read" />
+</Card>
+
+<Card title="五、边界总结" style={{ background: '#fff2f0', marginBottom: '16px' }}>
+  <Alert
+    message="不要放进 transition 的三种更新"
+    description={
+      <ul>
+        <li>需要即时反馈的受控输入状态</li>
+        <li>更新后需要立刻读取 DOM 的场景</li>
+        <li>需要同步执行的副作用（如 alert、DOM 操作）</li>
+      </ul>
+    }
+    type="warning"
+    showIcon
+  />
+</Card>
+
+---
+
+## 章节五：实现原理 <Tag color="gold">并发渲染</Tag>
+
+<Card title="一、原理总览" style={{ marginBottom: '16px' }}>
+  <Typography.Paragraph>
+    要理解 useTransition，必须先理解 React 18 的并发渲染模型。它由三个核心概念支撑：并发更新、时间切片和 Lane 优先级模型。
+  </Typography.Paragraph>
+</Card>
+
+<Card title="二、核心概念" style={{ marginBottom: '16px' }}>
+  <List
+    dataSource={[
+      {
+        title: '并发更新（Concurrent Updates）',
+        content:
+          'React 18 之前，一次渲染一旦开始就必须完成，无法中断。React 18 引入了并发渲染，允许 React 在执行低优先级更新时，暂停当前工作去处理更高优先级的更新，然后恢复或丢弃之前的工作。',
+      },
+      {
+        title: '时间切片（Time Slicing）',
+        content:
+          'React 把一次长渲染拆分成多个小任务（通常约 5ms），每个切片执行完后会检查是否有更高优先级任务。如果有，就暂停当前工作；如果没有，就继续下一个切片。这样主线程不会被长时间占用。',
+      },
+      {
+        title: 'Lane 模型',
+        content:
+          'React 用 Lane（二进制位）表示更新的优先级。InputDiscreteLane（输入事件）优先级高于 TransitionLane。startTransition 会把更新标记到 TransitionLane，因此输入事件可以插队，旧的 transition 会被丢弃并基于最新状态重新调度。',
+      },
+    ]}
+    renderItem={(item) => (
+      <List.Item>
+        <div style={{ width: '100%' }}>
+          <Typography.Text strong>{item.title}</Typography.Text>
+          <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
+            {item.content}
+          </Typography.Paragraph>
+        </div>
+      </List.Item>
+    )}
+  />
+</Card>
+
+<Card title="三、startTransition 的优先级注入机制" style={{ marginBottom: '16px' }}>
+  <Typography.Paragraph>
+    要理解 <Typography.Text code>startTransition</Typography.Text> 如何让 <Typography.Text code>HeavyList</Typography.Text> 变"低优先级"，需要追踪一条从 API 到底层 Lane 再到 Scheduler 调度器的完整链路。
+  </Typography.Paragraph>
+
+  <Typography.Title level={5}>第一步：设置上下文标志</Typography.Title>
+  <Typography.Paragraph>
+    当用户代码调用 <Typography.Text code>startTransition(() =&gt; setSearchQuery("数"))</Typography.Text> 时，React 不会立刻分析 <Typography.Text code>setSearchQuery</Typography.Text> 的优先级，而是先做一个动作：<Typography.Text strong>设置一个全局上下文变量</Typography.Text>。
+  </Typography.Paragraph>
+  <pre style={{ fontSize: 13, fontFamily: 'monospace', lineHeight: 1.8, padding: '12px 16px', background: '#f6f8fa', borderRadius: 4, overflow: 'auto' }}>
+{`function startTransition(scope) {
+  const prevTransition = ReactCurrentBatchConfig.transition;
+  ReactCurrentBatchConfig.transition = { name: 'Pending' };
+  try {
+    scope();  // 执行你的回调
+  } finally {
+    ReactCurrentBatchConfig.transition = prevTransition;
+  }
+}`}
+  </pre>
+  <Typography.Paragraph>
+    <Typography.Text code>ReactCurrentBatchConfig.transition</Typography.Text> 是一个模块级全局变量。不处于 transition 时为 <Typography.Text code>null</Typography.Text>，处于 transition 中时为 <Typography.Text code>{`{ name: 'Pending' }`}</Typography.Text>。<Typography.Text strong>所有 setState 的底层函数在申请优先级时都会检查这个变量。</Typography.Text>
+  </Typography.Paragraph>
+
+  <Typography.Title level={5}>第二步：requestUpdateLane 的分叉逻辑</Typography.Title>
+  <Typography.Paragraph>
+    <Typography.Text code>setSearchQuery("数")</Typography.Text> 最终会调用 <Typography.Text code>dispatchSetState</Typography.Text>，其核心是 <Typography.Text code>requestUpdateLane(fiber)</Typography.Text>：
+  </Typography.Paragraph>
+  <pre style={{ fontSize: 13, fontFamily: 'monospace', lineHeight: 1.8, padding: '12px 16px', background: '#f6f8fa', borderRadius: 4, overflow: 'auto' }}>
+{`function requestUpdateLane(fiber) {
+  if (!(fiber.mode & ConcurrentMode)) return SyncLane;
+
+  // ★★★ 核心判断 ★★★
+  const transition = ReactCurrentBatchConfig.transition;
+  if (transition !== null) {
+    return claimNextTransitionLane();  // → TransitionLane
+  }
+
+  const currentEventLane = currentEventLane;
+  if (currentEventLane !== NoLane) {
+    return currentEventLane;  // → InputDiscreteLane
+  }
+
+  return SyncLane;
+}`}
+  </pre>
+  <Alert
+    type="info"
+    message="同一个事件回调中两个 setState 获得不同优先级"
+    description="startTransition 外部的 setInputValue 不在 scope 内部，requestUpdateLane 读到的是 currentEventLane（来自 React 事件系统注入的 InputDiscreteLane）。而 scope 内的 setSearchQuery 读到的是被设为 { name: 'Pending' } 的 ReactCurrentBatchConfig.transition → TransitionLane。"
+    showIcon
+    style={{ marginBottom: 16 }}
+  />
+
+  <MermaidViewer source={priorityInjection} />
+
+  <Typography.Title level={5}>第三步：TransitionLane → Scheduler 优先级的映射</Typography.Title>
+  <Typography.Paragraph>
+    <Typography.Text code>scheduleUpdateOnFiber(root, TransitionLane)</Typography.Text> 需要把 Lane 转成 Scheduler 包认识的优先级数字：
+  </Typography.Paragraph>
+  <pre style={{ fontSize: 13, fontFamily: 'monospace', lineHeight: 1.8, padding: '12px 16px', background: '#f6f8fa', borderRadius: 4, overflow: 'auto' }}>
+{`function lanesToSchedulerPriority(lanes) {
+  if (includesSyncLane(lanes))
+    return ImmediatePriority;         // 同步，立刻执行
+  if (includesInputDiscreteLanes(lanes))
+    return UserBlockingPriority;      // 250ms 超时
+  if (includesTransitionLanes(lanes))
+    return NormalPriority;            // ★ 5000ms 超时
+  return IdlePriority;
+}`}
+  </pre>
+  <Typography.Paragraph>
+    这里的"低优先级"的含义就是：这个任务被放在 Scheduler 任务队列的 <Typography.Text code>NormalPriority</Typography.Text> 位置，前面还有 <Typography.Text code>ImmediatePriority</Typography.Text>（同步）和 <Typography.Text code>UserBlockingPriority</Typography.Text>（250ms）的任务等着。只有当主线程空闲、没有更高优先级的任务时，才会轮到它执行。
+  </Typography.Paragraph>
+
+  <Typography.Title level={5}>第四步：renderLanes 透传时的 Update 过滤</Typography.Title>
+  <Typography.Paragraph>
+    当 Scheduler 决定执行 <Typography.Text code>performConcurrentWorkOnRoot</Typography.Text> 后，React 计算出本轮要处理的 <Typography.Text code>renderLanes</Typography.Text>，然后在 <Typography.Text code>processUpdateQueue</Typography.Text> 中做位运算匹配：
+  </Typography.Paragraph>
+  <pre style={{ fontSize: 13, fontFamily: 'monospace', lineHeight: 1.8, padding: '12px 16px', background: '#f6f8fa', borderRadius: 4, overflow: 'auto' }}>
+{`function processUpdateQueue(fiber, queue, renderLanes) {
+  let update = queue.firstUpdate;
+  while (update !== null) {
+    // ★★★ 只处理与 renderLanes 匹配的 update ★★★
+    if (isSubsetOfLanes(update.lane, renderLanes)) {
+      newState = computeUpdate(newState, update.action);
+    }
+    // 不匹配的 update 跳过，留到下一轮
+    update = update.next;
+  }
+  return newState;
+}`}
+  </pre>
+
+  <Typography.Title level={5}>第五步：输入事件插队时丢弃旧工作</Typography.Title>
+  <Typography.Paragraph>
+    当渲染过程中有新输入事件触发时，<Typography.Text code>scheduleUpdateOnFiber(root, SyncLane)</Typography.Text> 被调用。<Typography.Text code>ensureRootIsScheduled()</Typography.Text> 检测到 root 有 SyncLane 待处理，立即中断当前 transition 渲染：
+  </Typography.Paragraph>
+  <pre style={{ fontSize: 13, fontFamily: 'monospace', lineHeight: 1.8, padding: '12px 16px', background: '#f6f8fa', borderRadius: 4, overflow: 'auto' }}>
+{`function prepareFreshStack(root) {
+  rootFiber = root.current;
+  workInProgress = createWorkInProgress(rootFiber, null);
+  // ↑ workInProgress 被全新创建
+  // 旧的 workInProgress 不再被引用 → GC 回收
+}`}
+  </pre>
+  <Typography.Paragraph>
+    这就是"丢弃旧工作"的源码级含义——旧的 WIP 树（基于 <Typography.Text code>searchQuery = "数"</Typography.Text>）变成孤儿被 GC 回收。同步渲染完成后，新的 TransitionLane 任务被重新调度，这一次 <Typography.Text code>HeavyList({`{ query: "数据" }`})</Typography.Text> 基于最新的搜索词运行。
+  </Typography.Paragraph>
+
+  <MermaidViewer source={laneFullDataflow} />
+</Card>
+
+<Card title="四、完整调度流程" style={{ marginBottom: '16px' }}>
+  <Typography.Paragraph>
+    当用户触发带 transition 的更新后，React 内部经历以下流程：
+  </Typography.Paragraph>
+  <MermaidViewer source={transitionFlow} />
+</Card>
+
+<Card title="五、时间切片：任务如何被切分" style={{ marginBottom: '16px' }}>
+  <Typography.Paragraph>
+    很多人误以为 React 会先把一棵组件树"切成几大块"，然后一块一块执行。实际上，React 的切分粒度是<strong>单个节点</strong>，切分时机由 <Typography.Text code>scheduler</Typography.Text> 包的 <Typography.Text code>shouldYield()</Typography.Text> 决定。
+  </Typography.Paragraph>
+  <List
+    dataSource={timeSlicingSteps}
+    renderItem={(item) => (
+      <List.Item>
+        <div style={{ width: '100%' }}>
+          <Typography.Text strong>{item.title}</Typography.Text>
+          <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
+            {item.desc}
+          </Typography.Paragraph>
+        </div>
+      </List.Item>
+    )}
+  />
+</Card>
+
+<Card title="六、调度时间线" style={{ marginBottom: '16px' }}>
+  <Steps
+    direction="vertical"
+    current={-1}
+    items={principleTimelineSteps}
+  />
+</Card>
+
+<Card
+  title={<span>七、互动演示：时间线模拟 <Tag color="blue">Live Demo</Tag></span>}
+  style={{ marginBottom: '16px' }}
+>
+  <Alert
+    message="如何理解这个动画"
+    description={
+      <ul>
+        <li>蓝色条代表 TransitionLane 的渲染进程。</li>
+        <li>橙色条代表 InputDiscreteLane（输入事件）插队。</li>
+        <li>当橙色条出现时，蓝色条会变淡（暂停/保存进度）。</li>
+        <li>橙色条处理完后，蓝色条会从头开始（丢弃旧工作，基于最新状态重新渲染）。</li>
+      </ul>
+    }
+    type="info"
+    showIcon
+    style={{ marginBottom: '16px' }}
+  />
+  <LiveDemo type="principle-visual" />
+</Card>
+
+<Card title="八、时间切片互动演示" style={{ marginBottom: '16px' }}>
+  <Typography.Paragraph>
+    下面这个动画把 60 个"组件节点"渲染任务分成多片。蓝色表示当前切片连续执行，绿色表示该切片执行后调用 <Typography.Text code>shouldYield()</Typography.Text> 让出主线程。你可以边播放边在输入框里打字，感受主线程被释放的过程。
+  </Typography.Paragraph>
+  <LiveDemo type="time-slicing" />
+</Card>
+
+<Card title="九、代码对比：同步长任务 vs 时间切片" style={{ marginBottom: '16px' }}>
+  <Typography.Paragraph>
+    左侧一次性处理所有节点，阻塞主线程；右侧每处理一个节点就检查 <Typography.Text code>shouldYield()</Typography.Text>，适时让出主线程。React 内部正是用类似右侧的逻辑实现时间切片。
+  </Typography.Paragraph>
+  <CodeDiff
+    oldValue={timeSlicingBad}
+    newValue={timeSlicingGood}
+    leftTitle="❌ 同步长任务"
+    rightTitle="✅ 手动模拟时间切片"
+    type="error"
+    hideDiffMarkers={true}
+    language="tsx"
+  />
+</Card>
+
+<Card title="十、源码参考" style={{ marginBottom: '16px' }}>
+  <Typography.Paragraph>
+    下面是原理可视化组件的实现源码，展示了如何用 React 状态模拟时间切片和 Lane 插队过程。
+  </Typography.Paragraph>
+  <CodeDiff
+    oldValue={principleVisualCode}
+    newValue={principleVisualCode}
+    title="原理可视化组件源码"
+    type="info"
+    language="tsx"
+  />
+</Card>
+
+<Card title="十一、每一步对应 React 的什么操作" style={{ background: '#f0f5ff', marginBottom: '16px' }}>
+  <List
+    dataSource={principleStepMapping}
+    renderItem={(item) => (
+      <List.Item>
+        <Typography.Text strong>{item.step}</Typography.Text>
+        <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
+          {item.action}
+        </Typography.Paragraph>
+      </List.Item>
+    )}
+  />
+</Card>
+
+---
+
+## 面试高频考点
+
+<Card style={{ background: '#f0f5ff' }}>
+  <List
+    dataSource={interviewQuestions}
+    renderItem={(item, index) => (
+      <List.Item>
+        <div style={{ width: '100%' }}>
+          <Typography.Text strong>
+            <Tag color="blue">Q{index + 1}</Tag> {item.q}
+          </Typography.Text>
+          <Typography.Paragraph type="secondary" style={{ marginBottom: 0, marginTop: 8 }}>
+            {item.a}
+          </Typography.Paragraph>
+        </div>
+      </List.Item>
+    )}
+  />
+</Card>

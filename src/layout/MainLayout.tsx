@@ -15,6 +15,7 @@ import { useOpenKeysByPath } from '../hooks/hooks.ts';
 import styled from 'styled-components';
 import SimpleBar from 'simplebar-react';
 import 'simplebar-react/dist/simplebar.min.css';
+import IdlePrefetch from '../components/IdlePrefetch';
 registerMicroApps([
   {
     name: 'vue-app',
@@ -123,6 +124,8 @@ const MainLayout: React.FC = () => {
   console.log('openKeys', openKeys);
 
   return (
+    <>
+    <IdlePrefetch routes={dashboardRoutes} />
     <Layout style={{ height: '100vh', minWidth: '1480px', overflow: 'hidden' }}>
       <Sider
         width={256}
@@ -259,6 +262,7 @@ const MainLayout: React.FC = () => {
       </Layout>
       {/*<DraggablePhoneBar />*/}
     </Layout>
+    </>
   );
 };
 

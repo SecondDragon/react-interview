@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>虚拟滚动表格 - 术语速查手册</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Noto Sans SC', 'PingFang SC', -apple-system, sans-serif;
+    background: #f8f9fa;
+    color: #1a1a2e;
+    line-height: 1.6;
+    padding: 40px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  @media print {
+    body { padding: 20px; background: #fff; }
+    .card { break-inside: avoid; border-color: #ccc; }
+  }
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; color: #16213e; }
+  .subtitle { font-size: 14px; color: #6c757d; margin-bottom: 32px; }
+  h2 {
+    font-size: 18px; font-weight: 700; margin-bottom: 16px; margin-top: 32px;
+    padding-bottom: 8px; border-bottom: 2px solid #0d6efd;
+    color: #0d6efd;
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .card {
+    background: #fff; border-radius: 10px; padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08); border: 1px solid #e9ecef;
+  }
+  .card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .card .term { color: #0d6efd; }
+  .card .desc { font-size: 13px; color: #495057; margin-bottom: 8px; }
+  .card code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; background: #e9ecef; padding: 2px 6px;
+    border-radius: 4px; color: #d63384;
+  }
+  .card .type-tag {
+    display: inline-block; font-size: 11px; padding: 1px 8px;
+    border-radius: 10px; font-weight: 600; margin-bottom: 6px;
+  }
+  .tag-api { background: #cfe2ff; color: #0a58ca; }
+  .tag-concept { background: #fff3cd; color: #856404; }
+  .tag-css { background: #d1e7dd; color: #0f5132; }
+  .tag-bug { background: #f8d7da; color: #842029; }
+  .section-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d; margin-top: 24px; margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
+  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #e9ecef; }
+  th { background: #f8f9fa; font-weight: 600; color: #495057; }
+  code { font-family: 'JetBrains Mono', monospace; }
+  .warning { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px 16px; font-size: 13px; margin: 12px 0; }
+  .footer { text-align: center; font-size: 12px; color: #adb5bd; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e9ecef; }
+</style>
+</head>
+<body>
+
+<h1>虚拟滚动表格 — 术语速查手册</h1>
+<p class="subtitle">基于 TanStack Table + TanStack Virtual 的技术参考 · 2026-07</p>
+
+<h2>库 API</h2>
+
+<div class="grid">
+
+<div class="card">
+  <span class="type-tag tag-api">TanStack Table</span>
+  <h3><span class="term">useReactTable()</span></h3>
+  <div class="desc">核心 Hook，接收 data + columns + 状态，返回 table 实例</div>
+  <code>{ data, columns, state, getCoreRowModel }</code>
+</div>
+
+<div class="card">
+  <span class="type-tag tag-api">TanStack Table</span>
+  <h3><span class="term">table.getRowModel()</span></h3>
+  <div class="desc">返回 { rows: Row[] }，包含所有数据行的完整模型</div>
+  <code>→ { rows: [{ id, getVisibleCells, getIsSelected }] }</code>
+</div>
+
+<div class="card">
+  <span class="type-tag tag-api">TanStack Table</span>
+  <h3><span class="term">table.getHeaderGroups()</span></h3>
+  <div class="desc">返回表头分组，每组包含 headers 数组</div>
+  <code>→ [{ id, headers: [{ id, getSize, column }] }]</code>
+</div>
+
+<div class="card">
+  <span class="type-tag tag-api">TanStack Table</span>
+  <h3><span class="term">table.getTotalSize()</span></h3>
+  <div class="desc">所有列的宽度之和（用于设置 table 宽度）</div>
+  <code>→ number</code>
+</div>
+
+<div class="card">
+  <span class="type-tag tag-api">TanStack Table</span>
+  <h3><span class="term">flexRender()</span></h3>
+  <div class="desc">通用渲染器：如果传函数则调用，否则直接渲染</div>
+  <code>flexRender(header, ctx) → ReactNode</code>
+</div>
+
+<div class="card">
+  <span class="type-tag tag-api">TanStack Table</span>
+  <h3><span class="term">ColumnDef</span></h3>
+  <div class="desc">列定义类型：id, accessorKey, header, cell, size</div>
+  <code>{ id, accessorKey, size, header?, cell? }</code>
+</div>
+
+<div class="card">
+  <span class="type-tag tag-api">TanStack Virtual</span>
+  <h3><span class="term">useVirtualizer()</span></h3>
+  <div class="desc">核心 Hook，计算哪些行应在视口内渲染</div>
+  <code>{ count, getScrollElement, estimateSize, overscan }</code>
+</div>
+
+<div class="card">
+  <span class="type-tag tag-api">TanStack Virtual</span>
+  <h3><span class="term">getVirtualItems()</span></h3>
+  <div class="desc">返回当前应渲染的虚拟行数组</div>
+  <code>→ [{ key, index, start, end, size }]</code>
+</div>
+
+<div class="card">
+  <span class="type-tag tag-api">TanStack Virtual</span>
+  <h3><span class="term">getTotalSize()</span></h3>
+  <div class="desc">总内容高度 = count × estimateSize（撑滚动条用）</div>
+  <code>→ number</code>
+</div>
+
+<div class="card">
+  <span class="type-tag tag-api">TanStack Virtual</span>
+  <h3><span class="term">estimateSize</span></h3>
+  <div class="desc">预估行高函数 <code>(index) → number</code>，非实际高度</div>
+  <code>(index: number) => number</code>
+</div>
+
+<div class="card">
+  <span class="type-tag tag-api">TanStack Virtual</span>
+  <h3><span class="term">overscan</span></h3>
+  <div class="desc">视口外额外渲染的像素数（缓冲区，防白屏）</div>
+  <code>number（像素，非行数）</code>
+</div>
+
+</div>
+
+<h2>CSS 关键概念</h2>
+
+<div class="grid">
+
+<div class="card">
+  <span class="type-tag tag-css">CSS</span>
+  <h3><span class="term">position: sticky</span></h3>
+  <div class="desc">元素在滚动容器内固定在指定位置。定位父级是最近的 overflow ≠ visible 的容器</div>
+  <code>sticky + top: 0 → 紧贴容器顶部</code>
+</div>
+
+<div class="card">
+  <span class="type-tag tag-css">CSS</span>
+  <h3><span class="term">transform: translateY()</span></h3>
+  <div class="desc">CSS 变换，只触发 Composite（合成），跳过 Layout + Paint</div>
+  <code>translateY(n px) → GPU 加速</code>
+</div>
+
+<div class="card">
+  <span class="type-tag tag-css">CSS</span>
+  <h3><span class="term">Stacking Context</span></h3>
+  <div class="desc">层叠上下文。非 fully opaque 的 position 元素、transform 都创建它</div>
+  <code>transform → 新 Stacking Context</code>
+</div>
+
+<div class="card">
+  <span class="type-tag tag-css">CSS</span>
+  <h3><span class="term">table-layout: fixed</span></h3>
+  <div class="desc">固定表格布局，列宽由第一行（thead）决定，而非内容撑开</div>
+  <code>fixed → 列宽由 th 的 width 决定</code>
+</div>
+
+<div class="card">
+  <span class="type-tag tag-css">CSS</span>
+  <h3><span class="term">will-change</span></h3>
+  <div class="desc">提示浏览器提前优化指定属性，可能创建合成层</div>
+  <code>will-change: transform</code>
+</div>
+
+<div class="card">
+  <span class="type-tag tag-css">CSS</span>
+  <h3><span class="term">isolation: isolate</span></h3>
+  <div class="desc">创建新的 stacking context，隔离子元素的层叠</div>
+  <code>isolation: isolate → 新 context</code>
+</div>
+
+</div>
+
+<h2>渲染机制</h2>
+
+<table>
+  <tr><th>概念</th><th>说明</th><th>性能影响</th></tr>
+  <tr><td><strong>Layout（重排）</strong></td><td>计算元素几何信息（位置、大小）</td><td>CPU 密集，触发整个子树</td></tr>
+  <tr><td><strong>Paint（重绘）</strong></td><td>将像素填充到位图上</td><td>中等，受绘制区域影响</td></tr>
+  <tr><td><strong>Composite（合成）</strong></td><td>在 GPU 将各图层合并</td><td>最快，不涉及 CPU</td></tr>
+  <tr><td><strong>合成层</strong></td><td>被提升到独立图层的元素</td><td>GPU 处理，大幅减少绘制</td></tr>
+</table>
+
+<h2>工作中遇到的 Bug</h2>
+
+<div class="card" style="grid-column: 1 / -1;">
+  <span class="type-tag tag-bug">Sticky Header 穿透</span>
+  <h3><span class="term">现象</span></h3>
+  <div class="desc">上滑时，虚拟行内容在 sticky thead 背后隐约可见</div>
+  <h3><span class="term">根因</span></h3>
+  <div class="desc">1) Chrome table sticky 实现缺陷；2) thead background 覆盖不完整；3) 虚拟行 transform 创建新 stacking context 导致绘制顺序异常</div>
+  <h3><span class="term">修复</span></h3>
+  <div class="desc"><code>thead { transform: translateZ(0); }</code> 提升到 GPU 层；或在 thead 上增加 <code>isolation: isolate</code></div>
+</div>
+
+<div class="footer">参考：docs/virtual-table-principle.md · 源码：src/pages/performance/VirtualTable/</div>
+
+</body>
+</html>

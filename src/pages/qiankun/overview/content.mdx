@@ -1,15 +1,7 @@
-import CodeDiff from '@/components/CodeDiff';
+import ComparisonSection from './ComparisonSection';
+import ScenarioTable from './ScenarioTable';
 import LiveDemo from './LiveDemo';
-import { Card, Table, Alert, Tag, Typography, Divider, Space, Collapse } from 'antd';
-import { comparisonData, scenarioTableData } from './data';
-
-import iframeBasic from './demos/iframe-basic.html?raw';
-import iframeCommunication from './demos/iframe-communication.html?raw';
-import iframeAutoHeight from './demos/iframe-auto-height.html?raw';
-import iframeMemoryLeak from './demos/iframe-memory-leak.html?raw';
-import qiankunRegister from './demos/qiankun-register.tsx?raw';
-import qiankunCommunication from './demos/qiankun-communication.tsx?raw';
-import qiankunStyleSharing from './demos/qiankun-style-sharing.tsx?raw';
+import { Card, Typography, Divider, Alert } from 'antd';
 
 # qiankun 专题：概览
 
@@ -19,7 +11,7 @@ import qiankunStyleSharing from './demos/qiankun-style-sharing.tsx?raw';
 
 ## 一、引言
 
-<Alert type="info" message="面试高频题" description=""到底微前端为什么不用 iframe？"" showIcon />
+<Alert type="info" message="面试高频题" description="到底微前端为什么不用 iframe？" showIcon />
 
 微前端是近年来前端领域最热门的话题之一。而在讨论微前端选型时，<strong>iframe</strong> 总能轻易地解决"把一个独立页面嵌入另一个页面"这个最原始的需求。iframe 在 1997 年的 HTML 4.0 规范中就已经存在了，它是最古老的"嵌入式页面"方案。
 
@@ -40,50 +32,7 @@ import qiankunStyleSharing from './demos/qiankun-style-sharing.tsx?raw';
 
 ## 二、qiankun vs iframe 全面对比
 
-{comparisonData.map((dimension) => {
-  const demoMap: Record<string, string> = {
-    'iframe-basic.html': iframeBasic,
-    'iframe-communication.html': iframeCommunication,
-    'iframe-auto-height.html': iframeAutoHeight,
-    'iframe-memory-leak.html': iframeMemoryLeak,
-    'qiankun-register.tsx': qiankunRegister,
-    'qiankun-communication.tsx': qiankunCommunication,
-    'qiankun-style-sharing.tsx': qiankunStyleSharing,
-  };
-
-  return (
-    <section key={dimension.id}>
-      <Typography.Title level={3}>{dimension.title}</Typography.Title>
-
-      <Typography.Paragraph>{dimension.summary}</Typography.Paragraph>
-
-      <Table
-        dataSource={dimension.table.dataSource}
-        columns={dimension.table.columns}
-        pagination={false}
-        size="small"
-        bordered
-        style={{ marginBottom: 16 }}
-      />
-
-      {dimension.badDemo && dimension.goodDemo && (
-        <>
-          <Typography.Title level={5}>代码示例对比</Typography.Title>
-          <CodeDiff
-            oldValue={demoMap[dimension.badDemo] || ''}
-            newValue={demoMap[dimension.goodDemo] || ''}
-            leftTitle={dimension.badDesc ? `❌ ${dimension.badDesc}` : '❌ iframe'}
-            rightTitle={dimension.goodDesc ? `✅ ${dimension.goodDesc}` : '✅ qiankun'}
-            type="error"
-            hideDiffMarkers={true}
-          />
-        </>
-      )}
-
-      <Divider />
-    </section>
-  );
-})}
+<ComparisonSection />
 
 ---
 
@@ -121,13 +70,7 @@ import qiankunStyleSharing from './demos/qiankun-style-sharing.tsx?raw';
 
 ### 常见场景对照
 
-<Table dataSource={scenarioTableData} pagination={false} size="small" bordered
-  columns={[
-    { title: '场景', dataIndex: 'scenario', key: 'scenario' },
-    { title: '推荐方案', dataIndex: 'recommendation', key: 'recommendation', render: (text: string) => <Tag color={text.includes('qiankun') ? 'blue' : 'green'}>{text}</Tag> },
-    { title: '原因', dataIndex: 'reason', key: 'reason' },
-  ]}
-/>
+<ScenarioTable />
 
 ---
 
