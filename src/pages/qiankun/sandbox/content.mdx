@@ -1,0 +1,146 @@
+import CodeDiff from '@/components/CodeDiff';
+import LiveDemo from './LiveDemo';
+import { Table, Typography, Divider, Alert } from 'antd';
+import { sandboxComparisonTable, escapeTable } from './data';
+
+import sandboxCollision from './demos/sandbox-collision.ts?raw';
+import snapshotSandbox from './demos/snapshot-sandbox.ts?raw';
+import proxySandbox from './demos/proxy-sandbox.ts?raw';
+import sandboxEscape from './demos/sandbox-escape.ts?raw';
+
+# qiankun 专题：JS 沙箱
+
+<Typography.Paragraph type="secondary">从快照到 Proxy：qiankun 利用 JS 沙箱隔离子应用全局变量的演进史与实现原理</Typography.Paragraph>
+
+---
+
+## 一、寓言故事
+
+### 老宅的客人
+
+在那座拥有百年历史的老宅中，住着一位管家，名叫老陈。
+
+老陈的职责很特别：每隔一段时间，就会有一位陌生人来到老宅，住上几天。他们走后，下一个人又会来。这些人互不相识，但每个人都会在老宅的客厅里留下自己的物品——有人摆了一个绿植，有人换了一幅画，有人把茶几向右挪了三寸。
+
+**问题来了：** 当第一个人走后，第二个人进来时，客厅里应该是什么样子？
+
+应该是一尘不染的，恢复到第一个人来之前的样子。否则，第二个人一进门，就会看到不属于自己的绿植、不想看到的画、乱放的茶几。最糟糕的是——他会以为这些东西本来就在那里，于是把自己的物品叠加上去，最终客厅面目全非。
+
+起初老陈的做法很笨拙但很直接：**每次客人来之前，他把客厅的每一个角落——每一片地板、每一盆花、每一本书、每一个茶杯——全部拍照记录。** 客人离开后，他对照照片一件一件恢复。这叫**拍照法**。
+
+拍照法的缺点是显而易见的：老宅有几十个房间，上千件物品，每次拍照和恢复都要花费大量时间。如果客人只动了一件东西，老陈也要把上千件物品全部对照一遍。更糟的是，拍照本身需要时间——在他拍照的过程中，如果另一位客人提前进来，就全乱套了。
+
+后来，老陈换了一种思路。他在客厅门口装了一扇**玻璃门**，客人进来后，所有想动的物品都必须经过这扇玻璃门。老陈在玻璃门旁坐着，手里拿一本记录本：
+
+- 客人说"我要在窗台放一盆花"，老陈就在记录本上写："窗台 → 花"。
+- 实际上，花确实被放到了窗台——但老陈的笔同时记下了这一变动。
+- 客人拉开窗帘 → 老陈记录："窗帘 → 拉开"。
+- 客人把沙发向右移 → 老陈记录："沙发 → 右移 3 寸"。
+
+**关键在这里：** 当客人询问"现在的客厅是什么样的"时，老陈会说："请稍等，我查一下我的记录本。"他把**原始客厅（从来没动过的那一份）**和**记录本上的改动**合并在一起告诉客人。而客人本身，觉得自己确实拥有整个客厅的使用权——他甚至不知道老陈的存在。
+
+客人离开后，老陈只需要做一件事：**合上记录本，扔掉。** 客厅就自动回到了最初的样子。不管客人动了多少件东西，老陈的恢复工作永远是——扔一个本子。
+
+这比拍照法快得多了。
+
+但老陈很快发现了玻璃门的一个局限：如果客人不是通过玻璃门去动物品，而是**直接穿过墙壁伸手去抓**怎么办？或者，客人**飞起来**绕过玻璃门怎么办？
+
+老陈想到了一个办法。他在客厅的外围加了一圈**透明软墙**，这堵墙平时几乎不存在——但当客人试图穿过它时，它就会挡住他。这样一来，客人的活动范围就完全被困在客厅内。
+
+### 真相揭晓
+
+老陈的故事，其实就是 qiankun **JS 沙箱（Sandbox）** 的演进史。
+
+老宅的客厅 → **浏览器的全局作用域（window）**
+客人 → **微应用（Micro App）**
+老陈的拍照法 → **SnapshotSandbox（快照沙箱）**，第一代
+老陈的玻璃门 → **ProxySandbox（代理沙箱）**，第二代
+老陈的记录本 → **Proxy 拦截器**，记录所有 `window` 属性的增删改
+合上记录本 → unmount 时丢弃 Proxy 上记录的所有变更
+玻璃门的缝隙 → **沙箱逃逸**
+
+### 概念对齐
+
+| 故事元素 | 技术映射 |
+|---|---|
+| 老宅客厅 | 浏览器的 `window` 全局对象 |
+| 客人 | 被 qiankun 加载的子应用 |
+| 老陈的记录本 | Proxy 拦截器对 window 属性的增删改追踪 |
+| 玻璃门 | window.proxy — 子应用访问的全局对象其实是 Proxy 实例 |
+| 原始客厅（一直没动的那一份） | 真实的 window，主应用的全局作用域 |
+| 客人看到的"客厅" | 子应用感知到的虚拟 window（Proxy 构造的沙箱） |
+| 拍照法 | SnapshotSandbox — mount 时快照，unmount 时恢复 |
+| 合上记录本丢弃 | unmount 时销毁 Proxy，子应用的所有修改灰飞烟灭 |
+| 透明软墙 | 额外的安全加固 |
+| 穿墙抓物 / 飞起来 | 沙箱逃逸 |
+
+---
+
+## 二、为什么需要沙箱
+
+在微前端架构中，多个子应用在同一个浏览器上下文（同一 Document、同一 `window`）中交替运行。
+
+每个子应用**认为自己拥有完整的 window 使用权**——但实际上 window 是共享的。
+
+### 典型冲突场景
+
+**全局变量冲突：** 子应用 A 设置 `window.__user`，子应用 B 也设置 `window.__user`，B unmount 后 A 残留着错误的值。
+
+**定时器未清理：** 子应用开了 `setInterval`，unmount 时没清理，继续执行影响性能。
+
+**事件监听泄漏：** `window.addEventListener` 绑定了子应用的回调，卸载后回调仍然被触发。
+
+**DOM 残留：** 子应用的 DOM 节点未随 unmount 清理。
+
+### 代码演示：无沙箱时的变量冲突
+
+<CodeDiff oldValue={sandboxCollision} newValue={sandboxCollision} leftTitle="" rightTitle="❌ 无沙箱时全局变量冲突" type="error" hideDiffMarkers={true} />
+
+---
+
+## 三、三代沙箱演进
+
+### 第一代：SnapshotSandbox（快照沙箱）
+
+**原理：** mount 前遍历所有 `window` 属性拍照，unmount 时逐项恢复。
+
+**缺点：**
+- 遍历数百个 window 属性，性能差
+- 运行期间直接在真实 window 上修改，不安全
+
+<CodeDiff oldValue={snapshotSandbox} newValue={snapshotSandbox} leftTitle="" rightTitle="✅ SnapshotSandbox 简化实现" type="error" hideDiffMarkers={true} />
+
+### 第三代：ProxySandbox（当前默认）
+
+**原理：** Proxy 拦截 `get`、`set`、`has`，fakeWindow 不继承 `Object.prototype`。
+
+**关键点：**
+- `fakeWindow = Object.create(null)` — 无原型链，避免原型污染
+- `get` 拦截器 — 优先返回 fakeWindow 中的值，回退到真实 window
+- `set` 拦截器 — 只写入 fakeWindow，不碰真实 window
+- `sandboxRunning` 标志位 — 控制激活/停用状态
+- unmount 时清空 fakeWindow，真实 window 完全未被污染
+
+<CodeDiff oldValue={proxySandbox} newValue={proxySandbox} leftTitle="" rightTitle="✅ ProxySandbox 简化实现" type="error" hideDiffMarkers={true} />
+
+<Table dataSource={sandboxComparisonTable.dataSource} columns={sandboxComparisonTable.columns} pagination={false} size="small" bordered />
+
+---
+
+## 四、沙箱逃逸与防御
+
+当子应用通过某些方式绕过了 Proxy 的拦截，直接操作了真实的 `window`，就发生了**沙箱逃逸（Sandbox Escape）**。
+
+<Table dataSource={escapeTable.dataSource} columns={escapeTable.columns} pagination={false} size="small" bordered />
+
+<CodeDiff oldValue={sandboxEscape} newValue={sandboxEscape} leftTitle="" rightTitle="❌ 沙箱逃逸演示" type="error" hideDiffMarkers={true} />
+
+qiankun 对已知的逃逸路径做了针对性防御，但理论上不可能 100% 拦截所有逃逸。
+
+---
+
+## 五、Live Demo：全局变量污染演示器
+
+在无沙箱和有沙箱两种模式下，分别挂载/卸载两个子应用，观察全局变量的残留情况和清理效果。
+
+<LiveDemo />
