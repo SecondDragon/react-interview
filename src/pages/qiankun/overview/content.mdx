@@ -1,0 +1,136 @@
+import CodeDiff from '@/components/CodeDiff';
+import LiveDemo from './LiveDemo';
+import { Card, Table, Alert, Tag, Typography, Divider, Space, Collapse } from 'antd';
+import { comparisonData, scenarioTableData } from './data';
+
+import iframeBasic from './demos/iframe-basic.html?raw';
+import iframeCommunication from './demos/iframe-communication.html?raw';
+import iframeAutoHeight from './demos/iframe-auto-height.html?raw';
+import iframeMemoryLeak from './demos/iframe-memory-leak.html?raw';
+import qiankunRegister from './demos/qiankun-register.tsx?raw';
+import qiankunCommunication from './demos/qiankun-communication.tsx?raw';
+import qiankunStyleSharing from './demos/qiankun-style-sharing.tsx?raw';
+
+# qiankun 专题：概览
+
+<Typography.Paragraph type="secondary">qiankun vs iframe：10 个维度的全面对比与场景化选型指南</Typography.Paragraph>
+
+---
+
+## 一、引言
+
+<Alert type="info" message="面试高频题" description=""到底微前端为什么不用 iframe？"" showIcon />
+
+微前端是近年来前端领域最热门的话题之一。而在讨论微前端选型时，<strong>iframe</strong> 总能轻易地解决"把一个独立页面嵌入另一个页面"这个最原始的需求。iframe 在 1997 年的 HTML 4.0 规范中就已经存在了，它是最古老的"嵌入式页面"方案。
+
+但是，<strong>"能解决"不等于"好解决"</strong>。
+
+我们听到面试官说 iframe 的一些常见缺点：iframe 太重、通信复杂、SEO 差、URL 不同步、白屏时间长。但 iframe 也在很多场景下是<strong>最成熟的方案</strong>。
+
+本章目标不是简单结论"qiankun 好 iframe 坏"，而是<strong>把 10 个维度的权衡讲透</strong>，让你在任何场景下都能做出合理的技术选型。
+
+每个维度的结构：
+<ol>
+  <li>一句话概括差异</li>
+  <li>对比表格（qiankun vs iframe）</li>
+  <li>代码示例对比</li>
+</ol>
+
+---
+
+## 二、qiankun vs iframe 全面对比
+
+{comparisonData.map((dimension) => {
+  const demoMap: Record<string, string> = {
+    'iframe-basic.html': iframeBasic,
+    'iframe-communication.html': iframeCommunication,
+    'iframe-auto-height.html': iframeAutoHeight,
+    'iframe-memory-leak.html': iframeMemoryLeak,
+    'qiankun-register.tsx': qiankunRegister,
+    'qiankun-communication.tsx': qiankunCommunication,
+    'qiankun-style-sharing.tsx': qiankunStyleSharing,
+  };
+
+  return (
+    <section key={dimension.id}>
+      <Typography.Title level={3}>{dimension.title}</Typography.Title>
+
+      <Typography.Paragraph>{dimension.summary}</Typography.Paragraph>
+
+      <Table
+        dataSource={dimension.table.dataSource}
+        columns={dimension.table.columns}
+        pagination={false}
+        size="small"
+        bordered
+        style={{ marginBottom: 16 }}
+      />
+
+      {dimension.badDemo && dimension.goodDemo && (
+        <>
+          <Typography.Title level={5}>代码示例对比</Typography.Title>
+          <CodeDiff
+            oldValue={demoMap[dimension.badDemo] || ''}
+            newValue={demoMap[dimension.goodDemo] || ''}
+            leftTitle={dimension.badDesc ? `❌ ${dimension.badDesc}` : '❌ iframe'}
+            rightTitle={dimension.goodDesc ? `✅ ${dimension.goodDesc}` : '✅ qiankun'}
+            type="error"
+            hideDiffMarkers={true}
+          />
+        </>
+      )}
+
+      <Divider />
+    </section>
+  );
+})}
+
+---
+
+## 三、核心结论
+
+### 决策树
+
+```
+是否需要统一路由/URL体验？
+  ├── 是 → 是否需要完全样式隔离？
+  │     ├── 是 → 综合考虑：qiankun + 额外样式隔离措施
+  │     └── 否 → 推荐 qiankun
+  └── 否 → 是否需要跨域加载不可信内容？
+        ├── 是 → 推荐 iframe（安全沙箱天然隔离）
+        └── 否 → 推荐 iframe（简单场景下最省心）
+```
+
+### 三句话总结
+
+<Card style={{ marginBottom: 12 }}>
+  <Typography.Text>
+    <strong>"iframe 是最成熟的微前端方案，但不是最好的"</strong> — 适合简单集成、跨域隔离场景
+  </Typography.Text>
+</Card>
+<Card style={{ marginBottom: 12 }}>
+  <Typography.Text>
+    <strong>"qiankun 是最流行的微前端框架，但不是万能的"</strong> — 适合统一 UX、共享资源、路由同步场景
+  </Typography.Text>
+</Card>
+<Card style={{ marginBottom: 12 }}>
+  <Typography.Text>
+    <strong>"选型没有银弹，只有取舍"</strong>
+  </Typography.Text>
+</Card>
+
+### 常见场景对照
+
+<Table dataSource={scenarioTableData} pagination={false} size="small" bordered
+  columns={[
+    { title: '场景', dataIndex: 'scenario', key: 'scenario' },
+    { title: '推荐方案', dataIndex: 'recommendation', key: 'recommendation', render: (text: string) => <Tag color={text.includes('qiankun') ? 'blue' : 'green'}>{text}</Tag> },
+    { title: '原因', dataIndex: 'reason', key: 'reason' },
+  ]}
+/>
+
+---
+
+## 四、Live Demo：对比决策器
+
+<LiveDemo />
