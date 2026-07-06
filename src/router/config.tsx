@@ -105,6 +105,7 @@ const WebSocketDemo = lazy(() => import('../pages/network/websocket-demo'));
 const StyleComponentsCSSOMPage = lazy(() => import('../pages/qiankun/styled-components-cssom/index'));
 const QiankunOverviewPage = lazy(() => import('../pages/qiankun/overview/index'));
 const QiankunCommunicationPage = lazy(() => import('../pages/qiankun/communication/index'));
+const QiankunSandboxPage = lazy(() => import('../pages/qiankun/sandbox/index'));
 
 export const dashboardRoutes: RouteConfig[] = [
   {
@@ -292,6 +293,11 @@ export const dashboardRoutes: RouteConfig[] = [
         path: '/dashboard/qiankun/communication',
         label: '应用间通信',
         element: <QiankunCommunicationPage />,
+      },
+      {
+        path: '/dashboard/qiankun/sandbox',
+        label: 'JS 沙箱',
+        element: <QiankunSandboxPage />,
       },
 
     ],
