@@ -1,0 +1,16 @@
+<!-- ❌ iframe 基础嵌入：整个 DOM 是黑盒，URL 不共享 -->
+<!DOCTYPE html>
+<html>
+<body>
+  <!-- iframe 就是简单地嵌入一个独立页面 -->
+  <!-- 1. iframe 内的 DOM 完全不可见，无法与主应用元素混排 -->
+  <!-- 2. iframe 内部的路由切换不影响主应用地址栏 -->
+  <!-- 3. iframe 高度需要手动计算，否则会出现滚动条或空白 -->
+  <iframe src="https://sql.example.com/query-page" width="100%" height="800px">
+    <!-- 这个 iframe 加载的是完整的 HTML 页面 -->
+    <!-- 它有自己的：<!DOCTYPE> / <html> / <head> / <body> -->
+    <!-- 有自己独立的：window / document / history / localStorage -->
+    <!-- 主应用完全无法操控 iframe 内部的内容 -->
+  </iframe>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!-- ❌ iframe 内存泄漏：频繁创建/销毁 iframe 会累积内存 -->
+<!DOCTYPE html>
+<html>
+<body>
+  <!-- 频繁切换子应用时，主应用不断创建新的 iframe -->
+  <script>
+    let currentIframe = null;
+
+    function switchApp(url) {
+      // 移除旧的 iframe
+      if (currentIframe) {
+        document.body.removeChild(currentIframe);
+        // 即使移除了 DOM，iframe 的浏览上下文可能还没有被 GC 回收
+        // 特别是 iframe 内有定时器、WebSocket、大量 DOM 时
+        // 需要显式设置 src 为空并等待回收
+        currentIframe.src = 'about:blank';  // 这个操作有助于释放部分内存
+      }
+
+      // 创建新的 iframe
+      currentIframe = document.createElement('iframe');
+      currentIframe.src = url;
+      document.body.appendChild(currentIframe);
+      // 每次切换都会加载一个完整的 HTML 文档
+      // 子应用所有的 JS、CSS、DOM、音频/视频/WebSocket 连接都要重新初始化
+      // 速度远不如 qiankun 的 mount/unmount 缓存机制
+    }
+  </script>
+</body>
+</html>

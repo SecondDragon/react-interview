@@ -1,0 +1,45 @@
+<!-- ❌ iframe 自适应高度：需要 postMessage 手动同步，复杂且不稳定 -->
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    /* 主应用无法用 CSS 控制 iframe 内部高度 */
+    /* 只能设置外部 iframe 标签的 height 属性 */
+  </style>
+</head>
+<body>
+  <!-- 主应用 JS：轮询或监听 iframe 内消息来调整高度 -->
+  <script>
+    const iframe = document.querySelector('iframe');
+
+    // 监听 iframe 内发来的高度变化消息
+    window.addEventListener('message', (event) => {
+      if (event.data.type === 'height-change') {
+        // 手动调整 iframe 高度
+        iframe.height = event.data.height + 'px';
+      }
+    });
+
+    // 需要监听 DOM 变化？还需要处理 ResizeObserver、MutationObserver
+
+    // 如果子应用是动态内容（如展开/折叠）、resize 窗口，
+    // 这个流程会大量触发 postMessage，导致帧率下降
+  </script>
+
+  <!-- 子应用（iframe 内）也需要发消息告知高度 -->
+  <script>
+    function reportHeight() {
+      const height = document.body.scrollHeight;
+      // 每次内容变化都要向父窗口发送消息
+      window.parent.postMessage({ type: 'height-change', height }, '*');
+    }
+
+    // 需要监听子应用自身的内容变化
+    const observer = new ResizeObserver(reportHeight);
+    observer.observe(document.body);
+    // 还要处理：MutationObserver 监听 DOM 变更
+    // 还要处理：字体加载、图片加载后高度变化
+    // 逻辑复杂，且容易因时序问题产生高度闪烁
+  </script>
+</body>
+</html>

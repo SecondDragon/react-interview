@@ -1,0 +1,50 @@
+<!-- ❌ iframe 通信：postMessage 只能传递序列化数据，无法传引用/函数 -->
+<!DOCTYPE html>
+<html>
+<body>
+  <!-- 主应用 -->
+  <script>
+    const iframe = document.querySelector('iframe');
+
+    // 问题 1：函数无法传递
+    function onUserChange(user) {
+      console.log('用户变了', user);
+    }
+    // ❌ 试图传递一个回调函数
+    iframe.contentWindow.postMessage(
+      { type: 'subscribe', callback: onUserChange },  // callback 会被 structured clone 丢弃！
+      '*'
+    );
+    // 实际收到的 callback 是 null / 报错
+
+    // 正确的做法：用消息类型协商
+    iframe.contentWindow.postMessage(
+      { type: 'user-changed', user: { id: 1, name: 'Alice' } },
+      '*'
+    );
+    // 但这样主应用需要自己维护消息路由，如果消息多了非常混乱
+  </script>
+
+  <!-- 子应用（iframe 内） -->
+  <script>
+    window.addEventListener('message', (event) => {
+      // 需要手动验证 event.origin
+      if (event.origin !== 'https://main.example.com') return;
+      // 所有通信都走 message 通道，没有类型安全
+      const { type, data } = event.data;
+      // 每新增一个消息类型就要改这里的 switch/case
+      switch (type) {
+        case 'user-changed': /* ... */ break;
+        case 'theme-changed': /* ... */ break;
+        // ...
+      }
+    });
+
+    // 回传消息也需要手动发 postMessage
+    iframe.contentWindow.parent.postMessage(
+      { type: 'query-result', data: { rows: [] } },
+      '*'
+    );
+  </script>
+</body>
+</html>
