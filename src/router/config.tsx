@@ -103,6 +103,7 @@ const SSEReconnectHybrid = lazy(() => import('../pages/network/sse-reconnect-hyb
 const SSEBackendStorage = lazy(() => import('../pages/network/sse-backend-storage'));
 const WebSocketDemo = lazy(() => import('../pages/network/websocket-demo'));
 const StyleComponentsCSSOMPage = lazy(() => import('../pages/qiankun/styled-components-cssom/index'));
+const QiankunOverviewPage = lazy(() => import('../pages/qiankun/overview/index'));
 
 export const dashboardRoutes: RouteConfig[] = [
   {
@@ -280,6 +281,11 @@ export const dashboardRoutes: RouteConfig[] = [
         path: '/dashboard/qiankun/styled-components-cssom',
         label: '样式丢失与CSSOM注入',
         element: <StyleComponentsCSSOMPage />,
+      },
+      {
+        path: '/dashboard/qiankun/overview',
+        label: '概览',
+        element: <QiankunOverviewPage />,
       },
     ],
   },
