@@ -106,6 +106,7 @@ const StyleComponentsCSSOMPage = lazy(() => import('../pages/qiankun/styled-comp
 const QiankunOverviewPage = lazy(() => import('../pages/qiankun/overview/index'));
 const QiankunCommunicationPage = lazy(() => import('../pages/qiankun/communication/index'));
 const QiankunSandboxPage = lazy(() => import('../pages/qiankun/sandbox/index'));
+const QiankunLoadMicroAppPage = lazy(() => import('../pages/qiankun/load-micro-app/index'));
 
 export const dashboardRoutes: RouteConfig[] = [
   {
@@ -298,6 +299,11 @@ export const dashboardRoutes: RouteConfig[] = [
         path: '/dashboard/qiankun/sandbox',
         label: 'JS 沙箱',
         element: <QiankunSandboxPage />,
+      },
+      {
+        path: '/dashboard/qiankun/load-micro-app',
+        label: 'loadMicroApp',
+        element: <QiankunLoadMicroAppPage />,
       },
 
     ],
