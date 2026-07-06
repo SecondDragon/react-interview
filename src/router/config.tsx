@@ -104,6 +104,7 @@ const SSEBackendStorage = lazy(() => import('../pages/network/sse-backend-storag
 const WebSocketDemo = lazy(() => import('../pages/network/websocket-demo'));
 const StyleComponentsCSSOMPage = lazy(() => import('../pages/qiankun/styled-components-cssom/index'));
 const QiankunOverviewPage = lazy(() => import('../pages/qiankun/overview/index'));
+const QiankunCommunicationPage = lazy(() => import('../pages/qiankun/communication/index'));
 
 export const dashboardRoutes: RouteConfig[] = [
   {
@@ -267,6 +268,11 @@ export const dashboardRoutes: RouteConfig[] = [
     label: 'qiankun 专题',
     icon: <ApiOutlined />,
     children: [
+       {
+        path: '/dashboard/qiankun/overview',
+        label: '概览',
+        element: <QiankunOverviewPage />,
+      },
       {
         path: '/dashboard/qiankun/basic',
         label: '乾坤基础',
@@ -283,10 +289,11 @@ export const dashboardRoutes: RouteConfig[] = [
         element: <StyleComponentsCSSOMPage />,
       },
       {
-        path: '/dashboard/qiankun/overview',
-        label: '概览',
-        element: <QiankunOverviewPage />,
+        path: '/dashboard/qiankun/communication',
+        label: '应用间通信',
+        element: <QiankunCommunicationPage />,
       },
+
     ],
   },
   {
