@@ -1,0 +1,110 @@
+import CodeDiff from '@/components/CodeDiff';
+import LiveDemo from './LiveDemo';
+import { Card, Table, Alert, Typography, Divider, List, Space } from 'antd';
+import { introData, propsData, globalStateData, comparisonData, principleData, liveDemoData } from './data';
+
+import propsRegister from './demos/props-register.tsx?raw';
+import propsMount from './demos/props-mount.tsx?raw';
+import propsUpdate from './demos/props-update.tsx?raw';
+import initGlobalState from './demos/init-global-state.tsx?raw';
+import onGlobalStateChange from './demos/on-global-state-change.tsx?raw';
+import setGlobalState from './demos/set-global-state.tsx?raw';
+import offGlobalStateChange from './demos/off-global-state-change.tsx?raw';
+import publishSubscribe from './demos/publish-subscribe-implementation.ts?raw';
+
+# qiankun 专题：应用间通信
+
+<Typography.Paragraph type="secondary">qiankun 中主应用与子应用之间、子应用与子应用之间的通信机制与实现原理</Typography.Paragraph>
+
+---
+
+## {introData.title}
+
+{introData.content.map((text, i) => (
+  <Typography.Paragraph key={i} dangerouslySetInnerHTML={{ __html: text }} />
+))}
+
+### 典型场景
+
+<List
+  size="small"
+  dataSource={introData.scenarios}
+  renderItem={(item) => <List.Item>{item}</List.Item>}
+/>
+
+---
+
+## {propsData.title}
+
+<Table dataSource={propsData.apiTable.dataSource} columns={propsData.apiTable.columns} pagination={false} size="small" bordered style={{ marginBottom: 16 }} />
+
+### 主应用注册时传入 props
+
+<CodeDiff oldValue={propsRegister} newValue={propsRegister} leftTitle="" rightTitle="✅ registerMicroApps 传入 props" type="error" hideDiffMarkers={true} />
+
+### 子应用 mount 时接收 props
+
+<CodeDiff oldValue={propsMount} newValue={propsMount} leftTitle="" rightTitle="✅ mount 接收 props" type="error" hideDiffMarkers={true} />
+
+### loadMicroApp 动态更新 props
+
+<CodeDiff oldValue={propsUpdate} newValue={propsUpdate} leftTitle="" rightTitle="✅ loadMicroApp update props" type="error" hideDiffMarkers={true} />
+
+### 对比
+
+<Table dataSource={propsData.advantageTable.dataSource} columns={propsData.advantageTable.columns} pagination={false} size="small" bordered style={{ marginBottom: 16 }} />
+
+---
+
+## {globalStateData.title}
+
+<Table dataSource={globalStateData.apiTable.dataSource} columns={globalStateData.apiTable.columns} pagination={false} size="small" bordered style={{ marginBottom: 16 }} />
+
+### initGlobalState
+
+<CodeDiff oldValue={initGlobalState} newValue={initGlobalState} leftTitle="" rightTitle="✅ initGlobalState 基本用法" type="error" hideDiffMarkers={true} />
+
+### 子应用订阅状态变化
+
+<CodeDiff oldValue={onGlobalStateChange} newValue={onGlobalStateChange} leftTitle="" rightTitle="✅ onGlobalStateChange 订阅" type="error" hideDiffMarkers={true} />
+
+### 子应用修改全局状态
+
+<CodeDiff oldValue={setGlobalState} newValue={setGlobalState} leftTitle="" rightTitle="✅ setGlobalState 修改" type="error" hideDiffMarkers={true} />
+
+### 取消订阅
+
+<CodeDiff oldValue={offGlobalStateChange} newValue={offGlobalStateChange} leftTitle="" rightTitle="✅ offGlobalStateChange 取消订阅" type="error" hideDiffMarkers={true} />
+
+---
+
+## {comparisonData.title}
+
+<Table dataSource={comparisonData.table.dataSource} columns={comparisonData.table.columns} pagination={false} size="small" bordered style={{ marginBottom: 16 }} />
+
+---
+
+## {principleData.title}
+
+{principleData.sections.map((section) => (
+  <div key={section.subtitle}>
+    <Typography.Title level={4}>{section.subtitle}</Typography.Title>
+    {section.content.map((text, i) => (
+      <Typography.Paragraph key={i} dangerouslySetInnerHTML={{ __html: text }} />
+    ))}
+  </div>
+))}
+
+### 源码级实现（简化）
+
+<CodeDiff oldValue={publishSubscribe} newValue={publishSubscribe} leftTitle="" rightTitle="✅ 手写发布订阅模式" type="error" hideDiffMarkers={true} />
+
+<Alert type="info" message="核心原理" description="initGlobalState 的内部实现就是上面这个发布订阅模式。qiankun 在加载子应用时，将 onGlobalStateChange 和 setGlobalState 注入到子应用的 props 中，从而实现跨应用通信。" showIcon style={{ marginTop: 16 }} />
+
+---
+
+## {liveDemoData.title}
+
+<Typography.Paragraph>{liveDemoData.description}</Typography.Paragraph>
+
+<LiveDemo />
