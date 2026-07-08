@@ -1,0 +1,20 @@
+sequenceDiagram
+    participant User as 用户操作
+    participant Input as input 事件
+    participant Comp as composition 事件
+    participant Lock as 锁标志位
+    participant Biz as 业务逻辑 (doSearch)
+
+    Note over User,Biz: Chromium / Blink / WebKit — 空格上屏
+    User->>+Input: 按空格选词
+    Input->>Lock: isComposing=true → ❌ 拦截
+    User->>+Comp: compositionend 触发
+    Comp->>Lock: 解锁
+    Note over Comp,Biz: 浏览器通常不补发 input
+    Comp->>+Biz: ✅ 主动补偿触发 doSearch
+
+    Note over User,Biz: Gecko (Firefox) — 典型时序
+    User->>+Comp: 选词上屏
+    Comp->>Lock: 解锁
+    Comp->>+Biz: ✅ 主动补偿触发 doSearch
+    Input->>Biz: 额外 input 触发 → 去重处理

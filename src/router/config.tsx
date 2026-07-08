@@ -412,44 +412,44 @@ export const dashboardRoutes: RouteConfig[] = [
     ],
   },
 
-  {
-    path: '/dashboard/tasks-container',
-    label: '任务中心',
-    icon: <CheckSquareOutlined />,
-    children: [
-      { path: '/dashboard/tasks-container/list', label: '全部任务清单', element: <TaskList /> },
-      {
-        path: '/dashboard/tasks-container/my',
-        label: '我的私人任务',
-        element: <MyTasks />,
-      },
-    ],
-  },
-  {
-    path: '/dashboard/multi-level',
-    label: '多级菜单示例',
-    icon: <MenuOutlined />,
-    children: [
-      {
-        path: '/dashboard/multi-level/sub1',
-        label: '二级子菜单 A',
-        icon: <AppstoreOutlined />,
-        children: [
-          {
-            path: '/dashboard/multi-level/sub1/page1',
-            label: '三级路由 1-1',
-            element: <Sub1Page1 />,
-          },
-          {
-            path: '/dashboard/multi-level/sub1/page2',
-            label: '三级路由 1-2',
-            element: <Sub1Page2 />,
-          },
-        ],
-      },
-      { path: '/dashboard/multi-level/sub2', label: '二级直达(限权)', element: <Sub2Page /> },
-    ],
-  },
+  // {
+  //   path: '/dashboard/tasks-container',
+  //   label: '任务中心',
+  //   icon: <CheckSquareOutlined />,
+  //   children: [
+  //     { path: '/dashboard/tasks-container/list', label: '全部任务清单', element: <TaskList /> },
+  //     {
+  //       path: '/dashboard/tasks-container/my',
+  //       label: '我的私人任务',
+  //       element: <MyTasks />,
+  //     },
+  //   ],
+  // },
+  // {
+  //   path: '/dashboard/multi-level',
+  //   label: '多级菜单示例',
+  //   icon: <MenuOutlined />,
+  //   children: [
+  //     {
+  //       path: '/dashboard/multi-level/sub1',
+  //       label: '二级子菜单 A',
+  //       icon: <AppstoreOutlined />,
+  //       children: [
+  //         {
+  //           path: '/dashboard/multi-level/sub1/page1',
+  //           label: '三级路由 1-1',
+  //           element: <Sub1Page1 />,
+  //         },
+  //         {
+  //           path: '/dashboard/multi-level/sub1/page2',
+  //           label: '三级路由 1-2',
+  //           element: <Sub1Page2 />,
+  //         },
+  //       ],
+  //     },
+  //     { path: '/dashboard/multi-level/sub2', label: '二级直达(限权)', element: <Sub2Page /> },
+  //   ],
+  // },
   {
     path: '/dashboard/micro-vue/*',
     label: 'Vue 微应用中心',
@@ -468,12 +468,12 @@ export const dashboardRoutes: RouteConfig[] = [
   //     { path: '/dashboard/micro-react/page-b', label: 'React 页面 B' },
   //   ],
   // },
-  {
-    path: '/dashboard/users1',
-    label: '用户权限管理',
-    icon: <TeamOutlined />,
-    element: <UserList />,
-  },
+  // {
+  //   path: '/dashboard/users1',
+  //   label: '用户权限管理',
+  //   icon: <TeamOutlined />,
+  //   element: <UserList />,
+  // },
   {
     path: '/dashboard/browser-dimensions',
     label: '浏览器的各种尺寸',
@@ -584,11 +584,11 @@ export const dashboardRoutes: RouteConfig[] = [
       },
     ],
   },
-  {
-    path: '/dashboard/settings',
-    label: '系统设置',
-    icon: <SettingOutlined />,
-    element: <Settings />,
-    closable: false,
-  },
+  // {
+  //   path: '/dashboard/settings',
+  //   label: '系统设置',
+  //   icon: <SettingOutlined />,
+  //   element: <Settings />,
+  //   closable: false,
+  // },
 ];
