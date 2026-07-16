@@ -21,6 +21,8 @@ import pitfallSyncReadGood from './demos/pitfall-sync-read.good.tsx?raw';
 import timeSlicingBad from './demos/time-slicing.bad.tsx?raw';
 import timeSlicingGood from './demos/time-slicing.good.tsx?raw';
 import principleVisualCode from './demos/principle-visual.tsx?raw';
+import routeEnterBad from './demos/route-enter.bad.tsx?raw';
+import routeEnterGood from './demos/route-enter.good.tsx?raw';
 import {
   UseTransitionMeta,
   overviewFeatures,
@@ -148,6 +150,41 @@ import {
       />
       <Card title={<span>互动演示 <Tag color="blue">Live Demo</Tag></span>} style={{ marginTop: '16px' }}>
         <LiveDemo type="tab" />
+      </Card>
+    </Collapse.Panel>
+    <Collapse.Panel
+      header="路由级延迟挂载：进入页面时先显示骨架屏"
+      key="3"
+    >
+      <Typography.Paragraph>
+        这是 useTransition 最有价值的应用场景之一，但也是最容易被忽略的。当用户从其他路由导航到一个包含重型组件的页面时，同步渲染所有内容会导致页面白屏卡顿——用户明明已经"进入"了页面，却要等几百毫秒才看到界面。
+      </Typography.Paragraph>
+      <Typography.Paragraph>
+        正确的做法是：在页面 mount 时的 <code>useEffect</code> 中用 <code>startTransition</code> 触发重型内容的渲染。这样页面的轻量外壳（标题、导航、骨架屏）会<strong>立即</strong>被 commit 到 DOM，用户在骨架屏上阅读的几秒内，重型内容在后台以低优先级完成渲染。
+      </Typography.Paragraph>
+      <CodeDiff
+        oldValue={routeEnterBad}
+        newValue={routeEnterGood}
+        leftTitle="❌ 同步渲染全部内容"
+        rightTitle="✅ Transition 延迟挂载"
+        type="error"
+        hideDiffMarkers={true}
+        language="tsx"
+      />
+      <Card title={<span>互动演示 <Tag color="blue">Live Demo</Tag></span>} style={{ marginTop: '16px' }}>
+        <Alert
+          type="success"
+          showIcon
+          message="体验方法"
+          description={
+            <Typography.Paragraph style={{ marginBottom: 0 }}>
+              <strong>同步模式</strong>：点击"模拟进入页面"，页面会卡住约 200ms，然后突然跳出完整内容。<br />
+              <strong>Transition 模式</strong>：点击"模拟进入页面"，骨架屏立即出现，30000 个节点在后台渲染（时间切片），且你可以在骨架屏期间自由交互。
+            </Typography.Paragraph>
+          }
+          style={{ marginBottom: 16 }}
+        />
+        <LiveDemo type="route-transition" />
       </Card>
     </Collapse.Panel>
   </Collapse>
@@ -537,7 +574,7 @@ import {
     style={{ marginBottom: 16 }}
   />
 
-  <MermaidViewer source={priorityInjection} />
+  <MermaidViewer source={priorityInjection} lazy />
 
   <Typography.Title level={5}>第三步：TransitionLane → Scheduler 优先级的映射</Typography.Title>
   <Typography.Paragraph>
@@ -593,14 +630,14 @@ import {
     这就是"丢弃旧工作"的源码级含义——旧的 WIP 树（基于 <Typography.Text code>searchQuery = "数"</Typography.Text>）变成孤儿被 GC 回收。同步渲染完成后，新的 TransitionLane 任务被重新调度，这一次 <Typography.Text code>HeavyList({`{ query: "数据" }`})</Typography.Text> 基于最新的搜索词运行。
   </Typography.Paragraph>
 
-  <MermaidViewer source={laneFullDataflow} />
+  <MermaidViewer source={laneFullDataflow} lazy />
 </Card>
 
 <Card title="四、完整调度流程" style={{ marginBottom: '16px' }}>
   <Typography.Paragraph>
     当用户触发带 transition 的更新后，React 内部经历以下流程：
   </Typography.Paragraph>
-  <MermaidViewer source={transitionFlow} />
+  <MermaidViewer source={transitionFlow} lazy />
 </Card>
 
 <Card title="五、时间切片：任务如何被切分" style={{ marginBottom: '16px' }}>

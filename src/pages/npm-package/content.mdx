@@ -1,0 +1,528 @@
+import CodeDiff from '@/components/CodeDiff';
+import MermaidViewer from '@/components/MermaidViewer';
+import { Card, Table, Typography, List } from 'antd';
+import { packageJsonFields, semverTable } from './data';
+import ComparisonSection from './ComparisonSection';
+import LiveDemo from './LiveDemo';
+import npmPackageStructure from './diagrams/npm-package-structure.mmd?raw';
+import buildPipeline from './diagrams/build-pipeline.mmd?raw';
+import publishFlow from './diagrams/publish-flow.mmd?raw';
+import tsupBadConfig from './demos/tsup-config.bad.ts?raw';
+import tsupGoodConfig from './demos/tsup-config.good.ts?raw';
+
+<Typography.Title level={2}>npm 包封装完全指南</Typography.Title>
+
+当你写好了一个 React 组件，想把它的成果分享给其他团队或开源社区，你就需要把它封装成一个 npm 包。封装看似简单——跑个构建然后 npm publish 就行——但其中涉及字段配置、构建工具选型、格式转换、版本管理等诸多环节。本文从零开始，把"组件到 npm 包"的完整链路讲透。
+
+---
+
+## 一、概念与背景
+
+### 1.1 什么是 npm 包
+
+npm 包本质上是一个包含 `package.json` 的目录，经过 `npm publish` 上传到 npm registry，其他人可以通过 `npm install` 下载使用。
+
+当你封装一个组件为 npm 包时，你需要考虑：
+
+- **多方消费者**：使用者的项目可能是 CJS（require）、ESM（import）、TypeScript（需要类型声明）、或 CDN（UMD/IIFE）
+- **构建与源码分离**：你写的是 `.tsx` / `.ts`，但使用者需要的是编译后的 `.js` + 类型声明 `.d.ts`
+- **依赖关系**：React 这类运行时依赖不应被打包进去，而是作为对等依赖让宿主环境提供
+
+### 1.2 为什么要封装为 npm 包
+
+<Card style={{ marginBottom: 24 }}>
+
+- **代码复用**：一次封装，多项目复用。修改源码后仅需发布新版本
+- **版本管理**：通过 semver 语义化版本控制，使用者可锁定或灵活升级
+- **关注点分离**：组件仓库独立维护，不耦合于业务项目
+- **Tree Shaking**：通过 ESM 格式输出，打包工具可以摇掉未使用的代码
+- **类型安全**：发布 `.d.ts` 后，使用者在 IDE 中获得完整类型提示
+
+</Card>
+
+---
+
+## 二、npm 包的核心目录与配置
+
+### 2.1 标准目录结构
+
+一个规范的 React 组件 npm 包，目录结构大致如下：
+
+<MermaidViewer source={npmPackageStructure} />
+
+**核心原则：**
+- `src/` 是源码（开发者编写），`dist/` 是构建产物（使用者引用）
+- `package.json` 是包的"身份证"，所有入口信息都在这里定义
+- `npm publish` 默认会发布 `package.json` + `README.md` + `files` 白名单内的文件
+
+### 2.2 package.json 核心字段详解
+
+package.json 中有几个字段直接决定了"使用者怎么用你的包"，这是封装 npm 包最核心的知识点：
+
+<Card title="package.json 关键字段一览" style={{ marginBottom: 24 }}>
+  <Table
+    columns={packageJsonFields.columns}
+    dataSource={packageJsonFields.dataSource}
+    pagination={false}
+    size="small"
+    bordered
+  />
+</Card>
+
+**重点理解 `exports` 字段的优先级机制：**
+
+当使用者写 `import 'my-button'` 时，Node.js 或打包工具会按以下顺序查找入口：
+
+1. 先看 `exports["."]` 是否有条件导出
+2. 根据环境匹配条件：`import` → `require` → `types` → `default`
+3. 如果无 `exports`，回退到 `module` 字段（仅打包工具支持）
+4. 再回退到 `main` 字段
+
+这就是为什么**推荐使用 `exports` 字段**——它提供了最精确的入口控制和环境隔离。
+
+---
+
+## 三、封装方案详解：三种构建工具对比
+
+封装 npm 包的核心任务是：**把 TypeScript/TSX 源码编译成 JS，同时生成类型声明文件**。解决这个问题有三种主流工具，它们各有优缺点。
+
+<ComparisonSection />
+
+### 方案一：tsup（推荐）—— 零配置构建
+
+tsup 基于 esbuild（Go 语言编写），是目前封 React 组件库最推荐的方案。它的理念是"约定大于配置"，一行命令即可完成构建。
+
+<Card title="一、使用 tsup 时可能出现的问题" style={{ marginBottom: 24 }}>
+  tsup 本身极其稳定，问题通常出在** package.json 的入口配置不正确**上。以下是新手最常见的表现：
+
+  <List
+    size="small"
+    dataSource={[
+      '使用者 import 时报 "Cannot find module" 错误',
+      'TypeScript 提示 "Could not find a declaration file"',
+      '打包后发现 dist 目录过大，包含了 src 源码',
+      '使用 import 和 require 导入时行为不一致',
+      'React 打包报 "You have multiple instances of React"',
+    ]}
+    renderItem={(item) => <List.Item>{item}</List.Item>}
+    style={{ marginTop: 8 }}
+  />
+</Card>
+
+<Card title="二、出现这些问题的底层原因" style={{ marginBottom: 24 }}>
+  <List
+    size="small"
+    dataSource={[
+      'main / module / types / exports 字段缺失或指向错误——导致打包工具在解析入口时找不到正确的文件',
+      'files 字段未配置或配置过大——导致 npm publish 时上传了不必要的文件，增大安装体积',
+      'React 放在 dependencies 而非 peerDependencies——使用者的项目中会同时存在两份 React 实例',
+      '缺少 sideEffects 标记——打包工具无法安全地进行 tree-shaking，可能导致未使用的代码被保留',
+      'tsup 构建脚本缺少 --dts 参数——不会生成 .d.ts 类型声明文件，TypeScript 使用者得不到类型提示',
+    ]}
+    renderItem={(item) => <List.Item>{item}</List.Item>}
+    style={{ marginTop: 8 }}
+  />
+</Card>
+
+<Card title="三、tsup 方案适合哪些场景" style={{ marginBottom: 24 }}>
+  <List
+    size="small"
+    dataSource={[
+      '你正在构建一个中型的 React 组件库（几个到几十个组件）',
+      '团队成员对构建配置不熟悉，希望尽量"零配置"',
+      '项目需要快速的构建速度（开发体验好）',
+      '你只需要输出 ESM + CJS + dts，不需要 UMD/IIFE',
+      '公司内部组件库、个人开源组件库',
+    ]}
+    renderItem={(item) => <List.Item>{item}</List.Item>}
+  />
+</Card>
+
+<Card title="四、配置对比：反面教材 vs 最佳实践" style={{ marginBottom: 24 }}>
+  <CodeDiff
+    oldValue={tsupBadConfig}
+    newValue={tsupGoodConfig}
+    leftTitle="❌ 反面教材（常见错误）"
+    rightTitle="✅ 最佳实践"
+    type="error"
+    hideDiffMarkers={true}
+  />
+</Card>
+
+**六处对比差异详解：**
+
+<List
+  size="small"
+  dataSource={[
+    'main 指向 src/index.ts（反面）vs 指向 dist/index.js（正确）：前者不用编译直接引源码，使用者环境如果没有 TypeScript 编译器会直接报错',
+    '无 module 字段（反面）vs 配置 module: ./dist/index.mjs（正确）：打包工具通过 module 字段识别 ESM 入口，这是 tree-shaking 的前提',
+    '无 exports 字段（反面）vs 配置 exports 条件导出（正确）：exports 提供了 import/require/types 三种环境的精确映射',
+    'React 放在 dependencies（反面）vs 放在 peerDependencies（正确）：peerDependencies 告诉 npm"宿主已经提供了 React，不需要重复安装"，避免双实例',
+    'files: ["src", "dist"]（反面）vs files: ["dist"]（正确）：src 目录不需要发布，files 应只白名单构建产物',
+    'build: "tsc"（反面）vs "tsup src/index.ts --format esm,cjs --dts --clean"（正确）：tsc 仅编译不打包，tsup 同时完成编译 + bundle + 多格式输出 + dts 生成',
+  ]}
+  renderItem={(item) => <List.Item>{item}</List.Item>}
+  style={{ marginTop: 8, marginBottom: 16 }}
+/>
+
+<Card title="五、tsup 构建的核心原理" style={{ marginBottom: 24 }}>
+  tsup 本质上是对 esbuild 的封装，其核心执行流程如下：
+
+  <List
+    size="small"
+    dataSource={[
+      '入口解析：读取 --format 参数，确定输出格式（esm/cjs/iife）',
+      'AST 构建：esbuild 使用 Go 语言并行解析所有源文件，构建模块依赖图',
+      'TypeScript 编译：esbuild 内置了 TypeScript 解析器，去除类型注解，保留类型声明（--dts 参数触发独立的 dts 生成流程）',
+      '输出格式转换：根据 format 参数，将 AST 分别生成为 ESM 和 CJS 两种格式的 JS 代码',
+      '代码压缩：esbuild 内置压缩器，在生产模式下自动压缩代码',
+      'dts 生成：tsup 内部调用 rollup-plugin-dts 的等效逻辑，从源码中提取类型声明并 bundle 为单个 .d.ts 文件',
+      '清理输出：--clean 参数会在构建前清空 dist/ 目录，避免旧文件残留',
+    ]}
+    renderItem={(item) => <List.Item>{item}</List.Item>}
+  />
+</Card>
+
+### 方案二：Rollup 构建 —— 灵活可控
+
+Rollup 是老牌的 JavaScript 打包工具，React 官方和很多大型组件库（如 Ant Design、Material UI）都在使用它。它的优势在于极致的 tree-shaking 和灵活的插件生态。
+
+<Card title="一、Rollup 构建时可能出现的问题" style={{ marginBottom: 24 }}>
+  <List
+    size="small"
+    dataSource={[
+      '配置繁琐，需要手动安装和配置多个插件才能支持 TypeScript',
+      '插件版本兼容性问题（@rollup/plugin-typescript 与 typescript 版本需要匹配）',
+      '类型声明需要额外的 rollup-plugin-dts 插件来生成',
+      '构建速度较慢（相对于 tsup/esbuild）',
+    ]}
+    renderItem={(item) => <List.Item>{item}</List.Item>}
+  />
+</Card>
+
+<Card title="二、Rollup 方案的优缺点" style={{ marginBottom: 24 }}>
+  <List
+    size="small"
+    header={<Typography.Text strong>优点</Typography.Text>}
+    dataSource={[
+      'Tree-shaking 效果最好——Rollup 的分析器能精确识别未使用的导出并在输出中剔除',
+      '插件生态丰富，可以支持各种自定义需求（CSS 提取、JSON 导入、SVGR 等）',
+      '支持输出 UMD 格式，适用于 CDN 直接引入场景',
+      '社区成熟，大型项目验证充分',
+    ]}
+    renderItem={(item) => <List.Item>✅ {item}</List.Item>}
+    style={{ marginBottom: 8 }}
+  />
+  <List
+    size="small"
+    header={<Typography.Text strong>缺点</Typography.Text>}
+    dataSource={[
+      '配置量大，创建一个 rollup.config.js 通常需要 30-50 行',
+      'TypeScript 支持依赖第三方插件，类型声明生成需要额外工具',
+      '构建速度不如 esbuild（Go vs JS）',
+      '多格式输出需要多次运行或额外配置',
+    ]}
+    renderItem={(item) => <List.Item>❌ {item}</List.Item>}
+  />
+</Card>
+
+<Card title="三、Rollup 方案适合哪些场景" style={{ marginBottom: 24 }}>
+  <List
+    size="small"
+    dataSource={[
+      '你的组件库需要输出 UMD 格式供 CDN 直接使用',
+      '你需要细粒度控制打包行为（如自定义 chunk 拆分、CSS 提取）',
+      '你正在构建一个需要极致 tree-shaking 效果的库',
+      '你的项目已经在使用 Rollup，希望统一构建标准',
+    ]}
+    renderItem={(item) => <List.Item>{item}</List.Item>}
+  />
+</Card>
+
+<Card title="四、Rollup 配置示例" style={{ marginBottom: 24 }}>
+  <pre style={{ background: '#1e1e1e', color: '#d4d4d4', padding: 16, borderRadius: 8, overflow: 'auto', fontSize: 13 }}>
+{`// rollup.config.js
+import typescript from '@rollup/plugin-typescript';
+import terser from '@rollup/plugin-terser';
+import dts from 'rollup-plugin-dts';
+
+export default [
+  {
+    input: 'src/index.ts',
+    output: [
+      { file: 'dist/index.js', format: 'cjs' },
+      { file: 'dist/index.mjs', format: 'esm' },
+      { file: 'dist/index.umd.js', format: 'umd', name: 'MyButton' },
+    ],
+    plugins: [
+      typescript({ declaration: false }),
+      terser(),
+    ],
+    external: ['react', 'react-dom'],
+  },
+  {
+    input: 'src/index.ts',
+    output: { file: 'dist/index.d.ts', format: 'esm' },
+    plugins: [dts()],
+  },
+];`}
+  </pre>
+</Card>
+
+<Card title="五、Rollup 构建的核心原理" style={{ marginBottom: 24 }}>
+  <List
+    size="small"
+    dataSource={[
+      '模块图构建：Rollup 从入口文件开始，通过 import/export 语句构建完整的模块依赖图（AST 级别的分析）',
+      'Tree Shaking 分析：Rollup 遍历模块图，标记所有被使用的导出（live binding），未使用的导出在输出阶段被剔除',
+      'TypeScript 编译：@rollup/plugin-typescript 使用 typescript 编译器 API 编译源码，但不输出类型声明',
+      '作用域提升：Rollup 将多个模块的源代码合并到同一个作用域中，减少运行时函数调用开销',
+      '格式转换：根据 output.format 参数，将 ES Module 的内部表示转换为目标格式（CJS/ESM/UMD/IIFE）',
+      '类型声明：rollup-plugin-dts 独立提取 TypeScript 类型声明，也将多个 .d.ts 文件 bundle 为单个文件',
+    ]}
+    renderItem={(item) => <List.Item>{item}</List.Item>}
+  />
+</Card>
+
+### 方案三：tsc 手动编译 —— 最简单但最基础
+
+直接用 TypeScript 编译器（tsc）编译源码，不经过任何打包步骤。这种方式适用于学习用途或非常简单的包。
+
+<Card title="一、tsc 方案的问题" style={{ marginBottom: 24 }}>
+  tsc 只做"编译"，不做"打包"。这意味着：
+
+  <List
+    size="small"
+    dataSource={[
+      '每个源文件都会输出一个独立的 JS 文件，而不是单个 bundle——使用者需要 import 多个路径',
+      '不支持 JSX/TSX 转换（需要在 tsconfig 中配置 jsx: "react-jsx"）',
+      '没有代码压缩功能',
+      '不支持 tree-shaking（未使用的导出不会被剔除）',
+      '需要手动复制 package.json 到输出目录，或使用 tscpaths 等辅助工具',
+      '没有自动的 --clean 功能，需要手动删除旧文件',
+    ]}
+    renderItem={(item) => <List.Item>{item}</List.Item>}
+  />
+</Card>
+
+<Card title="二、tsc 方案的优缺点" style={{ marginBottom: 24 }}>
+  <List
+    size="small"
+    header={<Typography.Text strong>优点</Typography.Text>}
+    dataSource={[
+      '零额外依赖——仅需 typescript，学习成本最低',
+      '配置直观——tsconfig.json 即可完成所有配置',
+      '适合超小包（1-2 个文件）或纯类型库',
+    ]}
+    renderItem={(item) => <List.Item>✅ {item}</List.Item>}
+    style={{ marginBottom: 8 }}
+  />
+  <List
+    size="small"
+    header={<Typography.Text strong>缺点</Typography.Text>}
+    dataSource={[
+      '无打包功能——每个源文件单独输出，不适合有多个源文件的组件库',
+      '无代码压缩——生产包体积较大',
+      '无自动多格式输出——需要自己写脚本来生成 ESM 和 CJS 两份代码',
+      '无内置类型声明 bundle——需配置 declaration: true 但每个文件独立输出 .d.ts',
+    ]}
+    renderItem={(item) => <List.Item>❌ {item}</List.Item>}
+  />
+</Card>
+
+<Card title="三、tsc 方案适合哪些场景" style={{ marginBottom: 24 }}>
+  <List
+    size="small"
+    dataSource={[
+      '只有一个文件的超小工具库',
+      '纯类型库（仅包含 TypeScript 类型定义）',
+      '学习 npm 包封装流程的阶段',
+      '配合 esbuild 等其他工具做增量编译',
+    ]}
+    renderItem={(item) => <List.Item>{item}</List.Item>}
+  />
+</Card>
+
+<Card title="四、tsc 配置示例" style={{ marginBottom: 24 }}>
+  <pre style={{ background: '#1e1e1e', color: '#d4d4d4', padding: 16, borderRadius: 8, overflow: 'auto', fontSize: 13 }}>
+{`// tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "declaration": true,
+    "declarationDir": "dist",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "include": ["src"]
+}`}
+  </pre>
+  使用 tsc 后，通常还需要搭配一个构建脚本来自动化处理：
+
+  <pre style={{ background: '#1e1e1e', color: '#d4d4d4', padding: 16, borderRadius: 8, overflow: 'auto', fontSize: 13, marginTop: 8 }}>
+{`"scripts": {
+  "build": "tsc",
+  "build:esm": "tsc --module ESNext --outDir dist/esm",
+  "build:cjs": "tsc --module CommonJS --outDir dist/cjs",
+  "postbuild": "cp package.json dist/ && cp README.md dist/"
+}`}
+  </pre>
+</Card>
+
+<Card title="五、tsc 编译的核心原理" style={{ marginBottom: 24 }}>
+  <List
+    size="small"
+    dataSource={[
+      '语法分析：tsc 调用 TypeScript 编译器核心，将 .ts/.tsx 文件解析为 AST（抽象语法树）',
+      '类型检查：在整个程序范围内进行类型推导和类型检查，报告类型错误',
+      '类型擦除：去除所有 TypeScript 类型注解（interface、type、泛型等），转换为纯 JavaScript',
+      '语法降级：根据 target 配置（如 ES2020），将高级语法（可选链、空值合并等）降级为兼容语法',
+      '模块格式转换：根据 module 配置（ESNext/CommonJS），将 import/export 转换为目标模块格式',
+      '文件输出：按照 tsconfig.json 的 outDir 配置，将编译结果写入磁盘，保持与源文件相同的目录结构',
+      '声明生成：如果 declaration: true，同时为每个源文件生成对应的 .d.ts 类型声明文件',
+    ]}
+    renderItem={(item) => <List.Item>{item}</List.Item>}
+  />
+</Card>
+
+---
+
+## 四、构建流程全景图
+
+不论使用哪种工具，从源码到 npm registry 的完整链路都是一致的：
+
+<MermaidViewer source={buildPipeline} />
+
+三个工具的共同点：
+
+- 都需要将 TypeScript 编译为 JavaScript
+- 都需要生成类型声明文件（.d.ts）
+- 都需要通过 npm publish 将产物上传到 registry
+
+三者的核心差异在于 **"编译+打包"是否由同一个工具完成**：
+
+- tsup：esbuild 一站式完成（编译 + bundle + 多格式 + dts）
+- Rollup：Rollup + 多个插件组合完成
+- tsc：仅完成编译，打包需额外工具
+
+---
+
+## 五、发布流程与版本管理
+
+### 5.1 发布完整流程
+
+<MermaidViewer source={publishFlow} />
+
+### 5.2 版本管理 —— semver 语义化版本
+
+<Card title="SemVer 版本号规范" style={{ marginBottom: 24 }}>
+  <Table
+    columns={semverTable.columns}
+    dataSource={semverTable.dataSource}
+    pagination={false}
+    size="small"
+    bordered
+  />
+</Card>
+
+**实用命令备忘：**
+
+<pre style={{ background: '#1e1e1e', color: '#d4d4d4', padding: 16, borderRadius: 8, overflow: 'auto', fontSize: 13 }}>
+{`# npm version 会自动更新 package.json 版本号并创建 git tag
+npm version patch   # 1.0.0 → 1.0.1（补丁修复）
+npm version minor   # 1.0.0 → 1.1.0（新增功能，向后兼容）
+npm version major   # 1.0.0 → 2.0.0（破坏性变更）
+
+# 发布（会自动触发 prepublishOnly → build）
+npm publish
+
+# 作用域包发布为 public
+npm publish --access public`}
+</pre>
+
+### 5.3 发布前 Checklist
+
+<Card style={{ marginBottom: 24 }}>
+  <List
+    size="small"
+    dataSource={[
+      'main / module / types / exports 字段配置正确',
+      'files 只包含 dist/ 目录',
+      'sideEffects 已正确标记',
+      'React 等运行时依赖放在 peerDependencies',
+      '运行 npm run build 确认构建成功',
+      '运行 npm pack --dry-run 查看发布文件列表',
+      '运行 npm version patch 更新版本并打 tag',
+      '确保 git 工作区干净（无未提交的修改）',
+    ]}
+    renderItem={(item) => <List.Item>{item}</List.Item>}
+  />
+</Card>
+
+---
+
+## 六、互动演示
+
+<LiveDemo />
+
+---
+
+## 七、核心原理总结
+
+### 7.1 构建工具的核心职责
+
+不管使用什么工具，封装 npm 包时构建工具需要解决三个核心问题：
+
+1. **格式转换**：TypeScript → JavaScript、TSX → JSX/JS
+2. **模块整合**：多个源文件 → 单一输出文件（bundle），或按需输出多文件
+3. **元信息生成**：类型声明 `.d.ts`、Source Map、压缩包
+
+### 7.2 为什么需要双格式输出（ESM + CJS）
+
+JavaScript 生态目前处于 ESM 和 CJS 并存的过渡期：
+
+- **使用者的项目可能是 CJS**（Node.js 传统项目，通过 require 加载）
+- **使用者的项目可能是 ESM**（现代项目，通过 import 加载，支持 tree-shaking）
+- **使用者的构建工具不同**（Webpack 5 优先使用 module 字段，Rollup 优先使用 exports.import）
+
+因此，"一个组件库发布时需要同时提供 `.js`（CJS）和 `.mjs`（ESM）两份构建产物"是当前的最佳实践。tsup 的 `--format esm,cjs` 就是干这件事的。
+
+### 7.3 sideEffects 与 Tree Shaking 的关系
+
+`sideEffects: false` 告诉打包工具："这个包的所有模块都没有副作用，可以安全地删除未使用的导出"。
+
+**副作用**指模块在导入时就会执行的代码（不依赖任何导出），例如：
+
+<CodeDiff
+  oldValue="import './global.css'    // 即使不导出任何内容，也会执行 CSS 注入"
+  newValue="import { Button } from 'my-button'  // 如果只用了 Button，Input 的代码会被 tree-shaking 掉"
+  leftTitle="有副作用的导入"
+  rightTitle="无副作用的导入"
+  type="warning"
+  hideDiffMarkers={true}
+/>
+
+如果你的包引入了全局 CSS 或有模块级副作用代码（如 `Object.defineProperty` 操作），需要正确标记 `sideEffects` 数组，而不是简单地写 `false`：
+
+<pre style={{ background: '#1e1e1e', color: '#d4d4d4', padding: 16, borderRadius: 8, overflow: 'auto', fontSize: 13 }}>
+{`// 只有特定文件有副作用
+"sideEffects": [
+  "./dist/global.css",
+  "./dist/polyfill.js"
+]`}
+</pre>
+
+---
+
+## 总结：一句话建议
+
+| 场景 | 推荐方案 |
+|---|---|
+| 新项目、中小型组件库 | **tsup**（零配置、速度快、够用） |
+| 大型组件库、需要 UMD 输出 | **Rollup**（tree-shaking 最强、插件生态丰富） |
+| 纯类型库或学习用途 | **tsc**（最简单、无额外依赖） |

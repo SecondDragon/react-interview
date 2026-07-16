@@ -1,0 +1,37 @@
+flowchart TB
+    subgraph HybridApp["Hybrid 应用容器"]
+        direction TB
+        subgraph NativeLayer["原生层 (Native)"]
+            NativeAPI["原生 API<br/>摄像头/蓝牙/支付/定位"]
+            BridgeNative["JSBridge 原生端<br/>JavaScriptCore / JSI / WKScriptMessageHandler"]
+            WebViewContainer["WebView 容器<br/>WKWebView / Android WebView"]
+        end
+
+        subgraph WebLayer["Web 层 (H5)"]
+            BridgeWeb["JSBridge Web 端<br/>window.__bridge__"]
+            BusinessCode["业务代码<br/>React / Vue / 小程序"]
+            UIRendering["UI 渲染<br/>DOM / Canvas"]
+        end
+
+        subgraph Communication["通信桥接"]
+            direction LR
+            JS2N["JS → Native<br/>调用原生能力"]
+            N2JS["Native → JS<br/>推送事件/回调"]
+        end
+    end
+
+    NativeAPI --> BridgeNative
+    BridgeNative --> WebViewContainer
+    WebViewContainer --> BridgeWeb
+    BridgeWeb --> UIRendering
+    BridgeWeb --> BusinessCode
+
+    BridgeWeb -- "postMessage" --> JS2N
+    BridgeNative -- "evaluateJavaScript" --> N2JS
+    JS2N --> BridgeNative
+    N2JS --> BridgeWeb
+
+    style HybridApp fill:#f0f5ff,stroke:#1890ff,stroke-width:2px
+    style NativeLayer fill:#e6f7ff,stroke:#69c0ff,stroke-dasharray:4
+    style WebLayer fill:#fff7e6,stroke:#ffc53d,stroke-dasharray:4
+    style Communication fill:#f6ffed,stroke:#95de64

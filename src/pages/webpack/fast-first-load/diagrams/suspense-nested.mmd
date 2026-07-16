@@ -1,0 +1,18 @@
+graph TD
+    subgraph "Route Level（路由级）"
+        A("User visits /dashboard") --> B("Dashboard chunk<br/>webpackPrefetch ✅ 已缓存")
+        B --> C("Suspense 触发渲染")
+    end
+
+    subgraph "Component Level（组件级）"
+        C --> D("渲染标题、导航等轻量 UI")
+        C --> E("遇到 <Suspense fallback={}> 包围的重组件")
+        E --> F("显示骨架屏 (Skeleton)")
+        E --> G("触发子 chunk 的 import() 加载")
+        G --> H("EChartsChart chunk 加载完成")
+        H --> I("骨架屏 → 真实图表")
+    end
+
+    style D fill:#e8f5e9
+    style F fill:#fff3e0
+    style I fill:#c8e6c9

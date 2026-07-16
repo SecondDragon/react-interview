@@ -1,0 +1,12 @@
+graph LR
+    subgraph "无 SplitChunks：单 Bundle"
+        A("单个 bundle.js<br/>~2.8MB") --- B("react + react-dom ~130KB")
+        A --- C("lodash ~550KB")
+        A --- D("moment ~230KB")
+        A --- E("echarts ~780KB")
+        A --- F("业务代码 ~500KB")
+        A --- G("组件代码 ~300KB")
+        A --- H("工具函数 ~180KB")
+    end
+
+    style A fill:#ffcdd2,stroke:#f44336

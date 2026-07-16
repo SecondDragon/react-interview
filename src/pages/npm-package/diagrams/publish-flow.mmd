@@ -1,0 +1,24 @@
+flowchart TD
+    A["准备发布"] --> B["npm version &lt;major|minor|patch&gt;"]
+    B --> C["自动更新 package.json 版本号"]
+    C --> D["提交版本更新 git commit"]
+    D --> E["git push + git push --tags"]
+    E --> F["npm run build（构建产物）"]
+    F --> G["npm publish"]
+
+    G --> H{"发布结果"}
+    H -->|"成功"| I["版本上线"]
+    H -->|"失败"| J["检查错误"]
+
+    J --> J1["包名冲突：@scope/name"]
+    J --> J2["权限不足：npm login"]
+    J --> J3["文件缺失：检查 files 字段"]
+    J --> J4["版本已存在：npm version patch"]
+
+    I --> K["使用者 npm install"]
+    K --> L["安装成功"]
+
+    style A fill:#4A90D9,color:#fff
+    style G fill:#2E8B57,color:#fff
+    style I fill:#2E8B57,color:#fff
+    style K fill:#E8FDE8

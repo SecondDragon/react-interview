@@ -1,0 +1,31 @@
+sequenceDiagram
+    participant Dev as 开发者
+    participant TS as TypeScript 源码
+    participant Builder as 构建工具<br/>(tsup / Rollup / tsc)
+    participant Dist as dist/ 输出目录
+    participant Npm as npm registry
+
+    Dev->>TS: 编写组件源码（.ts/.tsx）
+    Dev->>Builder: 执行 npm run build
+
+    alt tsup 构建流程
+        Builder->>Builder: esbuild 解析 AST
+        Builder->>Builder: 编译 TS → JS（ESNext）
+        Builder->>Builder: 生成 ESM 格式（index.mjs）
+        Builder->>Builder: 生成 CJS 格式（index.js）
+        Builder->>Builder: 生成 dts 声明（index.d.ts）
+    else Rollup 构建流程
+        Builder->>Builder: Rollup 解析模块依赖图
+        Builder->>Builder: @rollup/plugin-typescript 编译
+        Builder->>Builder: 生成 ESM / CJS / UMD
+        Builder->>Builder: 生成 dts 声明（rollup-plugin-dts）
+    else tsc 编译流程
+        Builder->>Builder: tsc 逐文件编译
+        Builder->>Builder: 仅输出 JS（需配合 cp 或 tscpaths）
+        Builder->>Builder: 无 bundle/压缩
+    end
+
+    Builder->>Dist: 输出构建产物
+    Dev->>Dist: 检查产物完整性
+    Dev->>Npm: npm publish（上传 dist/ + package.json + README）
+    Npm-->>Dev: 发布成功，版本号锁定

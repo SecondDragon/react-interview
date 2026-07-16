@@ -1,0 +1,368 @@
+import { Card, Table, Typography, Alert, Tag } from 'antd';
+import CodeDiff from '@/components/CodeDiff';
+import MermaidViewer from '@/components/MermaidViewer';
+
+import loadingStrategy from './diagrams/loading-strategy.mmd?raw';
+import suspenseNested from './diagrams/suspense-nested.mmd?raw';
+import loadingTimeline from './diagrams/loading-timeline.mmd?raw';
+
+import routeLevelGood from './demos/route-level.good.tsx?raw';
+import routeLevelBad from './demos/route-level.bad.tsx?raw';
+import cacheGroupsGood from './demos/cache-groups.good.tsx?raw';
+import cacheGroupsBad from './demos/cache-groups.bad.tsx?raw';
+import componentLevelGood from './demos/component-level.good.tsx?raw';
+import componentLevelBad from './demos/component-level.bad.tsx?raw';
+import lazyMountGood from './demos/lazy-mount.good.tsx?raw';
+import lazyMermaidGood from './demos/lazy-mermaid.good.tsx?raw';
+
+import {
+  preloadColumns,
+  preloadData,
+  chunkStrategyColumns,
+  chunkStrategyData,
+  layerColumns,
+  layerData,
+} from './data';
+
+# 首页的极速加载
+
+> 用户打开网站的第一印象，往往在**前 1-2 秒**内形成。如果首页加载超过 3 秒，53% 的用户会直接离开。优化首页加载速度，不只是技术问题，更是产品问题。
+
+<Card style={{ marginBottom: 24 }}>
+  本文从 Webpack 打包优化的角度，系统性地讲解如何让首页（登录页 + 登录后的 Dashboard 首页）实现"像素级秒开"。核心思路是 <strong>多层渐进加载</strong>——不是所有代码都急着加载，而是让用户"先看到能看的，再加载需要的，闲时预取未来要的"。
+</Card>
+
+---
+
+## 一、整体架构：四层渐进加载策略
+
+以下是我们将要实现的整体加载策略：
+
+<MermaidViewer source={loadingStrategy} />
+
+<Table dataSource={layerData} columns={layerColumns} pagination={false} size="small" bordered style={{ marginBottom: 24 }} />
+
+核心原则：
+
+- **entry chunk 只放"必需"**：`react` / `react-dom` / `react-router` + 路由配置外壳。不放任何页面组件。
+- **登录页 preload**：100% 会用到，与 entry 并行下载，零额外等待。
+- **Dashboard prefetch**：预测用户下一步会访问，在登录过程中闲时下载。
+- **组件级懒加载**：页面内的重组件（echarts、大表格）进一步拆为子 chunk，首帧只渲染骨架屏。
+
+---
+
+## 二、Chunk 拆分策略：精确控制第三方库
+
+### 1. 性能问题出现的现象
+
+所有第三方库被打包到一个文件里，导致：
+- **首次加载体积巨大**：echarts（~780KB）这种重型库被混在 vendor 中，用户访问登录页也要下载
+- **缓存粒度太粗**：更新 echarts 版本 → 整个 vendor 的 hash 变化 → react 等稳定库的缓存也一同失效
+- **预加载策略无法精确控制**：想预取某个页面时，捎带上了大量无关库
+
+### 2. 底层原因
+
+SplitChunksPlugin 默认的 `cacheGroups.vendor` 会将 node_modules 下的所有包合并到一个文件。这在小型项目中没问题，但在大型项目（包含 echarts、antd、moment 等重型库）中，vendor 体积可能超过 1.5MB gzip。
+
+### 3. 解决方案：精细分组
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Paragraph>
+    <strong>核心原则：</strong>按"稳定性和重要性"分组——最稳定的（react）单独一组，最重的（echarts）单独一组，变化频率高的单独一组。
+  </Typography.Paragraph>
+</Card>
+
+<CodeDiff
+  oldValue={cacheGroupsBad}
+  newValue={cacheGroupsGood}
+  leftTitle="❌ 反面教材：所有第三方库混在一起"
+  rightTitle="✅ 最佳实践：按稳定性分层分组"
+  type="error"
+  hideDiffMarkers={true}
+/>
+
+拆分后的效果：
+
+<Table dataSource={chunkStrategyData} columns={chunkStrategyColumns} pagination={false} size="small" bordered style={{ marginBottom: 24 }} />
+
+---
+
+## 三、预加载策略：preload vs prefetch
+
+### 1. preload 和 prefetch 的区别
+
+<Table dataSource={preloadData} columns={preloadColumns} pagination={false} size="small" bordered style={{ marginBottom: 24 }} />
+
+### 2. 代码演示
+
+<Card style={{ marginBottom: 24 }}>
+  <CodeDiff
+    oldValue={routeLevelBad}
+    newValue={routeLevelGood}
+    leftTitle="❌ 反面教材：无预加载策略"
+    rightTitle="✅ 最佳实践：preload + prefetch 分层预取"
+    type="error"
+    hideDiffMarkers={true}
+  />
+</Card>
+
+### 3. 完整的加载时间线
+
+<MermaidViewer source={loadingTimeline} />
+
+<Card style={{ marginBottom: 16, background: '#e6f7ff' }}>
+  <Typography.Paragraph style={{ marginBottom: 0 }}>
+    <strong>关键洞察：</strong>登录 API 请求本身需要 ~300ms 的网络延迟。这段时间正好被用来 <strong>prefetch</strong> Dashboard 和 echarts 的 chunk。等到登录成功跳转时，所有资源已经就绪——用户感知到的加载时间为零。
+  </Typography.Paragraph>
+</Card>
+
+---
+
+## 四、组件级懒加载：不只是首页，所有重页面都适用
+
+> 你问了一个很好的问题："如果不是首页呢？有些页面很重，但有些东西明明可以慢一点，而不是都挤在一起加载。在渲染完成前可以展示一些骨架屏。"
+
+这个思路就是**组件级懒加载**——不只在路由层面切 chunk，在页面内部也切。
+
+### 1. 性能问题出现的现象
+
+以 Dashboard 为例，它包含了：
+- 顶部的统计卡片（StatCards）— 轻量，~5KB
+- 中间的 echarts 图表 — 重量级，~780KB
+- 下方的数据表格 — 中等，~150KB
+- 右侧的复杂表单 — 中等，~200KB
+
+如果同步加载所有组件，即使用户只想看顶部的统计卡片，也必须等待 echarts 加载完成后页面才能渲染。
+
+### 2. 底层原因
+
+React 默认是**同步渲染**的——只要有一个组件还没加载完，整个页面就卡在空白或全局 loading 上。
+
+但是，**echarts 图表在首屏不可见区域，或者用户需要滚动才能看到**。为什么不等用户滚动到那里再加载呢？
+
+### 3. 解决方案：组件级 lazy() + Suspense 嵌套
+
+<Card style={{ marginBottom: 24 }}>
+  <CodeDiff
+    oldValue={componentLevelBad}
+    newValue={componentLevelGood}
+    leftTitle="❌ 反面教材：全部同步加载"
+    rightTitle="✅ 最佳实践：组件级懒加载 + 骨架屏"
+    type="error"
+    hideDiffMarkers={true}
+  />
+</Card>
+
+### 4. 工作原理
+
+<MermaidViewer source={suspenseNested} />
+
+### 5. 多层 Suspense 嵌套的加载效果
+
+```
+时间轴：
+
+T=0ms      用户进入 /dashboard
+            ├── Dashboard chunk 已缓存（prefetch 的功劳）
+            ├── 渲染 <h1>数据概览</h1> + <StatCards /> → 立刻可见
+            ├── 遇到 <Suspense fallback={<Skeleton />}>
+            │     ├── 触发 import('./EChartsChart') 加载 echarts chunk
+            │     └── 显示 Skeleton 骨架屏
+            └── 遇到下一个 <Suspense fallback={...}>
+                  ├── 触发 import('./DataTable') 加载表格 chunk
+                  └── 显示 Skeleton 骨架屏
+
+T=~200ms   echarts chunk 加载完成
+            ├── 骨架屏 → 真实图表
+            └── 用户已经开始阅读 StatCards 了
+
+T=~350ms   表格 chunk 加载完成
+            └── 骨架屏 → 真实表格
+```
+
+<Alert
+  type="success"
+  showIcon
+  message="用户体验效果"
+  description="用户进入页面后 <strong>立即</strong> 看到标题和统计卡片（~30KB 的轻量 UI）。图表和表格区域显示骨架屏，在用户阅读统计数据的几秒内，重组件逐一下载并渐进式替换骨架屏。整个过程用户无感知——他看到的只是'页面在加载'，而不是'页面卡住了'。"
+  style={{ marginBottom: 24 }}
+/>
+
+### 6. 适用场景
+
+组件级懒加载适合以下场景：
+
+| 场景 | 示例 | 推荐策略 |
+|---|---|---|
+| 页面折叠区域 | Tab 面板的第二个 Tab | `lazy()` + `Suspense` |
+| 折叠面板 | Collapse 面板 | `lazy()` + 展开时触发 `import()` |
+| 模态框/抽屉 | 点击按钮才弹出的 Modal | `lazy()` + 按钮 hover 时 prefetch |
+| 首屏不可见区域 | 需要滚动才看到的图表 | `lazy()` + `IntersectionObserver` 触发 |
+| 条件渲染组件 | Admin 面板 | `lazy()` + 权限判断后加载 |
+
+### 7. 核心原理
+
+组件级懒加载依赖两个机制：
+
+**React.lazy()**
+
+`React.lazy()` 接收一个 `() => import()` 函数，返回一个"可暂停渲染"的组件。当 React 在渲染树中遇到 `lazy` 组件时：
+1. 检查该组件对应的 chunk 是否已加载
+2. 如果未加载 → **抛出 Promise**（throw 一个 thenable）
+3. React 的 **Suspense 边界**捕获这个 Promise
+4. 暂停渲染该分支，显示 `fallback`
+5. Promise resolve 后，React 重新尝试渲染
+
+**这个机制和 Error Boundary 非常相似**——Error Boundary 用 `componentDidCatch` 捕获错误，Suspense 用类似机制"捕获加载中的 Promise"。
+
+**Webpack 的魔法注释**
+
+`import(/* webpackPrefetch: true */)` 中的魔法注释在构建阶段被 webpack 解析：
+
+1. webpack 为这个 `import()` 创建一个独立的 async chunk
+2. 在 HTML 中插入 `<link rel="prefetch" href="xxx.chunk.js">` 标签
+3. 浏览器解析到该标签时，在 idle 优先级下载该文件
+
+注意：**`prefetch` 是浏览器行为，不是 webpack 运行时行为**。即使 webpack 运行时没有触发这个 import，只要 HTML 中有 prefetch 标签，浏览器就会下载。
+
+```javascript
+// webpack 编译产物中的示意
+// 1. 为 import() 生成独立的 chunk
+// 2. 在 HTML 中插入：
+<link rel="prefetch" href="/static/js/EChartsChart.chunk.js">
+// 3. 运行时触发 import 时，文件已经在浏览器缓存中
+```
+
+### 8. 通用 LazyMount 组件：不只是列表，所有组件都能用
+
+前面讲的是通过 `lazy()` + `import()` 进行代码层面的拆分。但对于"首屏后的非列表区块"，还有一个更通用的模式——**LazyMount（延迟挂载）**。
+
+#### 为什么需要 LazyMount？
+
+虚拟列表（Virtual List）解决的是"长列表中成百上千个同类 item 的渲染"问题。但实际场景中，一个长页面可能像这样：
+
+```
+┌── 顶部：统计卡片 ──────┐  ← 首屏可见，必须立即渲染
+├── 中部：echarts 图表 ──┤  ← 可能在首屏内，也可能在首屏外
+├── 中部：数据表格 ──────┤  ← 可能需要滚动才看到
+├── 下部：配置表单 ──────┤  ← 需要滚动较多才看到
+└── 底部：页脚说明 ──────┘  ← 几乎要滚到底
+```
+
+在这种情况下，每个区块都是**不同类型**的组件，不适合用虚拟列表。但我们可以用 LazyMount——它包裹任意组件，**只有第一次进入视口附近时才 mount 子组件，之后永不 unmount**。
+
+<CodeDiff
+  oldValue={componentLevelBad}
+  newValue={lazyMountGood}
+  leftTitle="❌ 反面教材：全部同步加载"
+  rightTitle="✅ LazyMount：延迟挂载非首屏区块"
+  type="error"
+  hideDiffMarkers={true}
+/>
+
+#### 实战案例：MermaidViewer + lazy 属性
+
+我们在项目中已经把这个模式集成进了 `<MermaidViewer>` 组件——给它加了一个 `lazy` 属性：
+
+<CodeDiff
+  oldValue={componentLevelBad}
+  newValue={lazyMermaidGood}
+  leftTitle="❌ 无延迟（所有图同步渲染）"
+  rightTitle="✅ 启用 lazy（第二张图滚动到附近才渲染）"
+  type="error"
+  hideDiffMarkers={true}
+/>
+
+当 `lazy` 为 `true` 时，MermaidViewer 内部会用 LazyMount 包裹 mermaid 渲染区域：
+
+- 工具栏（边框、缩放按钮）**立即渲染**，占据空间
+- 渲染区域显示 **Spin 加载提示**
+- 当滚动到该图附近 **100px** 时，才执行 `mermaid.render()` 生成 SVG
+- 之后保持 mount，滚动离开再回来也不会重新渲染
+
+#### LazyMount 的设计原理
+
+```tsx
+// 核心逻辑 — 同步检测 + IO 兜底
+function isInViewport(el: HTMLElement, margin: number): boolean {
+  const rect = el.getBoundingClientRect();
+  return (
+    rect.bottom >= -margin &&
+    rect.top <= window.innerHeight + margin
+  );
+}
+
+useEffect(() => {
+  // 策略一：同步检测 → 解决"一开始就在视口内"不触发的问题
+  if (isInViewport(ref.current, rootMargin)) {
+    setHasMounted(true);
+    return;
+  }
+
+  // 策略二：IntersectionObserver → 后续滚动进入视口时触发
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      if (entry.isIntersecting) {
+        setHasMounted(true);
+        observer.disconnect();
+      }
+    },
+    { rootMargin: '100px' },
+  );
+  observer.observe(ref.current);
+  return () => observer.disconnect();
+}, []);
+```
+
+核心要点：
+
+1. **`getBoundingClientRect()` 同步判断**：如果元素已经在视口内，直接 mount，不依赖 IO 的异步回调。这就解决了你说的"如果一开始就在页面中不会触发他"的问题。
+
+2. **IntersectionObserver 兜底**：对于后续滚动才进入视口的元素，用 IO 监听，`rootMargin: '100px'` 提前触发，让渲染有缓冲时间。
+
+3. **只触发一次**：`setHasMounted(true)` 后 `observer.disconnect()`，组件 mount 后永久保留，不支持 unmount。
+
+#### MermaidViewer 中的具体应用
+
+MermaidViewer 集成 LazyMount 后，`lazy` 属性默认 `false`（向后兼容），按需启用：
+
+```tsx
+// 之前 — 所有 Mermaid 图都在页面加载时渲染
+<MermaidViewer source={diagram1} />
+<MermaidViewer source={diagram2} />
+<MermaidViewer source={diagram3} />
+
+// 之后 — 只在需要时懒加载
+<MermaidViewer source={diagram1} />                  {/* 立即渲染 */}
+<MermaidViewer source={diagram2} lazy />              {/* 滚动到附近才渲染 */}
+<MermaidViewer source={diagram3} lazy />              {/* 同上 */}
+```
+
+这对于包含 5-6 个 Mermaid 图表的"构建流程"页面特别有效——首屏附近的图立即渲染，页面底部的图延迟到用户滚动到那里时才执行 `mermaid.render()`，避免多个 CPU 密集型图表同时渲染阻塞主线程。
+
+---
+
+## 总结：四层渐进加载体系
+
+| 层级 | 技术手段 | 解决什么问题 | 用户感知 |
+|---|---|---|---|
+| 第零层 | entry 轻量化 + SplitChunks 精确分组 | 无关代码不进入初次加载 | 下载快 |
+| 第一层 | 路由级 lazy + preload/prefetch | 页面切换不卡顿 | 跳转快 |
+| 第二层 | 组件级 lazy + Suspense | 首帧只渲染轻量 UI | 看到快 |
+| 第三层 | 骨架屏（Skeleton） | 加载过程中不空白 | 感觉快 |
+
+<Alert
+  type="info"
+  showIcon
+  message="面试回答框架"
+  description={
+    <Typography.Paragraph style={{ marginBottom: 0 }}>
+      面试官问"如何优化首页加载速度"时，推荐按这个思路回答：<br />
+      1. <strong>先拆 entry：</strong>"首先保证入口 bundle 极其轻量，只放 react/router，不放任何页面组件。"<br />
+      2. <strong>再拆 chunk：</strong>"利用 SplitChunksPlugin 精确分组，把 echarts 等重型库拆为独立 chunk。"<br />
+      3. <strong>最后预取：</strong>"对 100% 会访问的页面用 preload 并行加载，对预测会访问的用 prefetch 闲时加载。"<br />
+      4. <strong>还不够？还有组件级：</strong>"如果某个页面本身就很重，可以把页面内的重型组件进一步用 lazy() 拆分，配合 Suspense + 骨架屏，让用户先看到轻量 UI。"<br />
+      5. <strong>收尾总结：</strong>"这套策略概括起来就是——让用户先看到能看的，再加载需要的，闲时预取未来要的。"
+    </Typography.Paragraph>
+  }
+/>

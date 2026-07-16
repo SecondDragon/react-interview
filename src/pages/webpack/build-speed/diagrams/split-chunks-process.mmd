@@ -1,0 +1,49 @@
+sequenceDiagram
+    participant WP as Webpack 内核 (Core)
+    participant Parser as Parser 解析器
+    participant Graph as ModuleGraph
+    participant Chunk as ChunkGraph
+    participant Split as SplitChunksPlugin
+    participant Final as 最终 Chunk
+    participant Output as 文件输出
+
+    Note over WP,Chunk: 阶段一：Webpack 内核 — 动态 import() 自动创建 Chunk 边界
+    Note over WP,Chunk: （此阶段与 SplitChunksPlugin 完全无关）
+
+    WP->>Parser: 从 index.jsx 开始解析
+    Parser->>Graph: 遇到静态 import → 递归解析依赖
+    Parser->>Parser: 遇到动态 import('Home.jsx')...
+
+    rect rgb(255, 243, 224)
+        Note over Parser,Chunk: Webpack Core 自动：每个 import() 创建一个独立的 Async Chunk
+        Parser->>Chunk: 🆕 创建 async chunk: Home.async
+        Parser->>Chunk: 🆕 创建 async chunk: ProductList.async
+        Parser->>Chunk: 🆕 创建 async chunk: OrderList.async
+        Parser->>Chunk: 🆕 创建 async chunk: Dashboard.async
+        Parser->>Chunk: entry.chunk (initial)
+        Chunk->>Chunk: 将各个模块分配到所属 Chunk
+    end
+
+    Note over Chunk: 此时已存在 5 个 Chunk<br/>Webpack Core 完成了模块→Chunk 的初次分配<br/>react 等公共模块被重复分配到多个 Chunk 中
+
+    Note over WP,Chunk: 阶段二：SplitChunksPlugin 介入 — 跨 Chunk 去重
+
+    rect rgb(232, 245, 233)
+        Note over Split,Final: SplitChunksPlugin 只在已有 Chunk 之上做"查重→提取"
+        Split->>Split: 遍历所有模块，统计"该模块出现在哪些 Chunk 中"
+        Split->>Split: react → 5个 Chunk → 提取
+        Split->>Split: lodash → 3个 Chunk → 提取
+        Split->>Split: Table → 2个 Chunk → 提取
+        Split->>Split: format.js → 1个 Chunk → 不提取
+        Split->>Split: 应用 minChunks/minSize/cacheGroups 条件
+        Split->>Final: 创建新 Chunk (vendor / common)
+        Split->>Final: 从原 Chunk 中删除已被提取的模块
+    end
+
+    Final->>Output: vendor.js [react+react-dom+lodash] ← 新增
+    Final->>Output: common.js [Table+request.js]       ← 新增
+    Final->>Output: entry.chunk (Layout 只剩 Layout.jsx)
+    Final->>Output: Home.async (只剩 Home.jsx + format.js)
+    Final->>Output: ProductList.async (只剩 ProductList.jsx)
+    Final->>Output: OrderList.async (只剩 OrderList.jsx)
+    Final->>Output: Dashboard.async (只剩 Dashboard.jsx)

@@ -1,0 +1,222 @@
+import { Card, Table, Tag, Typography, Alert, Collapse } from 'antd';
+import {
+  overviewColumns,
+  differenceGroups,
+  renderingModeColumns,
+  renderingModeData,
+  planColumns,
+  planData,
+} from './data';
+
+# Next.js 专题：与普通 React 开发的全面区别
+
+> 如果你只写过 CRA (Create React App) 或 Vite 搭建的 React SPA，第一次接触 Next.js 时很可能会感到困惑："同样是 React，为什么写法完全不同？" 本专题将系统性地梳理 Next.js 与传统 React 开发在**渲染模式、路由、数据获取、打包、部署**等各个维度的根本差异，并揭示背后的设计原理。
+
+<Card style={{ marginBottom: 24 }}>
+  <Typography.Title level={5}>什么是 Next.js？</Typography.Title>
+  <Typography.Paragraph>
+    Next.js 是 Vercel 公司维护的 **React 全栈框架**。它不是一个"React 加强版"，而是一个**在 React 之上构建的 Web 应用框架**，提供了传统 React SPA 不具备的**服务端能力**。
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    可以把关系理解为：**React 是 UI 库（提供组件模型），Next.js 是应用框架（提供路由、渲染、数据获取、构建优化等完整方案）**。
+  </Typography.Paragraph>
+</Card>
+
+---
+
+## 一、根本原因：CSR 到 SSR 的范式转换
+
+<Typography.Paragraph>
+  要理解 Next.js 和普通 React 开发的所有区别，首先要抓住最核心的一个转变：**从纯客户端渲染（CSR）到服务端渲染（SSR）的范式转换**。这个转变是一切的根源。
+</Typography.Paragraph>
+
+<Card style={{ marginBottom: 24 }}>
+  <Typography.Title level={5}>普通 React SPA（CSR）的渲染流程</Typography.Title>
+  <Typography.Paragraph>
+    1. 浏览器请求 `index.html`
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    2. 服务器返回一个**几乎为空的 HTML**：`<div id="root"></div>` + `<script src="/bundle.js"></script>`
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    3. 浏览器下载并执行整个 JS Bundle（可能几百 KB）
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    4. JS 执行 `ReactDOM.createRoot().render()`，在客户端渲染所有内容
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    5. 用户**必须等待 JS 下载→解析→执行完成**后才能看到页面内容
+  </Typography.Paragraph>
+</Card>
+
+<Card style={{ marginBottom: 24 }}>
+  <Typography.Title level={5}>Next.js（SSR）的渲染流程</Typography.Title>
+  <Typography.Paragraph>
+    1. 浏览器请求 `/some-page`
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    2. **Next.js 服务器在 Node.js 中运行 React 组件**，将其渲染为完整的 HTML 字符串
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    3. 服务器返回**包含完整内容的 HTML**（标题、段落、图片等都已渲染好）
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    4. 浏览器直接展示 HTML（用户**立即看到内容**）
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    5. 浏览器后台下载 JS Bundle，执行 **Hydration**（为静态 HTML 绑定事件处理器）
+  </Typography.Paragraph>
+</Card>
+
+<Typography.Paragraph>
+  这个**核心流程的差异**导致了后面所有的不同：路由系统、数据获取方式、打包策略、部署方式、SEO 能力……一切都围绕着"代码需要在服务端运行"这个前提展开。
+</Typography.Paragraph>
+
+### Next.js 支持的四种渲染模式
+
+<Typography.Paragraph>
+  Next.js 的强大之处在于不只有 SSR——它提供了四种渲染模式，每个页面可以按需选择：
+</Typography.Paragraph>
+
+<Table dataSource={renderingModeData} columns={renderingModeColumns} pagination={false} size="small" bordered style={{ marginBottom: 24 }} />
+
+---
+
+## 二、Next.js 与普通 React 的十大核心区别
+
+<Typography.Paragraph>
+  以下从 10 个维度详细对比 Next.js 与普通 React 开发的差异。每个差异的本质都可以追溯到第一条——**渲染模式的不同**。
+</Typography.Paragraph>
+
+<Collapse
+  defaultActiveKey={['rendering', 'routing']}
+  style={{ marginBottom: 24 }}
+  size="large"
+  items={differenceGroups.map((group) => ({
+    key: group.key,
+    label: (
+      <span>
+        {group.icon} {group.category}
+      </span>
+    ),
+    children: (
+      <div>
+        <Alert
+          message="核心区别"
+          description={group.summary}
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+
+        <Card
+          size="small"
+          style={{ marginBottom: 12, background: '#f6f8fa' }}
+          title="普通 React (CRA/Vite) 的做法"
+        >
+          <Typography.Paragraph style={{ marginBottom: 0 }}>
+            {group.craApproach}
+          </Typography.Paragraph>
+        </Card>
+
+        <Card
+          size="small"
+          style={{ marginBottom: 12, background: '#f0f5ff' }}
+          title="Next.js 的做法"
+        >
+          <Typography.Paragraph style={{ marginBottom: 0 }}>
+            {group.nextApproach}
+          </Typography.Paragraph>
+        </Card>
+
+        <Card
+          size="small"
+          style={{ marginBottom: 12, background: '#fff7e6' }}
+          title="底层原因"
+        >
+          <Typography.Paragraph style={{ marginBottom: 0 }}>
+            {group.coreReason}
+          </Typography.Paragraph>
+        </Card>
+
+        {group.subTopics.length > 0 && (
+          <div>
+            <Typography.Text strong style={{ fontSize: 13 }}>待展开的子专题：</Typography.Text>
+            <div style={{ marginTop: 8 }}>
+              {group.subTopics.map((topic, idx) => (
+                <Tag key={idx} color="blue" style={{ marginBottom: 4 }}>
+                  {topic}
+                </Tag>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    ),
+  }))}
+/>
+
+---
+
+## 三、一图总览所有差异
+
+<Typography.Paragraph>
+  以下表格将所有 10 个维度的差异汇总在一起，方便快速查阅：
+</Typography.Paragraph>
+
+<Table
+  dataSource={differenceGroups}
+  columns={overviewColumns}
+  pagination={false}
+  size="small"
+  bordered
+  scroll={{ x: 1400 }}
+  style={{ marginBottom: 24 }}
+/>
+
+---
+
+## 四、本专题计划覆盖的子页面
+
+<Typography.Paragraph>
+  以上 10 个维度的差异，每一个都值得独立成篇深入讲解。以下是本专题计划创建的子页面列表（点击左侧菜单导航可浏览已完成的内容）：
+</Typography.Paragraph>
+
+<Table dataSource={planData} columns={planColumns} pagination={false} size="middle" bordered style={{ marginBottom: 24 }} />
+
+---
+
+## 五、写给初学者：学习路线图
+
+<Alert
+  message="推荐学习顺序"
+  description="如果你刚开始接触 Next.js，建议按以下顺序探索本专题"
+  type="info"
+  showIcon
+  style={{ marginBottom: 16 }}
+/>
+
+<Card style={{ marginBottom: 24 }}>
+  <Typography.Paragraph>
+    <Tag color="red">第 1 步</Tag> <strong>渲染模式详解</strong> —— 先搞懂 SSR/SSG/ISR/CSR 的区别，这是所有后续内容的基础
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    <Tag color="volcano">第 2 步</Tag> <strong>路由系统对比</strong> —— 理解文件系统路由的工作方式和 App Router 的约定
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    <Tag color="orange">第 3 步</Tag> <strong>数据获取策略</strong> —— Server Component 如何直接 fetch，与 useEffect 的本质区别
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    <Tag color="gold">第 4 步</Tag> <strong>SEO 与元数据</strong> —— generateMetadata 和结构化数据的使用
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    <Tag color="green">第 5 步</Tag> <strong>打包与代码分割</strong> —— 理解为什么 Next.js 的 Bundle 更小
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    <Tag color="cyan">第 6-11 步</Tag> <strong>其余专题</strong> —— 按需深入图片优化、API Routes、部署等实践性内容
+  </Typography.Paragraph>
+</Card>
+
+<Typography.Paragraph type="secondary" style={{ textAlign: 'center' }}>
+  本专题将持续更新，欢迎通过左侧菜单导航浏览各个子页面。
+</Typography.Paragraph>

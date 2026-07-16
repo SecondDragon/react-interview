@@ -1,0 +1,66 @@
+import { Card, Table, Typography, Alert, Divider, Tag } from 'antd';
+import MermaidViewer from '@/components/MermaidViewer';
+import CodeDiff from '@/components/CodeDiff';
+import BridgeMethodsDetail from './BridgeMethodsDetail';
+import BridgeMethodsLiveDemo from './LiveDemo';
+import overviewDiagram from './diagrams/bridge-methods-overview.mmd?raw';
+import {
+  bridgeMethodsColumns,
+  bridgeMethodsData,
+  summaryColumns,
+  summaryData,
+} from './data';
+
+# 四种主流桥接方式对比
+
+Hybrid 开发中，Web 与 Native 之间的通信桥梁是整个架构的**核心基础设施**。不同的桥接方式在实现复杂度、性能、兼容性和安全性上各有取舍。
+
+本章将深入剖析四种主流的桥接方式，每一种都提供 **Web 端（JavaScript）**、**iOS 端（Swift）** 和 **Android 端（Kotlin）** 的真实代码示例，让你不仅能「懂原理」，还能「会实现」。
+
+## 一、整体架构概览
+
+<Card style={{ marginBottom: 24 }}>
+  下图展示了四种桥接方式在 Web 层与原生层之间的通信路径架构：
+
+  <MermaidViewer source={overviewDiagram} />
+
+  从图中可以看到：
+  - **URL Scheme 拦截** 和 **JavaScript 上下文注入** 是历史最悠久的方案，兼容性最好
+  - **postMessage 双向通信** 是 Apple 和 Google 官方推荐的标准方案
+  - **WebSocket 桥接** 最复杂，但支持真正意义上的全双工通信
+</Card>
+
+## 二、四种方式核心对比
+
+<Card style={{ marginBottom: 24 }}>
+  <Table dataSource={bridgeMethodsData} columns={bridgeMethodsColumns} pagination={false} size="small" bordered />
+</Card>
+
+## 三、详细实现方案（含真实代码）
+
+每一种桥接方式都包含完整的 **JavaScript + Swift + Kotlin** 三端代码示例，点击面板展开查看详情：
+
+<BridgeMethodsDetail />
+
+## 四、互动演示：模拟各方案的通信延迟
+
+<Card style={{ marginBottom: 24, border: '2px solid #1890ff' }}>
+  选择不同的桥接方式，模拟 Web 端调用 Native API 并返回结果的过程。体验各方案在延迟和数据传输能力上的差异：
+
+  <BridgeMethodsLiveDemo />
+</Card>
+
+## 五、方案选型建议
+
+在实际项目中，**从来没有银弹**。正确的做法是根据业务场景选择最适合的方案，通常是 **多种方案的组合**：
+
+<Card style={{ marginBottom: 24 }}>
+  <Table dataSource={summaryData} columns={summaryColumns} pagination={false} size="small" bordered />
+</Card>
+
+<Card title="业界最佳实践参考" style={{ marginBottom: 24 }}>
+  - **微信小程序：** 使用 JSI 注入 + postMessage 混合架构，双线程模型（渲染层 + 逻辑层）
+  - **支付宝 App：** 主要使用 postMessage 标准 API，URL Scheme 作为降级方案
+  - **抖音/头条：** 自研 JSBridge，基于 JSI 注入 + WebSocket 桥接做实时通信
+  - **美团/大众点评：** 采用 JSI 注入为主，URL Scheme 做兜底降级
+</Card>

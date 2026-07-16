@@ -1,0 +1,49 @@
+flowchart TB
+    classDef web fill:#E3F2FD,stroke:#1565C0,stroke-width:2px,color:black
+    classDef bridge fill:#FFF3E0,stroke:#E65100,stroke-width:2px,color:black
+    classDef native fill:#E8F5E9,stroke:#2E7D32,stroke-width:2px,color:black
+
+    subgraph Web["🌐 Web 层"]
+        JS["JavaScript Bridge Client"]
+    end
+
+    subgraph Bridge["🔗 四种桥接方式 | Web → Native 通信路径"]
+        direction TB
+        M1["1️⃣ URL Scheme 拦截"]
+        M2["2️⃣ JavaScript 上下文注入"]
+        M3["3️⃣ postMessage 双向通信"]
+        M4["4️⃣ 本地 WebSocket Server"]
+    end
+
+    subgraph Native["📱 原生层 - 拦截/接收端"]
+        subgraph iOS["iOS 实现"]
+            iOS1["WKNavigationDelegate<br/>拦截 navigateAction"]
+            iOS2["WKUserScript 注入全局对象<br/>evaluateJavaScript 回调"]
+            iOS3["WKUserContentController<br/>注册 scriptMessageHandler"]
+            iOS4["NWListener<br/>Network.framework 本地 Server"]
+        end
+        subgraph Android["Android 实现"]
+            Android1["WebViewClient<br/>shouldOverrideUrlLoading"]
+            Android2["addJavascriptInterface<br/>@JavascriptInterface 同步注入"]
+            Android3["addJavascriptInterface<br/>封装 postMessage 协议"]
+            Android4["ServerSocket<br/>WebSocket 握手实现"]
+        end
+    end
+
+    JS --> M1
+    JS --> M2
+    JS --> M3
+    JS --> M4
+
+    M1 --> iOS1
+    M1 --> Android1
+    M2 --> iOS2
+    M2 --> Android2
+    M3 --> iOS3
+    M3 --> Android3
+    M4 --> iOS4
+    M4 --> Android4
+
+    class JS web
+    class M1,M2,M3,M4 bridge
+    class iOS1,iOS2,iOS3,iOS4,Android1,Android2,Android3,Android4 native

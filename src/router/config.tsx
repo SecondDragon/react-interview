@@ -15,6 +15,7 @@ import {
   GlobalOutlined,
   FileTextOutlined,
   BookOutlined,
+  BuildOutlined,
 } from '@ant-design/icons';
 
 export interface RouteConfig {
@@ -34,7 +35,8 @@ export interface RouteConfig {
 // 懒加载组件
 const Overview = lazy(() => import('../pages/overview/index'));
 const ReactApiLearning = lazy(() => import('../pages/react-api/index'));
-const UseTransitionPage = lazy(() => import('../pages/react-api/useTransition/index'));
+const UseTransitionPageImporter = () => import('../pages/react-api/useTransition/index');
+const UseTransitionPage = lazy(UseTransitionPageImporter);
 const TaskList = lazy(() => import('../pages/tasks/TaskList'));
 const MyTasks = lazy(() => import('../pages/tasks/MyTasks'));
 const UserList = lazy(() => import('../pages/users/UserList'));
@@ -69,6 +71,9 @@ const DynamicFormPage = lazy(() => import('../pages/components-encapsulation/Dyn
 const ProDynamicFormPage = lazy(
   () => import('../pages/components-encapsulation/ProDynamicForm/index')
 );
+
+const HybridPage = lazy(() => import('../pages/hybrid/index'));
+const HybridBridgeMethodsPage = lazy(() => import('../pages/hybrid/bridge-methods/index'));
 
 // 兼容性问题组件
 const MobileViewport = lazy(() => import('../pages/compatibility/mobile/MobileViewport/index'));
@@ -121,6 +126,12 @@ const QiankunOverviewPage = lazy(() => import('../pages/qiankun/overview/index')
 const QiankunCommunicationPage = lazy(() => import('../pages/qiankun/communication/index'));
 const QiankunSandboxPage = lazy(() => import('../pages/qiankun/sandbox/index'));
 const QiankunLoadMicroAppPage = lazy(() => import('../pages/qiankun/load-micro-app/index'));
+const WebpackOverview = lazy(() => import('../pages/webpack/overview/index'));
+const BuildSpeed = lazy(() => import('../pages/webpack/build-speed/index'));
+const FastFirstLoad = lazy(() => import('../pages/webpack/fast-first-load/index'));
+
+const NextjsOverview = lazy(() => import('../pages/nextjs/index'));
+const NpmPackage = lazy(() => import('../pages/npm-package/index'));
 
 export const dashboardRoutes: RouteConfig[] = [
   {
@@ -278,6 +289,8 @@ export const dashboardRoutes: RouteConfig[] = [
         path: '/dashboard/react-api/use-transition',
         label: 'useTransition',
         element: <UseTransitionPage />,
+        importFn: UseTransitionPageImporter,
+        idlePrefetch: true,
       },
     ],
   },
@@ -500,6 +513,63 @@ export const dashboardRoutes: RouteConfig[] = [
         path: '/dashboard/js-basics/module-systems',
         label: 'JavaScript 模块化',
         element: <ModuleSystems />,
+      },
+    ],
+  },
+  {
+    path: '/dashboard/hybrid',
+    label: '混合开发（Hybrid）',
+    icon: <PhoneOutlined />,
+    children: [
+      {
+        path: '/dashboard/hybrid/overview',
+        label: 'Hybrid 开发详解',
+        element: <HybridPage />,
+      },
+      {
+        path: '/dashboard/hybrid/bridge-methods',
+        label: '四种桥接方式对比',
+        element: <HybridBridgeMethodsPage />,
+      },
+    ],
+  },
+  {
+    path: '/dashboard/webpack',
+    label: 'Webpack 打包知识',
+    icon: <ToolOutlined />,
+    children: [
+      {
+        path: '/dashboard/webpack/overview',
+        label: '章节概览',
+        element: <WebpackOverview />,
+      },
+      {
+        path: '/dashboard/webpack/build-speed',
+        label: '构建速度优化',
+        element: <BuildSpeed />,
+      },
+      {
+        path: '/dashboard/webpack/fast-first-load',
+        label: '首页的极速加载',
+        element: <FastFirstLoad />,
+      },
+    ],
+  },
+  {
+    path: '/dashboard/npm-package',
+    label: 'npm 包封装',
+    icon: <BuildOutlined />,
+    element: <NpmPackage />,
+  },
+  {
+    path: '/dashboard/nextjs',
+    label: 'Next.js 专题',
+    icon: <BookOutlined />,
+    children: [
+      {
+        path: '/dashboard/nextjs/overview',
+        label: '专题概览',
+        element: <NextjsOverview />,
       },
     ],
   },

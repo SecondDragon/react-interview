@@ -1,0 +1,20 @@
+graph LR
+    subgraph "有 SplitChunks：多 Chunk 并行输出"
+        A("vendor.js<br/>~680KB<br/>hash: a1b2c3") --- B("react + react-dom + lodash")
+        C("moment.js<br/>~230KB<br/>hash: d4e5f6") --- D("moment")
+        E("echarts.js<br/>~780KB<br/>hash: g7h8i9") --- F("echarts")
+        G("common.js<br/>~400KB<br/>hash: j0k1l2") --- H("Table + request.js")
+        I("Home.js<br/>~60KB<br/>hash: m3n4o5") --- J("Home 页面")
+        K("ProductList.js<br/>~120KB<br/>hash: p6q7r8") --- L("ProductList 页面")
+        M("OrderList.js<br/>~100KB<br/>hash: s9t0u1") --- N("OrderList 页面")
+        O("Dashboard.js<br/>~80KB<br/>hash: v2w3x4") --- P("Dashboard 页面")
+    end
+
+    style A fill:#c8e6c9,stroke:#4caf50
+    style C fill:#c8e6c9,stroke:#4caf50
+    style E fill:#c8e6c9,stroke:#4caf50
+    style G fill:#c8e6c9,stroke:#4caf50
+    style I fill:#e3f2fd,stroke:#2196f3
+    style K fill:#e3f2fd,stroke:#2196f3
+    style M fill:#e3f2fd,stroke:#2196f3
+    style O fill:#e3f2fd,stroke:#2196f3

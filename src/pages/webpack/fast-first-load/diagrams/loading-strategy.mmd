@@ -1,0 +1,25 @@
+graph TD
+    subgraph "entry chunk (initial)"
+        A("react / react-dom / react-router<br/>~42KB gzip")
+        B("路由配置 + Suspense 外壳<br/>~5KB")
+        C("Layout 骨架<br/>~3KB")
+    end
+
+    subgraph "preload（并行下载）"
+        D("Login chunk<br/>~15KB gzip<br/>登录表单 + 基础样式")
+    end
+
+    subgraph "prefetch（闲时下载）"
+        E("Dashboard chunk<br/>~30KB gzip<br/>标题、导航、骨架屏")
+        F("EChartsChart chunk<br/>~780KB<br/>echarts 图表")
+        G("其他页面 chunk<br/>各 ~50-200KB")
+    end
+
+    A --- B --- C
+    style A fill:#e1f5fe
+    style B fill:#e1f5fe
+    style C fill:#e1f5fe
+    style D fill:#fff3e0,stroke:#ff9800
+    style E fill:#e8f5e9,stroke:#4caf50
+    style F fill:#e8f5e9,stroke:#4caf50,stroke-dasharray: 5 5
+    style G fill:#f3e5f5,stroke:#9c27b0

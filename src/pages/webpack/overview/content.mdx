@@ -1,0 +1,144 @@
+import { Card, Table, Tag, Typography, Alert, Collapse } from 'antd';
+
+import {
+  topicColumns,
+  topicData,
+  coreConceptColumns,
+  coreConceptData,
+} from './data';
+
+# Webpack 打包知识专题
+
+> 工欲善其事，必先利其器。Webpack 是现代前端工程化中**最核心的构建工具**之一，掌握它的工作原理和优化策略，是高级前端工程师的必备技能。
+
+<Card style={{ marginBottom: 24 }}>
+  本专题将系统性地深入 Webpack 的各个核心领域，从**基础概念**到**高级优化**，从**Loader/Plugin 开发**到**构建性能调优**，帮助你建立起完整的 Webpack 知识体系。
+</Card>
+
+---
+
+## 一、为什么前端需要 Webpack？
+
+<Typography.Paragraph>
+  在 Webpack 出现之前，前端项目面临以下痛点：
+</Typography.Paragraph>
+
+<Card style={{ marginBottom: 24 }}>
+  <Typography.Paragraph>
+    - **模块化缺失：** 没有原生的模块系统（ES Modules 标准虽已提出，但浏览器支持慢），全局变量污染严重
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    - **资源管理混乱：** CSS、图片、字体等非 JS 资源缺乏统一的管理和加载方式
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    - **依赖管理困难：** 没有成熟的包管理工具配合，第三方库的管理和版本控制困难
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    - **性能优化缺失：** 代码压缩、Tree Shaking、代码分割等现代优化手段完全空白
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    - **开发体验差：** 缺少热更新、Source Map、开发服务器等提升效率的工具
+  </Typography.Paragraph>
+</Card>
+
+`Webpack` 通过将一切视为**模块**（从 JS 到 CSS、图片、字体），并提供一个高度可扩展的**插件系统**，彻底解决了上述问题。它不仅是打包工具，更是**前端工程化的基石**。
+
+---
+
+## 二、核心概念速览
+
+<Card style={{ marginBottom: 24 }}>
+  以下表格总结了 Webpack 的核心概念，后续每个子页面都会深入展开讲解。
+</Card>
+
+<Table dataSource={coreConceptData} columns={coreConceptColumns} pagination={false} size="small" bordered style={{ marginBottom: 24 }} />
+
+---
+
+## 三、专题内容一览
+
+本专题计划覆盖以下核心知识点：
+
+<Table dataSource={topicData} columns={topicColumns} pagination={false} size="middle" bordered style={{ marginBottom: 24 }} />
+
+---
+
+## 四、前置知识要求
+
+<Alert
+  message="学习前提"
+  description="为了能够顺畅地学习本专题，建议你具备以下基础知识"
+  type="info"
+  showIcon
+  style={{ marginBottom: 16 }}
+/>
+
+<Card style={{ marginBottom: 24 }}>
+  <Typography.Paragraph>
+    - <Tag color="blue">基础</Tag> 熟悉 JavaScript/TypeScript 语法，了解 ES Modules 规范
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    - <Tag color="blue">基础</Tag> 有过实际使用 Webpack 配置项目的经验
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    - <Tag color="green">进阶</Tag> 了解 Node.js 文件系统和流的基本操作
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    - <Tag color="orange">高阶</Tag> 对编译原理（AST、Tapable）有一定了解更佳
+  </Typography.Paragraph>
+</Card>
+
+---
+
+## 五、常见面试问题方向
+
+<Collapse
+  defaultActiveKey={['1']}
+  style={{ marginBottom: 24 }}
+  items={[
+    {
+      key: '1',
+      label: 'Webpack 构建流程',
+      children: (
+        <Typography.Paragraph>
+          Webpack 的构建流程本质上是一个<strong>事件驱动型</strong>的编译过程，主要分为三个阶段：<strong>初始化</strong>（加载配置、注册插件）、<strong>编译</strong>（从入口开始递归解析依赖、调用 Loader 转换模块）、<strong>输出</strong>（Seal 封装 Chunk、优化、生成文件）。核心在于 Tapable 钩子系统驱动的 Plugin 机制。
+        </Typography.Paragraph>
+      ),
+    },
+    {
+      key: '2',
+      label: 'Loader 与 Plugin 的区别',
+      children: (
+        <Typography.Paragraph>
+          <strong>Loader</strong> 是<strong>文件转换器</strong>，运行在模块解析阶段，将不同类型的文件转换为 Webpack 可处理的模块（如 JS）。每个 Loader 是纯函数，职责单一。<br />
+          <strong>Plugin</strong> 是<strong>功能扩展器</strong>，通过 Tapable 钩子介入构建的全生命周期，可以做任何 Loader 做不到的事情（如资源优化、环境变量注入、Bundle 分析）。
+        </Typography.Paragraph>
+      ),
+    },
+    {
+      key: '3',
+      label: 'Webpack 性能优化策略',
+      children: (
+        <Typography.Paragraph>
+          构建速度方向：Loader 范围限制（`include/exclude`）、`thread-loader` 多线程编译、`cache-loader` / Webpack 5 持久化缓存、`DLL` / `HardSourceWebpackPlugin`（已废弃）。<br />
+          输出质量方向：`Tree Shaking`、`Code Splitting`（`SplitChunksPlugin`）、`Scope Hoisting`、压缩（`TerserWebpackPlugin` / `CSSMinimizerWebpackPlugin`）、`Gzip` / `Brotli` 预压缩。
+        </Typography.Paragraph>
+      ),
+    },
+    {
+      key: '4',
+      label: 'Webpack 5 相比 4 的核心变化',
+      children: (
+        <Typography.Paragraph>
+          内置静态资源模块（Asset Modules，替代 `file-loader`/`url-loader`/`raw-loader`）、持久化缓存（`cache.type`）、模块联邦（Module Federation）、Tree Shaking 增强（嵌套 Tree Shaking、`sideEffects` 优化）、运行时优化（更小的 Runtime 代码）、弃用 Node.js Polyfill 策略。
+        </Typography.Paragraph>
+      ),
+    },
+  ]}
+/>
+
+---
+
+<Typography.Paragraph type="secondary" style={{ textAlign: 'center' }}>
+  本专题将持续更新，欢迎通过左侧菜单导航浏览各个子页面。
+</Typography.Paragraph>

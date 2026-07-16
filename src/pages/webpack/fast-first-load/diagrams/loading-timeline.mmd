@@ -1,0 +1,25 @@
+sequenceDiagram
+    participant Browser as 浏览器
+    participant Entry as entry chunk
+    participant Login as Login chunk
+    participant Dashboard as Dashboard chunk
+    participant ECharts as EChartsChart chunk
+    participant User as 用户
+
+    Note over Browser,User: 阶段一：首次访问（未登录）
+    Browser->>Entry: 下载 entry chunk (~50KB gzip)
+    Browser->>Login: **并行 preload** 登录页 chunk (~15KB)
+    Entry-->>User: 渲染登录页（零等待，login chunk 已就绪）
+    User->>User: 输入账号密码
+    User->>User: 点登录
+
+    Note over Browser,User: 阶段二：登录 API 请求期间（~300ms）
+    Browser->>Dashboard: **闲时 prefetch** Dashboard chunk (~30KB)
+    Browser->>ECharts: **闲时 prefetch** echarts chunk (~280KB gzip)
+
+    Note over Browser,User: 阶段三：登录成功跳转 /dashboard
+    Browser-->>User: Dashboard chunk 已缓存 → 立即渲染
+    Dashboard-->>User: 显示标题、导航、图表骨架屏
+    ECharts-->>User: echarts chunk 已缓存 → 骨架屏直接替换为图表
+
+    Note over Browser,User: 用户无感知 —— 所有等待都在登录过程中消化

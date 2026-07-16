@@ -1,0 +1,65 @@
+graph TD
+    subgraph "示例项目：电商管理后台 (src/)"
+        A("index.jsx") -->|"入口"| B("App.jsx")
+        B --> C("pages/")
+        B --> D("components/")
+        B --> E("utils/")
+
+        C --> F("Home.jsx 🚀 [首页]")
+        C --> G("ProductList.jsx 🚀 [商品列表]")
+        C --> H("OrderList.jsx 🚀 [订单列表]")
+        C --> I("Dashboard.jsx 🚀 [数据看板]")
+
+        D --> J("Table.jsx")
+        D --> K("Chart.jsx")
+        D --> L("Layout.jsx")
+
+        E --> M("format.js")
+        E --> N("request.js")
+    end
+
+    subgraph "动态 import() 创建 Async Chunk 边界"
+        F_async["⏺ Home.async.chunk"]:::async
+        G_async["⏺ ProductList.async.chunk"]:::async
+        H_async["⏺ OrderList.async.chunk"]:::async
+        I_async["⏺ Dashboard.async.chunk"]:::async
+        init["⏺ entry.chunk (initial)"]:::initial
+
+        F --> F_async
+        G --> G_async
+        H --> H_async
+        I --> I_async
+        B --> init
+    end
+
+    subgraph "依赖关系 (module graph)"
+        F_async -->|import| O("react / react-dom")
+        F_async -->|import| P("lodash")
+        F_async -->|import| M
+
+        G_async -->|import| O
+        G_async -->|import| P
+        G_async -->|import| J
+        G_async -->|import| N
+
+        H_async -->|import| O
+        H_async -->|import| P
+        H_async -->|import| Q("moment")
+        H_async -->|import| J
+        H_async -->|import| N
+
+        I_async -->|import| O
+        I_async -->|import| R("echarts")
+        I_async -->|import| K
+        I_async -->|import| N
+
+        init -->|import| L
+        init -->|import| O
+    end
+
+    classDef async fill:#e8f5e9,stroke:#4caf50,stroke-dasharray: 5 5
+    classDef initial fill:#e1f5fe,stroke:#2196f3
+    style O fill:#fff3e0
+    style P fill:#fff3e0
+    style Q fill:#fff3e0
+    style R fill:#fff3e0

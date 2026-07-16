@@ -1,0 +1,220 @@
+import { Card, Table, Tag, Typography, Alert, Divider, Tabs } from 'antd';
+import MermaidViewer from '@/components/MermaidViewer';
+import CodeDiff from '@/components/CodeDiff';
+import BridgeDemo from './LiveDemo';
+import hybridArch from './diagrams/hybrid-architecture.mmd?raw';
+import bridgeCallFlow from './diagrams/bridge-call-flow.mmd?raw';
+import badCode from './demos/js-bridge.bad.tsx?raw';
+import goodCode from './demos/js-bridge.good.tsx?raw';
+import {
+  schemeComparisonColumns,
+  schemeComparisonData,
+  frameworkColumns,
+  frameworkData,
+  bridgeColumns,
+  bridgeData,
+  callModeColumns,
+  callModeData,
+} from './data';
+
+# Hybrid 开发详解
+
+## 一、什么是 Hybrid 开发
+
+<Card style={{ marginBottom: 24 }}>
+  Hybrid（混合）开发是一种融合了 **Native 原生能力** 与 **Web 技术栈** 的移动端开发模式。其核心思想是：
+
+  - 基础 UI 和业务逻辑使用 **HTML + CSS + JavaScript** 开发，实现跨平台和热更新
+  - 需要通过 Native 代码调用设备底层能力（摄像头、蓝牙、支付、定位等）
+  - 通过 **JSBridge** 桥梁在 Web 与 Native 之间建立双向通信通道
+
+  Hybrid 方案在**移动互联网红利期**帮助大量企业（如阿里巴巴、美团、携程）实现了低成本、高效率的跨平台交付。即使在 RN、Flutter 等新一代跨平台框架兴起的今天，Hybrid 因其 **Web 生态兼容性** 和 **成熟度**，仍是电商、资讯、金融等领域的核心方案之一。
+</Card>
+
+### 为什么需要 Hybrid？
+
+移动端开发长期面临**三难选择**：
+
+<Table dataSource={schemeComparisonData} columns={schemeComparisonColumns} pagination={false} size="small" bordered />
+
+### Hybrid 的适用场景
+
+- **电商平台：** 商品详情页、活动页频繁更新，需要热更新能力，关键路径（支付、登录）用原生
+- **资讯 / 内容类 App：** 文章内容用 Web 渲染，推送和离线缓存用原生
+- **金融 App：** 开户流程中的协议展示、H5 活动页，敏感操作用原生
+- **企业内部 App：** 快速迭代、多平台覆盖、统一 UI 标准
+
+---
+
+## 二、Hybrid 开发的核心原理
+
+<Card title="整体架构" style={{ marginBottom: 24 }}>
+  Hybrid 应用由三层结构组成：
+
+  - **原生层（Native Layer）：** 提供设备 API 和 WebView 容器
+  - **Web 层（Web Layer）：** 承载业务 UI 和交互逻辑
+  - **通信桥接层（Bridge）：** 连接 Web 与 Native 的双向通道
+
+  整体架构关系如下：
+
+  <MermaidViewer source={hybridArch} />
+</Card>
+
+<Card title="通信流程" style={{ marginBottom: 24 }}>
+  Hybrid 的核心在于 JS 与 Native 之间的双向通信。以下序列图展示了两种典型场景：
+
+  - **场景一：JS 调用 Native 并等待返回值**（最常用）
+  - **场景二：Native 主动推送事件给 JS**（如网络状态变化）
+
+  <MermaidViewer source={bridgeCallFlow} />
+
+  这个机制本质上是一个 **RPC（Remote Procedure Call）** 模式——JS 端发起远程调用，Native 端执行并返回结果，和网络请求的概念异曲同工。
+</Card>
+
+### 四种主流桥接方式对比
+
+不同桥接方式在实现复杂度、性能、兼容性上各有优劣：
+
+<Table dataSource={bridgeData} columns={bridgeColumns} pagination={false} size="small" bordered />
+
+### 四种通信模式
+
+<Table dataSource={callModeData} columns={callModeColumns} pagination={false} size="small" bordered />
+
+---
+
+## 三、主流 Hybrid 方案对比
+
+Hybrid 的概念已经演化出多个分支，从最早的 WebView 套壳到现代的跨平台自绘引擎，每种方案都在"跨平台"与"原生体验"之间做了不同的权衡。
+
+<Table dataSource={frameworkData} columns={frameworkColumns} pagination={false} size="small" bordered />
+
+### 方案的演进脉络
+
+1. **第一代（WebView 套壳）：** Cordova / PhoneGap — 简单粗暴，性能是瓶颈
+2. **第二代（原生组件映射）：** React Native / Weex — 用 JS 写原生 UI，性能接近原生
+3. **第三代（自研渲染引擎）：** Flutter — 完全跳过系统组件，自己画 UI
+4. **小程序生态：** 微信小程序等 — Hybrid 的"极致优化版"，双线程模型 + 原生组件混合
+
+---
+
+## 四、互动演示：JSBridge 桥接通信
+
+<Card style={{ marginBottom: 24, border: '2px solid #1890ff' }}>
+  下方是一个模拟 **JS-Native 桥接通信** 的 Live Demo。它模拟了 WebView 中 JS 端通过 Bridge 调用 Native API、Native 主动推送事件的完整流程。
+
+  <BridgeDemo />
+</Card>
+
+---
+
+## 五、代码演示：Bridge 实现对比
+
+<Card title="JSBridge 实现：反面教材 vs 最佳实践" style={{ marginBottom: 24 }}>
+  下面对比两种 JSBridge 实现方式：
+
+  - **反面教材（URL Scheme）：** 早期的简陋方案，通过 iframe 发起自定义 URL 请求，无法获取返回值
+  - **最佳实践（注入式 Bridge）：** 通过 `postMessage` + 回调注册表实现 Promise 风格的双向通信
+
+  <CodeDiff
+    oldValue={badCode}
+    newValue={goodCode}
+    leftTitle="❌ 反面教材：URL Scheme 桥接"
+    rightTitle="✅ 最佳实践：注入式 JSBridge"
+    type="error"
+    hideDiffMarkers={true}
+  />
+</Card>
+
+---
+
+## 六、核心原理深入：JSBridge 的四个关键设计
+
+<Card title="1. 回调注册表（Callback Registry）" style={{ marginBottom: 24 }}>
+  JSBridge 中最核心的机制是 **回调注册表**。由于 JS -> Native 的通信本质上是异步的（Native 需要在主线程完成操作后才能回传结果），JS 端需要一个映射表来管理所有"未完成"的调用：
+
+  ```typescript
+  class Bridge {
+    private callbackId = 0;
+    private callbacks = new Map<number, (data: any) => void>();
+
+    call(method: string, params?: any): Promise<any> {
+      return new Promise((resolve) => {
+        const id = ++this.callbackId;
+        this.callbacks.set(id, resolve);  // 存入回调
+        nativeBridge.postMessage({ method, params, callbackId: id });
+      });
+    }
+
+    // Native 完成操作后调用此方法
+    receiveResponse(response: BridgeResponse) {
+      const callback = this.callbacks.get(response.callbackId);
+      if (callback) {
+        callback(response.data);           // 取出并执行回调
+        this.callbacks.delete(response.callbackId);
+      }
+    }
+  }
+  ```
+
+  这个模式本质上就是 **发布-订阅（Pub/Sub）** 模式的一个变体——每次 `call` 生成一个唯一的 `callbackId` 作为"订阅者标识"，Native 完成操作后通过这个 ID 将结果"发布"回去。
+</Card>
+
+<Card title="2. 序列化与反序列化（Serialization）" style={{ marginBottom: 24 }}>
+  Web 和 Native 之间传递的是字符串。这意味着：
+
+  - **调用参数** 必须通过 `JSON.stringify` 序列化
+  - **返回结果** 必须通过 `JSON.parse` 反序列化
+  - **不支持传递函数引用**（因此才需要 callbackId 映射机制）
+  - **不支持传递二进制数据**（需要先转为 Base64 或 ArrayBuffer）
+
+  这是一个极其重要的约束——**Bridge 边界就是序列化边界**。理解这一点，你就理解了为什么 JSBridge 需要 callbackId 而不仅仅是传一个函数。
+</Card>
+
+<Card title="3. 超时保护（Timeout Guard）" style={{ marginBottom: 24 }}>
+  因为 Bridge 调用依赖 Native 端的响应，如果 Native 端崩溃或卡死，JS 端的 Promise 就会永远 pending。因此生产级的 Bridge 实现必须包含超时保护：
+
+  ```typescript
+  call(method: string, params?: any): Promise<any> {
+    return new Promise((resolve) => {
+      const id = ++this.callbackId;
+      this.callbacks.set(id, resolve);
+      // 10s 超时保护
+      setTimeout(() => {
+        if (this.callbacks.has(id)) {
+          this.callbacks.delete(id);
+          resolve({ error: 'Bridge call timeout', code: 'TIMEOUT' });
+        }
+      }, 10000);
+    });
+  }
+  ```
+
+  超时时间需要根据具体场景调整——获取设备信息可以容忍 1-2s，而支付调用可能需要 30s 的超时窗口。
+</Card>
+
+<Card title="4. 安全性（Security）" style={{ marginBottom: 24 }}>
+  JSBridge 是 Hybrid 应用最大的攻击面之一。关键安全措施包括：
+
+  - **白名单校验：** 只允许注册过的方法被调用，拒绝未知方法
+  - **来源校验：** Android 需配置 `@JavascriptInterface` 注解（4.2+ 安全增强）
+  - **参数校验：** 所有来自 JS 的参数必须校验类型和范围
+  - **敏感操作二次确认：** 支付、登录等操作需要 Native 弹窗确认
+
+  ```typescript
+  // Native 端白名单校验（伪代码）
+  const WHITELIST = new Set(['getDeviceInfo', 'showToast', 'vibrate']);
+  function handleBridgeCall(method: string, params: any, callbackId: number) {
+    if (!WHITELIST.has(method)) {
+      return reject(callbackId, { error: 'Method not allowed' });
+    }
+    // 安全执行...
+  }
+  ```
+
+  > **历史教训：** Android 4.2 之前的 `addJavascriptInterface` 存在严重安全漏洞——任何 JS 代码都可以通过注入的对象执行反射攻击。这就是为什么现代实现都改用 `@JavascriptInterface` 注解 + `postMessage` 模式。
+</Card>
+
+---
+
+通过以上六个维度的讲解，你应该已经掌握了 Hybrid 开发的核心概念、架构原理和关键实现技术。后续章节将继续深入 Hybrid 开发中的具体场景，包括 **小程序的 Hybrid 架构剖析**、**React Native 的 Bridge 与 JSI 对比**、**Hybrid 中的性能优化实战** 等专题。

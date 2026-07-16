@@ -1,0 +1,18 @@
+sequenceDiagram
+    participant JS as Web 端 (JS)
+    participant Bridge as JSBridge 核心
+    participant Native as 原生端 (Native)
+
+    Note over JS,Native: 场景一：JS 调用 Native 并获取返回值
+
+    JS->>Bridge: 1. call('getDeviceInfo', {}, callbackId)
+    Bridge->>Native: 2. postMessage({method, params, callbackId})
+    Native->>Native: 3. 执行原生方法
+    Native->>Bridge: 4. evaluateJS({callbackId, data})
+    Bridge->>JS: 5. 查找 callbackId → resolve(data)
+
+    Note over JS,Native: 场景二：Native 主动推送事件给 JS
+
+    Native->>Bridge: 1. evaluateJS("__bridge_events__['networkChange'](data)")
+    Bridge->>JS: 2. 触发已注册的事件处理函数
+    JS->>JS: 3. handler(data) 处理事件

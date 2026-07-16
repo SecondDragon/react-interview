@@ -1,0 +1,741 @@
+import { Card, Table, Typography, Alert, Collapse, Space, Tag } from 'antd';
+import CodeDiff from '@/components/CodeDiff';
+import MermaidViewer from '@/components/MermaidViewer';
+
+import badLoaderScope from './demos/loader-scope.bad.tsx?raw';
+import goodLoaderScope from './demos/loader-scope.good.tsx?raw';
+import badMultithread from './demos/multithread.bad.tsx?raw';
+import goodMultithread from './demos/multithread.good.tsx?raw';
+import badCache from './demos/cache-comparison.bad.tsx?raw';
+import goodCache from './demos/cache-comparison.good.tsx?raw';
+import badSplitChunks from './demos/split-chunks.bad.tsx?raw';
+import goodSplitChunks from './demos/split-chunks.good.tsx?raw';
+
+import splitChunksProject from './diagrams/split-chunks-project.mmd?raw';
+import splitChunksProcess from './diagrams/split-chunks-process.mmd?raw';
+import splitChunksWith from './diagrams/split-chunks-with.mmd?raw';
+import splitChunksWithout from './diagrams/split-chunks-without.mmd?raw';
+
+import {
+  chapterOverviewColumns,
+  chapterOverviewData,
+  wp4wp5CacheColumns,
+  wp4wp5CacheData,
+  splitChunksColumns,
+  splitChunksData,
+  threadLoaderWarningColumns,
+  threadLoaderWarningData,
+} from './data';
+
+# 构建速度优化
+
+> 构建速度是前端工程化中直接影响**开发效率**的关键指标。一个需要等待 30s 冷启动、5s HMR 的项目，和 3s 冷启动、即时 HMR 的项目，对开发者体验的影响是天壤之别。
+
+<Card style={{ marginBottom: 24 }}>
+  本文汇总了 Webpack 构建速度优化的**所有常用手段**，覆盖 Webpack 4 → 5 的演进脉络。每个优化手段都从"为什么慢"出发，给出配置和原理，方便在面试中展开讨论。
+</Card>
+
+以下为各章节总览：
+
+<Table dataSource={chapterOverviewData} columns={chapterOverviewColumns} pagination={false} size="small" bordered style={{ marginBottom: 32 }} />
+
+---
+
+## 一、公共依赖提取（SplitChunks）
+
+> SplitChunks 通常被理解为"输出优化"（减小产物体积、提升缓存），但它在 **构建速度** 层面也有显著收益——**文件越小，压缩越快；模块越解耦，缓存命中率越高**。
+
+### 1. 性能问题出现的现象
+
+在大型项目中，以下场景直接拖慢构建速度：
+
+- **Terser 压缩阶段很久**：单个 bundle 体积达到 2-3MB，TerserWebpackPlugin 需要一次性压缩整个大文件，即使开启了 `parallel`，单文件的 AST 解析依然是瓶颈
+- **修改一行业务代码，构建全部重来**：没有代码拆分的情况下，任何模块变更都可能改变整个 bundle 的 module graph 拓扑，导致持久化缓存大面积失效
+- **HMR 更新慢**：业务代码修改后，Webpack 需要重新评估整个 Chunk 的优化策略（Scope Hoisting、Tree Shaking 等），大 Chunk 的处理时间更长
+
+### 2. 底层原因
+
+Webpack 默认将所有入口依赖打包到同一个 bundle 中。这导致三个层面的性能问题：
+
+| 层面 | 问题 | 影响构建速度的原因 |
+|---|---|---|
+| **压缩阶段** | 2MB 大的文件需要单次压缩 | TerserPlugin 对单文件的并行度有限（内部会分块，但多于 4 个 Worker 后收益递减） |
+| **缓存粒度** | 所有模块在一个 Chunk 中 | Webpack 5 持久化缓存以模块为单位，但 Chunk 的 `seal` 优化阶段（Scope Hoisting、SplitChunks 自身）对整个 Chunk 是整体处理的。一个模块变 → 整个 Chunk 的优化重算 |
+| **增量构建** | 无法跳过 vendor 模块 | 三方库模块（react、lodash 等）和业务模块混杂在一起，编译时无法区分"哪些可以跳过" |
+
+### 3. 适用场景
+
+所有生产环境项目都应当使用 SplitChunks，尤其在以下场景收益更大：
+
+- **大型 SPA**：路由懒加载 + vendor 分离，构建速度提升 30-50%
+- **多页面应用**：多入口共享公共依赖，避免重复编译
+- **CI/CD 流水线**：vendor 不变时可直接复用缓存产物，跳过构建
+
+### 4. 解决方案与权衡
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Paragraph>
+    - <Tag>Webpack 3</Tag> `CommonsChunkPlugin`（手动配置提取策略，API 复杂）
+    - <Tag color="blue">Webpack 4 / 5</Tag> `SplitChunksPlugin`（内置，智能缓存组，零配置即可生效）
+  </Typography.Paragraph>
+</Card>
+
+#### SplitChunksPlugin 核心配置
+
+<Table dataSource={splitChunksData} columns={splitChunksColumns} pagination={false} size="small" bordered style={{ marginBottom: 16 }} />
+
+<Alert
+  type="warning"
+  showIcon
+  message="权衡"
+  description="SplitChunks 并非 Chunk 越多越好。过多的 Chunk 会增加 HTTP 请求数（HTTP/1.1 场景下尤其明显），也可能导致代码碎片化严重。建议 vendor 分组 2-3 个（core + ui-lib + utils），common 分组 1 个即可。"
+  style={{ marginBottom: 16 }}
+/>
+
+---
+
+### 5. 互动演示：通过完整例子理解 SplitChunks 如何加速构建
+
+下面用一个**电商管理后台**的示例项目，从**目录结构 → 依赖关系 → 构建产物 → 构建过程**四个维度，完整展示 SplitChunks 对构建速度的影响。
+
+#### 5.1 项目目录树与依赖关系
+
+<Card title="示例项目：电商管理后台（Webpack 内核为 import() 自动创建 Async Chunk 边界）" style={{ marginBottom: 24 }}>
+  <MermaidViewer source={splitChunksProject} />
+</Card>
+
+这个项目的依赖关系如下（🚀 表示通过动态 `import()` 加载的页面）：
+
+| 模块 | 所在的 Async Chunk | 类型 |
+|---|---|---|
+| `react` / `react-dom` | entry + Home + ProductList + OrderList + Dashboard **(5 个 chunk)** | 第三方库 |
+| `lodash` | Home + ProductList + OrderList **(3 个 chunk)** | 第三方库 |
+| `moment` | OrderList **(1 个 chunk)** | 第三方库 |
+| `echarts` | Dashboard **(1 个 chunk)** | 第三方库 |
+| `Table` 组件 | ProductList + OrderList **(2 个 chunk)** | 公共组件 |
+| `request.js` | ProductList + OrderList + Dashboard **(3 个 chunk)** | 工具函数 |
+| `format.js` | Home **(1 个 chunk)** | 工具函数 |
+
+#### 5.2 构建产物对比
+
+**无 SplitChunks（单 Bundle）：**
+
+<MermaidViewer source={splitChunksWithout} />
+
+单个 bundle 2.8MB，包含所有代码。TerserPlugin 压缩这个文件时，即使 `parallel: true`，单个 2.8MB 的 AST 解析依然耗时。而且，只要任何一个业务文件修改（比如 `Home.jsx` 加了一行），整个 bundle 的 hash 变化 → 持久化缓存全部失效 → 下次构建必须全部重来。
+
+**有 SplitChunks（多 Chunk）：**
+
+<MermaidViewer source={splitChunksWith} />
+
+#### 5.3 SplitChunks 的拆分解读
+
+基于上面的依赖统计，SplitChunksPlugin 会这样拆分：
+
+```
+策略：
+  vendor 组：node_modules 下的所有包，单独提取
+  common 组：被 >= 2 个 async chunk 引用的业务模块（Table + request.js）
+  页面本身：各自形成独立的异步 Chunk
+
+拆分结果：
+┌─ vendor.js          ─ react + react-dom + lodash     ─ 680KB ── hash: a1b2c3
+├─ common.js          ─ Table + request.js             ─ 400KB ── hash: j0k1l2
+├─ entry.chunk (瘦身)  ─ Layout                        ─ 20KB  ── hash: y4z5a6
+├─ Home.async         ─ Home 页面业务代码              ─ 60KB  ── hash: m3n4o5
+├─ ProductList.async  ─ ProductList 页面业务代码       ─ 120KB ── hash: p6q7r8
+├─ OrderList.async    ─ OrderList 页面业务代码         ─ 100KB ── hash: s9t0u1
+├─ Dashboard.async    ─ Dashboard 页面业务代码         ─ 80KB  ── hash: v2w3x4
+└─ moment.js (单体)   ─ moment                         ─ 230KB ── hash: d4e5f6  (minChunks=1?)
+   └─ echarts.js      ─ echarts                        ─ 780KB ── hash: g7h8i9  (minChunks=1?)
+
+注意：moment 和 echarts 只出现在 1 个 chunk 中，
+它们在默认的 chunks: 'async' 配置下不会被提取，
+但如果配置了 chunks: 'all' + minSize 条件合适，仍可独立成包以利用浏览器缓存。
+```
+
+#### 5.4 构建过程（SplitChunks 工作流程）
+
+<Card title="SplitChunksPlugin 工作流程（两个阶段分色展示）" style={{ marginBottom: 24 }}>
+  <Typography.Paragraph>
+    以下序列图清晰区分了两个阶段：
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    <Tag color="orange">橙色区域</Tag> Webpack 内核（Parser + ChunkGraph）在解析 <code>import()</code> 时自动创建 Async Chunk 边界——<strong>此阶段无插件参与</strong>
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    <Tag color="green">绿色区域</Tag> SplitChunksPlugin 在已有 Chunk 之上做"跨 Chunk 去重提取"
+  </Typography.Paragraph>
+  <MermaidViewer source={splitChunksProcess} />
+</Card>
+
+#### 5.5 构建速度收益定量分析
+
+假设构建流程包括三个阶段：**编译（Build）→ 优化（Optimize）→ 输出（Emit）**，SplitChunks 在优化阶段的影响最大：
+
+| 构建阶段 | 无 SplitChunks | 有 SplitChunks | 收益来源 |
+|---|---|---|---|
+| **编译阶段** (Build) | ~12s | ~12s | 编译阶段不受影响（模块解析量相同） |
+| **优化阶段** (Optimize) | ~8s | ~3s | **①** Terser 压缩：1个2.8MB vs 8个文件并行压缩<br/>**②** Scope Hoisting：大 Chunk 的拼接更耗时 |
+| **输出阶段** (Emit) | ~1s | ~2s | 多 Chunk 写盘略慢，但可忽略 |
+| **二次构建（修改 Home.jsx）** | ~8s | ~2s | **③** 缓存视角：vendor/moment/echarts 全部命中缓存，只需重新编译 Home |
+| **总计（冷启动）** | ~21s | ~17s | 优化阶段节省 ~5s |
+| **总计（热启动）** | ~8s | ~2s | 缓存命中后差距更显著 |
+
+### 6. 代码演示
+
+<Card style={{ marginBottom: 24 }}>
+  以下对比 SplitChunks 的基础配置：
+
+  - **反面教材**：不配置任何代码分割策略，或使用已废弃的 `CommonsChunkPlugin`
+  - **最佳实践**：使用 SplitChunksPlugin，通过 `cacheGroups` 精细控制 vendor 和 common 的提取策略
+
+  <CodeDiff
+    oldValue={badSplitChunks}
+    newValue={goodSplitChunks}
+    leftTitle="❌ 反面教材：无 SplitChunks 配置"
+    rightTitle="✅ 最佳实践：SplitChunks + cacheGroups"
+    type="error"
+    hideDiffMarkers={true}
+  />
+</Card>
+
+### 7. 核心原理
+
+理解 SplitChunksPlugin，首先要区分**两个完全不同的机制**：
+
+#### 机制一（Webpack 内核）：`import()` 自动创建独立的 Async Chunk
+
+<Card style={{ marginBottom: 16, background: '#fffbe6' }}>
+  <Typography.Paragraph style={{ marginBottom: 0 }}>
+    <strong>先说明：这个机制跟 SplitChunksPlugin 毫无关系。</strong> 它是 Webpack 内核（<code>Parser</code> + <code>ChunkGraph</code>）在构建模块图时的原生行为。
+  </Typography.Paragraph>
+</Card>
+
+当 Webpack 解析到 `import('./Home.jsx')` 时，会在 `ChunkGraph` 中自动创建一个新的 **Async Chunk** 作为边界。这是 Webpack 内置的代码分割能力（源自 webpack 的 `EnsureChunkConditionsPlugin` 和模块图构建逻辑），**不需要任何插件**。
+
+以我们的示例项目为例，Webpack 内核完成模块图构建后，模块已经被分配到了 5 个 Chunk 中：
+
+```text
+Webpack 内核自动创建的 Chunk 分布（此时 SplitChunksPlugin 还未运行）：
+
+entry.chunk (initial)
+  └─ Layout.jsx
+  └─ react / react-dom    ← ① 这里有一份 react
+
+Home.async (dynamic import)
+  ├─ Home.jsx
+  ├─ react / react-dom    ← ② 这里也有一份 react
+  ├─ lodash
+  └─ format.js
+
+ProductList.async (dynamic import)
+  ├─ ProductList.jsx
+  ├─ react / react-dom    ← ③ 这里还有一份 react
+  ├─ lodash
+  ├─ Table
+  └─ request.js
+
+OrderList.async (dynamic import)
+  ├─ OrderList.jsx
+  ├─ react / react-dom    ← ④ 这里也有一份 react
+  ├─ lodash
+  ├─ moment
+  ├─ Table
+  └─ request.js
+
+Dashboard.async (dynamic import)
+  ├─ Dashboard.jsx
+  ├─ react / react-dom    ← ⑤ 这里也有一份 react
+  ├─ echarts
+  ├─ Chart
+  └─ request.js
+```
+
+注意：**每个 Async Chunk 都独立包含它所依赖的全部模块**。`react` 出现在了 5 个 Chunk 中，`lodash` 出现在了 3 个 Chunk 中。这意味着用户访问不同页面时，`react` 和 `lodash` 的代码会被重复下载和执行——这就是接下来 SplitChunksPlugin 要解决的问题。
+
+#### 机制二（SplitChunksPlugin）：跨已有 Chunk 做"查重→提取"
+
+<Card style={{ marginBottom: 16, background: '#e6f7ff' }}>
+  <Typography.Paragraph style={{ marginBottom: 0 }}>
+    SplitChunksPlugin 是在 Webpack 内核<strong>已经创建好多个 Chunk</strong> 之后才运行的。它的工作不是"分 Chunk"，而是<strong>"在已有 Chunk 之间做去重"</strong>。
+  </Typography.Paragraph>
+</Card>
+
+**SplitChunksPlugin 的核心算法：**
+
+**第一步：遍历所有模块，统计"这个模块出现在哪些 Chunk 中"**
+
+```text
+模块 react       → 出现在 [entry, Home, ProductList, OrderList, Dashboard] → 跨 5 个 Chunk
+模块 lodash      → 出现在 [Home, ProductList, OrderList]                 → 跨 3 个 Chunk
+模块 request.js  → 出现在 [ProductList, OrderList, Dashboard]             → 跨 3 个 Chunk
+模块 Table       → 出现在 [ProductList, OrderList]                       → 跨 2 个 Chunk
+模块 format.js   → 出现在 [Home]                                         → 仅 1 个 Chunk → 不提取
+模块 moment      → 出现在 [OrderList]                                     → 仅 1 个 Chunk → 不提取
+模块 echarts     → 出现在 [Dashboard]                                     → 仅 1 个 Chunk → 不提取
+```
+
+**"跨 Chunk"是这里的关键词。** 因为 Webpack 内核已经把模块分散到了多个 Chunk 中，SplitChunksPlugin 才能在这些 Chunk 之间做横向比较。如果只有一个 entry chunk（没有 `import()`），每个模块的 count 都是 1，SplitChunksPlugin 不会提取任何东西——**这就是为什么纯单入口项目配 SplitChunks 效果有限**。
+
+**第二步：条件筛选**
+
+- `minChunks: 2` → 只处理跨 >= 2 个 Chunk 的模块（`format.js`、`moment`、`echarts` 被过滤）
+- `minSize: 30000` → 候选模块产出的独立 Chunk 至少 30KB，避免碎片化
+- `cacheGroups` 分组 → 匹配 `vendor` 组（node_modules）或 `common` 组（业务公共模块）
+
+**第三步：提取 + 瘦身**
+
+从原 Chunk 中**删除**被提取的模块，放到新的独立 Chunk 中：
+
+```text
+vendor.js (新增)
+  ├─ react / react-dom    ← 从 5 个 Chunk 中各删除一份，合并到这里
+  └─ lodash
+
+common.js (新增)
+  ├─ Table
+  └─ request.js
+
+entry.chunk (瘦身)
+  └─ Layout.jsx           ← react 已被删掉，移到 vendor.js
+
+Home.async (瘦身)
+  ├─ Home.jsx             ← react/lodash 已被删掉
+  └─ format.js
+
+ProductList.async (瘦身)
+  └─ ProductList.jsx      ← react/lodash/Table/request 已被删掉
+
+...以此类推
+```
+
+<Card style={{ marginBottom: 16, background: '#e6f7ff' }}>
+  <Typography.Paragraph style={{ marginBottom: 0 }}>
+    <strong>一句话总结：</strong><code>import()</code> 负责<strong>"分"</strong>（由 Webpack 内核自动完成，无插件参与），SplitChunksPlugin 负责<strong>"去重"</strong>。两者的关系是：<code>import()</code> 先把代码拆成了多个 Chunk（造成了重复），SplitChunksPlugin 再把这些 Chunk 中重复的公共模块提取出来，避免重复下载。
+  </Typography.Paragraph>
+</Card>
+
+### 8. 补充：为什么 SplitChunks 能优化构建速度的本质
+
+<Card title="理解三个关键机制" style={{ marginBottom: 24 }}>
+  <Typography.Paragraph>
+    <strong>① 压缩并行化收益（Optimize 阶段）</strong>
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    在优化阶段，TerserWebpackPlugin 会对每个 Chunk 独立执行压缩。8 个小文件可以分配到多个 Worker 线程并行压缩。而 1 个大文件虽然内部也会分块，但 Terser 的分块粒度受限于 JavaScript 的作用域和函数边界，并行度有限。
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    <strong>② 持久化缓存命中率（二次构建）</strong>
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    Webpack 5 的 `cache.type: 'filesystem'` 以模块为粒度缓存。当 Home.jsx 修改时，只有 Home 模块的缓存需要重建。但 Chunk 级别的优化（Scope Hoisting、Chunk 拼接）是整体处理的——如果所有模块在一个 Chunk 中，即使只改了一个小模块，整个 Chunk 的优化结果都要重新计算。SplitChunks 将 vendor 拆出去后，vendor 模块的优化结果稳定不变。
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    <strong>③ 模块拼接成本（Seal 阶段）</strong>
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    Scope Hoisting（`ModuleConcatenationPlugin`）会将模块合并到同一作用域。一个包含 1000 个模块的大 Chunk 的拼接复杂度远高于 10 个各含 100 个模块的小 Chunk。SplitChunks 天然降低了每个 Chunk 需要拼接的模块数量，从而加速了 Seal 阶段。
+  </Typography.Paragraph>
+</Card>
+
+```javascript
+// 生产推荐配置
+module.exports = {
+  optimization: {
+    splitChunks: {
+      chunks: 'all',
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendor',
+          priority: 10,
+        },
+        common: {
+          minChunks: 2,
+          name: 'common',
+          priority: 5,
+          reuseExistingChunk: true,
+        },
+      },
+    },
+  },
+};
+```
+
+---
+
+## 二、Loader 范围限制
+
+### 1. 性能问题出现的现象
+
+在大型项目中，每次修改代码后重新构建需要等待 **15-30s**，尤其是第一次冷启动时，`babel-loader` 似乎在处理大量文件，CPU 占用飙升至 100%。
+
+### 2. 底层原因
+
+Webpack 的 Loader 默认会对 `test` 匹配到的所有文件执行转换，如果不加 `include` / `exclude`，像 `babel-loader` 会试图处理整个项目，包括 `node_modules` 中的数千个第三方包。而这些包一般已经是 ES5 代码，根本不需要 Babel 转换。
+
+此外，Webpack 的 `module.rules` 是**顺序匹配**的——每个文件都会从上到下尝试所有规则，直到匹配成功。在规则较多时，不必要的匹配循环累积起来也是可观的性能损耗。
+
+### 3. 适用场景
+
+所有使用了 `babel-loader`、`ts-loader`、`eslint-loader` 等资源密集型 Loader 的项目，都应配置 `include` + `exclude`。
+
+### 4. 解决方案与权衡
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Paragraph>
+    核心原则：<strong>让 Loader 只处理它必须处理的文件</strong>。
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    - `include` 指定 Loader 的作用范围（通常是 `src/`）
+    - `exclude` 明确排除不需要处理的目录（通常是 `node_modules/`）
+    - <Tag color="blue">Webpack 5 新增</Tag> `oneOf`：文件匹配第一个规则后不再继续尝试后续规则
+  </Typography.Paragraph>
+</Card>
+
+### 5. 代码演示
+
+<Card style={{ marginBottom: 24 }}>
+  <CodeDiff
+    oldValue={badLoaderScope}
+    newValue={goodLoaderScope}
+    leftTitle="❌ 反面教材：无范围限制"
+    rightTitle="✅ 最佳实践：include + exclude"
+    type="error"
+    hideDiffMarkers={true}
+  />
+</Card>
+
+### 6. 核心原理
+
+`include` 和 `exclude` 底层对应 Webpack 的 **RuleSetCondition** 匹配逻辑。Webpack 内部对每个模块文件都会调用 `ruleCondition(path)` 进行路径匹配。加上 `include` 后，不匹配的路径直接跳过，不再进入 Loader 的 `pitch` 和 `normal` 阶段。
+
+`oneOf` 的实现则是在遍历规则数组时，命中第一条规则后通过 `break` 跳出循环，避免后续规则的 `test` 正则匹配计算。
+
+---
+
+## 三、多线程编译
+
+### 1. 性能问题出现的现象
+
+Babel / TypeScript 编译阶段，CPU 利用率不足（Node.js 单线程模型下，复杂 Loader 的执行是串行的）。在拥有 8 核 CPU 的开发机上，你能利用的只有 1 个核。
+
+### 2. 底层原因
+
+Webpack 的 Loader 执行在 Node.js 的**主线程**中。Node.js 的事件循环是单线程的，多个文件即使没有依赖关系也会排队等待处理。CPU 密集型操作（Babel AST 转换、TypeScript 类型检查、ESLint 检查）会长时间占用主线程，导致后续所有处理被阻塞。
+
+### 3. 适用场景
+
+项目中有大量需要 Babel / TypeScript 编译的文件，且 CPU 核数 >= 4。小型项目（< 50 个模块）不建议使用，线程创建和通信的开销可能超过收益。
+
+### 4. 解决方案与权衡
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Paragraph>
+    将耗时的 Loader 放到 **Worker 池**（Worker Pool）中并行执行。
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    - Webpack 4：可选 <Tag>happypack</Tag> 或 <Tag color="blue">thread-loader</Tag>
+    - Webpack 5：<Tag color="blue">thread-loader</Tag> 是唯一推荐方案（happypack 已不兼容）
+  </Typography.Paragraph>
+</Card>
+
+<Card title="thread-loader 注意事项" style={{ marginBottom: 16 }}>
+  <Table dataSource={threadLoaderWarningData} columns={threadLoaderWarningColumns} pagination={false} size="small" bordered />
+</Card>
+
+### 5. 代码演示
+
+<Card style={{ marginBottom: 24 }}>
+  <CodeDiff
+    oldValue={badMultithread}
+    newValue={goodMultithread}
+    leftTitle="❌ 反面教材：单线程处理"
+    rightTitle="✅ 最佳实践：thread-loader 多线程"
+    type="error"
+    hideDiffMarkers={true}
+  />
+</Card>
+
+### 6. 核心原理
+
+`thread-loader` 底层基于 Node.js 的 `worker_threads` 模块。它维护一个 Worker 池，主线程将 Loader 处理的请求和文件内容发送到 Worker 线程，Worker 线程执行实际的转换工作（如 Babel 编译），完成后将结果返回给主线程。
+
+关键实现细节：
+- Worker 与主线程通过 `postMessage` 通信，传输的是序列化后的 AST 节点，不是整个文件
+- Worker 会复用（避免每次创建/销毁），默认闲置超时 500ms 后自动终止
+- `workers` 参数控制池大小，一般设置为 `os.cpus().length - 1`（留一个核给主线程）
+
+---
+
+## 四、持久化缓存（Webpack 4 → 5 的核心差异）
+
+### 1. 性能问题出现的现象
+
+每次重新启动开发服务器或切换分支后，即使只改动了一行代码，Webpack 仍然需要重新编译所有模块，冷启动时间与首次构建无异。
+
+### 2. 底层原因
+
+Webpack 默认不缓存编译结果，每次构建都是**从头再来**——读取源文件、解析 AST、应用 Loader 转换、构建依赖图、Seal 封装、优化输出。这些操作中，Loader 转换阶段（尤其是 Babel 编译）最耗时。
+
+但实际上，大部分模块在上次构建后并没有变化。如果能缓存这些模块的编译中间产物，二次构建只需要重新处理有变更的模块即可。
+
+### 3. 适用场景
+
+任何需要**频繁重启 Dev Server** 或**切换分支**的开发场景。CI 环境中效果更显著——在相同的 commit 上执行流水线时可以复用缓存。
+
+### 4. 解决方案与权衡
+
+<Card title="Webpack 4 vs Webpack 5 缓存方案对比" style={{ marginBottom: 16 }}>
+  <Table dataSource={wp4wp5CacheData} columns={wp4wp5CacheColumns} pagination={false} size="small" bordered />
+</Card>
+
+<Alert
+  type="warning"
+  showIcon
+  message="缓存失效"
+  description="缓存并非万能——当升级依赖版本、修改 Webpack 配置或 Babel 配置时，缓存会被自动或手动清除。Webpack 5 的 buildDependencies 配置可以自动追踪配置文件的 hash 变化来判断缓存是否失效。"
+  style={{ marginBottom: 16 }}
+/>
+
+### 5. 代码演示
+
+<Card style={{ marginBottom: 24 }}>
+  <CodeDiff
+    oldValue={badCache}
+    newValue={goodCache}
+    leftTitle="❌ Webpack 4 无缓存（每次重编）"
+    rightTitle="✅ Webpack 5 内置 filesystem cache"
+    type="error"
+    hideDiffMarkers={true}
+  />
+</Card>
+
+### 6. 核心原理
+
+Webpack 5 的 `cache.type: 'filesystem'` 底层使用 **LevelDB**（Google 开发的键值存储库）来持久化模块的编译结果。它将每个模块的以下信息序列化后存入磁盘：
+- **源代码 hash**：用于判断源文件是否变更
+- **Loader 转换结果**：Babel 等 Loader 的输出
+- **模块的依赖关系**：`import` / `require` 的路径及其 hash
+- **生成的代码块**：模块在最终 bundle 中的代码
+
+二次构建时，Webpack 通过检查源文件 hash 来决定是重用缓存还是重新编译。这个过程叫**持久化缓存索引**，对开发者几乎是透明的。
+
+---
+
+## 五、模块标识符稳定性
+
+### 1. 性能问题出现的现象
+
+明明只改了一行代码，结果浏览器的缓存大面积失效——所有 Chunk 的 hash 都变了，用户需要重新下载整个应用。
+
+### 2. 底层原因
+
+Webpack 4 之前，模块 ID 默认使用**自增整数**（0, 1, 2, 3...）。新增一个模块后，后续所有模块 ID 都会后移。由于 Chunk 的 hash 计算依赖其包含的所有模块 ID，模块 ID 的变化会导致所有 Chunk 的 hash 变化，进而导致浏览器缓存全部失效。
+
+### 3. 适用场景
+
+任何需要利用**浏览器长期缓存**的生产环境。
+
+### 4. 解决方案
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Paragraph>
+    - <Tag>Webpack 4</Tag> 需手动配置 `HashedModuleIdsPlugin`（生产）或 `NamedModulesPlugin`（开发）
+    - <Tag color="blue">Webpack 5</Tag> 默认开启 `moduleIds: 'deterministic'`，零配置
+  </Typography.Paragraph>
+</Card>
+
+### 5. 核心原理
+
+`deterministic` 模式使用**模块路径的 hash** 作为模块 ID。由于模块路径是确定性的（`src/a.js` 永远是 `src/a.js`），hash 也是确定性的。新增模块时，新模块获得自己的 hash ID，既有的模块 ID 不受影响，hash 保持不变。
+
+```javascript
+// Webpack 4（需手动）
+module.exports = {
+  plugins: [new webpack.HashedModuleIdsPlugin()],
+};
+
+// Webpack 5（默认已启用，仅作示意）
+module.exports = {
+  optimization: {
+    moduleIds: 'deterministic', // production 模式下默认值
+    chunkIds: 'deterministic',
+  },
+};
+```
+
+---
+
+## 六、JavaScript 并行压缩
+
+### 1. 性能问题出现的现象
+
+构建日志显示在 `terser` 压缩阶段卡了很久，CPU 占用率却很低。
+
+### 2. 底层原因
+
+代码压缩同样是 CPU 密集型操作（AST 解析 + 变量名缩短 + 死代码删除），默认单线程执行无法利用多核 CPU。
+
+### 3. 适用场景
+
+生产构建（production build）场景，尤其是 bundle 体积较大的项目。
+
+### 4. 解决方案
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Paragraph>
+    - <Tag>Webpack 4</Tag> 手动安装 `terser-webpack-plugin`，配置 `parallel: true`
+    - <Tag color="blue">Webpack 5</Tag> 内置 `terser-webpack-plugin`，且 `parallel` 默认为 `true`
+  </Typography.Paragraph>
+</Card>
+
+### 5. 核心原理
+
+`TerserWebpackPlugin` 内部同样使用 `worker_threads` 启动多个 Worker 实例。它将 bundle 分成多个代码块，分配给不同的 Worker 并行压缩。
+
+`parallel` 接受三个值：
+- `true`：自动检测 CPU 核数（默认使用 `os.cpus().length - 1`）
+- 数字：手动指定 Worker 数量
+- `false`：关闭并行，退化为单线程
+
+```javascript
+// Webpack 5 — 默认已开启并行，无需配置
+module.exports = {
+  optimization: {
+    minimize: true, // production 默认 true
+    minimizer: [
+      new TerserPlugin({
+        parallel: true, // Webpack 5 默认为 true
+      }),
+    ],
+  },
+};
+```
+
+---
+
+## 七、CSS 压缩
+
+### 1. 性能问题出现的现象
+
+生产构建产出的 CSS 文件中包含大量空格、注释和冗余选择器，导致首屏加载时 CSS 体积过大。
+
+### 2. 底层原因
+
+Webpack 本身不会对 CSS 做任何优化，CSS 文件中可能存在：
+- 未被 Tree Shaking 消除的冗余样式
+- 重复的选择器
+- 未压缩的空格和注释
+
+### 3. 适用场景
+
+使用了 CSS / Less / Sass 的生产环境构建。
+
+### 4. 解决方案
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Paragraph>
+    - <Tag>Webpack 4</Tag> `optimize-css-assets-webpack-plugin`
+    - <Tag color="blue">Webpack 5</Tag> `css-minimizer-webpack-plugin`（对 Source Map 兼容性更好）
+  </Typography.Paragraph>
+  <Typography.Paragraph>
+    两者都需要配合 `MiniCssExtractPlugin` 使用（将 CSS 提取为独立文件而非内联在 JS 中）。
+  </Typography.Paragraph>
+</Card>
+
+### 5. 核心原理
+
+`css-minimizer-webpack-plugin` 底层使用 **cssnano**（基于 PostCSS 的 CSS 优化引擎）进行压缩。cssnano 会执行以下优化：
+- 删除多余空格和注释
+- 合并相同的选择器规则
+- 缩短 CSS 变量名
+- 移除无用的浏览器前缀（配合 autoprefixer）
+
+```javascript
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+
+module.exports = {
+  optimization: {
+    minimizer: [
+      new CssMinimizerPlugin({
+        parallel: true,
+        minimizerOptions: {
+          preset: ['default', { discardComments: { removeAll: true } }],
+        },
+      }),
+    ],
+  },
+};
+```
+
+---
+
+## 八、构建信息与进度展示
+
+### 1. 性能问题出现的现象
+
+在大型项目中，构建日志被海量 webpack 内部信息刷屏，开发者难以看到真正的错误信息，也无法直观了解当前构建进度。
+
+### 2. 底层原因
+
+Webpack 默认的 `stats` 输出包含大量底层细节（模块 ID、chunk hash、每个模块的体积等）。这些信息对调试有用，但在日常开发中反而会造成信息过载。
+
+### 3. 适用场景
+
+所有项目，尤其是多人协作的大型团队。
+
+### 4. 解决方案
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Paragraph>
+    - <Tag>Webpack 4</Tag> `friendly-errors-webpack-plugin`（美化错误输出）+ `webpack-build-notifier`（系统通知）
+    - <Tag color="blue">Webpack 5</Tag> `WebpackBar`（交互式进度条 + 错误汇总）
+  </Typography.Paragraph>
+</Card>
+
+### 5. 核心原理
+
+`WebpackBar` 通过监听 Webpack 的 `compiler.hooks.compile` / `compiler.hooks.done` 等钩子，实时获取当前构建的状态信息（已处理模块数、总模块数、已用时间等），并在终端渲染进度条。
+
+```javascript
+const WebpackBar = require('webpackbar');
+
+module.exports = {
+  plugins: [
+    new WebpackBar({
+      color: '#1890ff',
+      basic: true,
+      reporter: {
+        done(ctx) {
+          console.log(`✅ 构建完成: ${ctx.time}ms`);
+        },
+      },
+    }),
+  ],
+};
+```
+
+---
+
+## 总结：面试回答框架
+
+面试官问"Webpack 构建速度优化"时，推荐按以下思路回答：
+
+<Alert
+  type="success"
+  showIcon
+  message="推荐答案框架"
+  description={
+    <Typography.Paragraph style={{ marginBottom: 0 }}>
+      1. <strong>定位痛点：</strong>"构建速度优化的核心是解决两个问题——冷启动慢和热更新慢。"<br />
+      2. <strong>按优先级展开：</strong>"我通常会从三个层面来做：<br />
+      &nbsp;&nbsp;- <strong>结构层面：</strong>SplitChunks 拆分解耦，让 vendor 和业务代码分离，提升缓存和并行压缩效率<br />
+      &nbsp;&nbsp;- <strong>范围层面：</strong>Loader 的 include/exclude、oneOf，让 Webpack 少处理文件<br />
+      &nbsp;&nbsp;- <strong>并行与缓存层面：</strong>thread-loader 多线程编译、TerserPlugin 并行压缩、Webpack 5 filesystem cache"<br />
+      3. <strong>版本差异：</strong>"Webpack 5 相比 4 最大的改善就是内置化了缓存和压缩，配置量减少了 80%，同时构建速度快了 30-50%。"<br />
+      4. <strong>注意边界：</strong>"不过缓存不是银弹，在 CI 环境或者频繁改配置的时候要注意缓存失效策略。SplitChunks 也不是越多越好，HTTP/1.1 场景下过多 Chunk 会增加请求开销。"
+    </Typography.Paragraph>
+  }
+/>

@@ -1,0 +1,30 @@
+graph TD
+    subgraph "npm 包的典型目录结构"
+        A["my-react-component/"] --> B["package.json"]
+        A --> C["src/"]
+        A --> D["dist/"]
+        A --> E["tsconfig.json"]
+        A --> F["README.md"]
+        A --> G[".npmignore / files 白名单"]
+
+        C --> C1["index.ts / index.tsx"]
+        C --> C2["components/"]
+        C --> C3["hooks/"]
+        C --> C4["utils/"]
+
+        D --> D1["index.js（CommonJS）"]
+        D --> D2["index.mjs（ES Module）"]
+        D --> D3["index.d.ts（类型声明）"]
+
+        C2 --> C2a["Button.tsx"]
+        C2 --> C2b["Input.tsx"]
+
+        style A fill:#4A90D9,color:#fff,stroke:#2C5F8A
+        style B fill:#E8F4FD,stroke:#4A90D9
+        style D fill:#E8FDE8,stroke:#2E8B57
+        style D1 fill:#E8FDE8,stroke:#2E8B57
+        style D2 fill:#E8FDE8,stroke:#2E8B57
+        style D3 fill:#E8FDE8,stroke:#2E8B57
+        style C fill:#FFF3E0,stroke:#FF9800
+        style F fill:#F3E5F5,stroke:#9C27B0
+    end
