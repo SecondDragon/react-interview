@@ -1,0 +1,18 @@
+sequenceDiagram
+    participant IO as IntersectionObserver
+    participant FN as loadMoreData
+    participant API as fetchMockData
+    participant RAF as Double rAF
+    participant DOM as Sentinel DOM
+
+    IO->>FN: 哨兵进入视口
+    FN->>FN: 检查 isLoadingRef / hasMoreRef
+    FN->>API: await fetchMockData
+    API-->>FN: newData
+    FN->>FN: setDataList(prev => [...prev, ...newData])
+    FN->>RAF: requestAnimationFrame
+    RAF->>RAF: requestAnimationFrame
+    RAF->>FN: 释放加载锁
+    RAF->>DOM: getBoundingClientRect
+    DOM-->>RAF: rect.top
+    RAF->>FN: 如果 rect.top <= viewport + 300<br/>递归加载下一页

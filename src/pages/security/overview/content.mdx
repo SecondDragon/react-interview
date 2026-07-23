@@ -1,0 +1,445 @@
+import {
+  Card,
+  Table,
+  Tag,
+  Typography,
+  Alert,
+  Collapse,
+  Steps,
+} from 'antd';
+import {
+  securityTopics,
+  topicColumns,
+  defenseCategories,
+  defenseColumns,
+  owaspData,
+  owaspColumns,
+} from './data';
+import {
+  BugOutlined,
+  SafetyCertificateOutlined,
+  GlobalOutlined,
+  KeyOutlined,
+  EyeOutlined,
+  CloudServerOutlined,
+  CodeSandboxOutlined,
+  DeploymentUnitOutlined,
+  ToolOutlined,
+} from '@ant-design/icons';
+
+# 前端安全知识体系
+
+> 安全不是后端的事、也不是运维的事——**每一个前端工程师都站在攻击者的第一道门前**。XSS 在你的 `<input>` 里，CSRF 在你的 `<form>` 里，敏感数据在你的 DevTools 里。
+
+<Alert
+  message="为什么前端安全如此重要？"
+  description={
+    <Typography.Paragraph>
+      现代 Web 应用的逻辑越来越多地运行在浏览器端：Token 存储、路由权限、富文本渲染、iframe 嵌入……<strong>前端已经是整个安全链中最复杂的一环</strong>。一个 XSS 漏洞就能绕过所有后端的 CSRF 防御；一个 CSP 配置错误就能让整个站点的注入防护形同虚设。下面这张全景图涵盖前端工程师必须掌握的 <strong>{securityTopics.length} 个安全专题</strong>。
+    </Typography.Paragraph>
+  }
+  type="warning"
+  showIcon
+  style={{ marginBottom: 24 }}
+/>
+
+---
+
+## 一、前端安全全景图
+
+<Card style={{ marginBottom: 24 }}>
+  <Typography.Paragraph>
+    按攻击类型分类，系统梳理前端安全领域的核心知识。已标注 <Tag color="green">✓ 已收录</Tag> 的专题在本系统中设有深度讲解页面。
+  </Typography.Paragraph>
+
+  <Table
+    dataSource={securityTopics}
+    columns={topicColumns}
+    pagination={false}
+    size="small"
+    bordered
+    scroll={{ x: 900 }}
+    rowKey="key"
+    style={{ marginBottom: 16 }}
+  />
+</Card>
+
+---
+
+## 二、六大防护层次
+
+<Card style={{ marginBottom: 24 }}>
+  <Typography.Paragraph>
+    安全不是打补丁——它是<strong>分层防御体系</strong>。单一手段永远不够（只用 HttpOnly 防不住 CSRF、只用 CSP 防不住 DOM XSS），必须多层叠加：
+  </Typography.Paragraph>
+
+  <Table
+    dataSource={defenseCategories}
+    columns={defenseColumns}
+    pagination={false}
+    size="middle"
+    bordered
+    rowKey="key"
+    style={{ marginBottom: 16 }}
+  />
+
+  <Alert
+    message="纵深防御（Defense in Depth）"
+    description="如果你只有一层防御，那攻破它只是时间问题。XSS 防御 = 输出编码 + CSP + HttpOnly Cookie + Trusted Types，四层缺一不可。"
+    type="info"
+    showIcon
+  />
+</Card>
+
+---
+
+## 三、攻击流程：从发现到利用
+
+<Steps
+  size="small"
+  direction="vertical"
+  style={{ marginBottom: 24 }}
+  items={[
+    {
+      title: '侦察阶段：信息收集',
+      description: '攻击者通过浏览器 DevTools、Source Map、错误信息、响应头来收集前端技术栈、API 端点、认证方式。找到 CSP 配置中的漏洞（如 unsafe-inline）或 CORS 配置错误。',
+      icon: <EyeOutlined />,
+    },
+    {
+      title: '注入阶段：找到输入点',
+      description: '攻击者在 URL 参数、表单输入、富文本编辑器、文件上传、WebSocket 消息、postMessage 事件等入口寻找未过滤的用户输入，尝试注入恶意代码。',
+      icon: <CodeSandboxOutlined />,
+    },
+    {
+      title: '执行阶段：触发 Payload',
+      description: '恶意代码在受害者浏览器中执行：窃取 localStorage/IndexedDB 中的敏感数据、读取 Cookie、发起伪造请求、修改页面 DOM 为钓鱼界面、键盘记录。',
+      icon: <BugOutlined />,
+    },
+    {
+      title: '外传阶段：数据窃取',
+      description: '窃取的数据通过 new Image().src、navigator.sendBeacon()、fetch()、WebSocket 等方式回传到攻击者控制的服务器，避免触发 CSP 的 report-uri 告警。',
+      icon: <CloudServerOutlined />,
+    },
+    {
+      title: '持久化阶段：保持控制',
+      description: '通过 Service Worker 注册恶意脚本、利用 Web Worker 维持后台连接、篡改 localStorage 中的用户数据以维持钓鱼效果、甚至修改 Service Worker 缓存来持久化。',
+      icon: <DeploymentUnitOutlined />,
+    },
+  ]}
+/>
+
+---
+
+## 四、OWASP Top 10 2021 与前端的关系
+
+<Card style={{ marginBottom: 24 }}>
+  <Table
+    dataSource={owaspData}
+    columns={owaspColumns}
+    pagination={false}
+    size="small"
+    bordered
+    rowKey="key"
+    style={{ marginBottom: 16 }}
+  />
+
+  <Alert
+    message="关键结论"
+    description="OWASP Top 10 中有 9 项与前端开发直接相关。前端是安全的第一道防线——不是「可以做」而是「必须做」。"
+    type="warning"
+    showIcon
+  />
+</Card>
+
+---
+
+## 五、必知必会：核心概念速览
+
+<Collapse
+  defaultActiveKey={['xss']}
+  style={{ marginBottom: 24 }}
+  items={[
+    {
+      key: 'xss',
+      label: <Typography.Text strong>XSS 跨站脚本攻击 — 前端安全的「头号公敌」</Typography.Text>,
+      children: (
+        <Typography.Paragraph>
+          XSS（Cross-Site Scripting）是最常见、危害最大的 Web 前端安全漏洞。核心原理是攻击者将恶意脚本注入页面，浏览器无法区分「合法脚本」和「注入脚本」。
+          <br /><br />
+          <strong>三种类型：</strong>存储型（持久化在数据库/富文本中）、反射型（在 URL 参数中立即回显）、DOM 型（纯客户端漏洞，服务端不参与）。
+          <br /><br />
+          <strong>防御体系：</strong>输出编码（HTML Entity / JS 编码 / URL 编码）+ CSP（Content Security Policy）+ HttpOnly Cookie + Trusted Types。任何单一防御手段都不足够，必须多层叠加。
+          <br /><br />
+          <Tag color="green">已收录深度讲解页面</Tag> 详见左侧菜单 "XSS 跨站脚本攻击"
+        </Typography.Paragraph>
+      ),
+    },
+    {
+      key: 'csrf',
+      label: <Typography.Text strong>CSRF 跨站请求伪造 — 利用「信任」的攻击</Typography.Text>,
+      children: (
+        <Typography.Paragraph>
+          CSRF（Cross-Site Request Forgery）利用的是「浏览器自动携带目标站点的 Cookie」这一特性。攻击者不直接窃取凭证，而是让受害者在自己不知情的情况下"自愿"发起请求。
+          <br /><br />
+          <strong>攻击前提：</strong>Cookie Based 的会话管理 + 浏览器自动携带 Cookie 机制 + 可预测的请求参数。
+          <br /><br />
+          <strong>防御体系：</strong>CSRF Token（Synchronizer Token Pattern）+ SameSite Cookie + Origin/Referer 校验 + 自定义请求头。
+          <br /><br />
+          <Tag color="green">已收录深度讲解页面</Tag> 详见左侧菜单 "CSRF 跨站请求伪造"
+        </Typography.Paragraph>
+      ),
+    },
+    {
+      key: 'csp',
+      label: <Typography.Text strong>CSP 内容安全策略 — XSS 防御的最后一道墙</Typography.Text>,
+      children: (
+        <Typography.Paragraph>
+          CSP（Content Security Policy）是一套浏览器层面的安全机制，通过 HTTP 响应头或 meta 标签声明页面允许加载/执行的资源来源白名单。
+          <br /><br />
+          <strong>核心指令：</strong>script-src（JS 来源）、style-src（CSS 来源）、img-src（图片来源）、connect-src（fetch/WebSocket 目标）、frame-ancestors（防点击劫持）、form-action（防 CSRF）、report-uri/report-to（违规上报）。
+          <br /><br />
+          <strong>关键误区：</strong>unsafe-inline 允许内联脚本和事件处理器（onclick=...），会使 CSP 对 XSS 的防护大打折扣。unsafe-eval 允许 eval()、setTimeout(string)、new Function(string) 等动态执行。
+          <br /><br />
+          <strong>最佳实践：</strong>使用 nonce（每次请求生成唯一随机数）或 hash（对合法内联脚本计算 SHA-256 哈希）替代 unsafe-inline，并开启 report-only 模式逐步收敛策略。
+        </Typography.Paragraph>
+      ),
+    },
+    {
+      key: 'cookie',
+      label: <Typography.Text strong>Cookie 安全属性 — 最被低估的安全配置</Typography.Text>,
+      children: (
+        <Typography.Paragraph>
+          <strong>HttpOnly：</strong>禁止 JavaScript 通过 document.cookie 读取，防 XSS 窃取 Session ID。但注意——HttpOnly 不防 CSRF，因为浏览器发请求时仍会自动携带 Cookie。<br />
+          <strong>Secure：</strong>Cookie 只在 HTTPS 连接中传输，防中间人截获。<br />
+          <strong>SameSite：</strong>控制跨站请求是否携带 Cookie。Strict（完全不携带，最安全）/ Lax（允许顶级导航 GET 请求，Chrome 默认）/ None（必须配合 Secure，允许所有跨站请求）。<br />
+          <strong>__Host- 前缀：</strong>要求 Cookie 必须同时有 Secure + Path=/ + 无 Domain 属性，提供最强的防篡改保证。<br />
+          <strong>__Secure- 前缀：</strong>要求 Cookie 必须有 Secure，但允许自定义 Path。
+        </Typography.Paragraph>
+      ),
+    },
+    {
+      key: 'cors',
+      label: <Typography.Text strong>CORS 跨域资源共享 — 同源策略的「开关」</Typography.Text>,
+      children: (
+        <Typography.Paragraph>
+          CORS 是浏览器同源策略（Same-Origin Policy）的例外机制，允许服务器声明哪些跨域来源可以访问资源。
+          <br /><br />
+          <strong>常见配置错误：</strong><br />
+          1. <Typography.Text code>Access-Control-Allow-Origin: *</Typography.Text> + <Typography.Text code>Access-Control-Allow-Credentials: true</Typography.Text> — 二者不能同时使用，浏览器会拒绝。<br />
+          2. 动态反射 Origin 头 — 读取请求的 Origin 并在响应中原样返回，等于放行所有跨域来源。<br />
+          <br />
+          <strong>安全 CORS 配置原则：</strong>使用严格的白名单（而非反射 Origin）、区分公开 API（严格 Origin 白名单）和内部 API（不让浏览器通过 CORS 访问，用 BFF 代理）。
+        </Typography.Paragraph>
+      ),
+    },
+    {
+      key: 'supply',
+      label: <Typography.Text strong>npm 供应链安全 — 你装的每个包都可能是一颗炸弹</Typography.Text>,
+      children: (
+        <Typography.Paragraph>
+          npm 生态中有超过 200 万个包，每个包背后都可能存在恶意代码：
+          <br /><br />
+          <strong>主要攻击形式：</strong><br />
+          1. <strong>依赖混淆/命名抢注</strong> — 攻击者发布与公司内部包同名的公开包，利用 npm 的包解析优先级使项目安装恶意版本。<br />
+          2. <strong>恶意包投毒</strong> — 伪装为常用工具库（如 event-stream 被植入比特币窃取代码）。<br />
+          3. <strong>锁文件篡改</strong> — 利用 PR 修改 package-lock.json 引入恶意版本的间接依赖。<br />
+          4. <strong>维护者账号接管</strong> — 通过社工或密码泄露获取流行包维护者权限，发布含后门的新版本。<br />
+          <br />
+          <strong>防御手段：</strong>npm audit / Snyk 扫描、锁文件完整性校验、SRI、使用私有 npm registry、审查依赖的 postinstall 脚本。
+        </Typography.Paragraph>
+      ),
+    },
+    {
+      key: 'postmessage',
+      label: <Typography.Text strong>postMessage 安全 — 跨窗口通信的「信任陷阱」</Typography.Text>,
+      children: (
+        <Typography.Paragraph>
+          window.postMessage 是浏览器原生提供的跨窗口（iframe、弹窗、opener）通信方式，但它不提供任何安全保证：
+          <br /><br />
+          <strong>常见漏洞：</strong><br />
+          1. <Typography.Text code>{`window.postMessage(data, '*')`}</Typography.Text> — 不限定目标 Origin，任何页面都能接收。<br />
+          2. 接收端未校验 <Typography.Text code>event.origin</Typography.Text> — 攻击者可在恶意页面中向目标 iframe 发送伪造消息。<br />
+          <br />
+          <strong>最佳实践：</strong>发送时明确指定 targetOrigin（永不使用 *）、接收时严格校验 event.origin 白名单、校验消息结构、对敏感操作要求用户确认。
+        </Typography.Paragraph>
+      ),
+    },
+    {
+      key: 'storage',
+      label: <Typography.Text strong>浏览器存储安全 — 你的 Token 放在哪里？</Typography.Text>,
+      children: (
+        <Typography.Paragraph>
+          不同存储方式的权衡：
+          <br /><br />
+          <strong>localStorage / sessionStorage：</strong>方便但完全暴露给 JS，任何 XSS 都能读取。不应存储 Session Token、明文密码等敏感数据。<br />
+          <strong>Cookie + HttpOnly + Secure + SameSite：</strong>防 XSS 读取（HttpOnly）、防 MITM（Secure）、防 CSRF（SameSite）。但容量有限（4KB）。<br />
+          <strong>IndexedDB：</strong>容量大、支持事务和索引，但同样无 JS 读取保护，XSS 可全部导出。<br />
+          <strong>BFF 模式（推荐）：</strong>Access Token 存后端 Session，前端只持有一个 httpOnly + Secure + SameSite=Strict 的 Session ID Cookie。前端通过 BFF 代理请求，Token 永不到达浏览器。
+        </Typography.Paragraph>
+      ),
+    },
+  ]}
+/>
+
+---
+
+## 六、前端安全工程化：七个关键实践
+
+<Steps
+  size="small"
+  direction="vertical"
+  style={{ marginBottom: 24 }}
+  items={[
+    {
+      title: '代码审查：重点关注危险 API',
+      description: (
+        <>
+          审查每个 <Typography.Text code>dangerouslySetInnerHTML</Typography.Text>、<Typography.Text code>v-html</Typography.Text>、<Typography.Text code>innerHTML</Typography.Text>、<Typography.Text code>document.write()</Typography.Text>、<Typography.Text code>eval()</Typography.Text>、<Typography.Text code>new Function()</Typography.Text> 的使用是否必要且安全。这些 API 是 XSS 的主要入口。
+        </>
+      ),
+      icon: <ToolOutlined />,
+    },
+    {
+      title: 'ESLint 安全规则',
+      description: (
+        <>
+          启用 ESLint 安全插件（如 <Typography.Text code>eslint-plugin-no-unsanitized</Typography.Text>、<Typography.Text code>eslint-plugin-security</Typography.Text>）自动检测不安全代码模式。如检测到 innerHTML 赋值会告警。
+        </>
+      ),
+      icon: <BugOutlined />,
+    },
+    {
+      title: 'CSP 策略管理',
+      description: '从 Report-Only 模式开始部署 CSP，通过 report-uri/report-to 收集违规报告，逐步收紧策略。最终不允许 unsafe-inline 和 unsafe-eval。利用 nonce 或 hash 处理必要的内联脚本。',
+      icon: <SafetyCertificateOutlined />,
+    },
+    {
+      title: '依赖安全审计',
+      description: (
+        <>
+          将 <Typography.Text code>npm audit</Typography.Text> / Snyk / Dependabot 集成到 CI/CD 流程中，阻止含已知高危 CVE 的 PR 合并。定期审查依赖项，移除不再维护的包。监控 postinstall 脚本和 lockfile 变更。
+        </>
+      ),
+      icon: <CloudServerOutlined />,
+    },
+    {
+      title: '安全 Headers 中间件',
+      description: (
+        <>
+          在 Web 服务器或框架中间件层统一配置安全头：<Typography.Text code>Content-Security-Policy</Typography.Text>（防 XSS）、<Typography.Text code>Strict-Transport-Security</Typography.Text>（强制 HTTPS）、<Typography.Text code>X-Content-Type-Options: nosniff</Typography.Text>（防 MIME 嗅探）、<Typography.Text code>X-Frame-Options: DENY</Typography.Text> 或 CSP <Typography.Text code>frame-ancestors</Typography.Text>（防点击劫持）、<Typography.Text code>Referrer-Policy</Typography.Text>（控制 Referer 泄露）。
+        </>
+      ),
+      icon: <GlobalOutlined />,
+    },
+    {
+      title: 'SRI 子资源完整性',
+      description: '对所有从 CDN 加载的第三方脚本（如 Google Analytics、支付 SDK）添加 integrity 属性。若 CDN 被入侵，浏览器会拒绝加载哈希值不匹配的脚本，防止供应链攻击。',
+      icon: <KeyOutlined />,
+    },
+    {
+      title: '安全监控与告警',
+      description: '前端接入 CSP 违规上报（report-uri/report-to）、JS 运行时异常监控（Sentry），并对异常的数据外传行为（navigator.sendBeacon 到未知域名）建立告警规则。',
+      icon: <EyeOutlined />,
+    },
+  ]}
+/>
+
+---
+
+## 七、常见面试问题方向
+
+<Collapse
+  style={{ marginBottom: 24 }}
+  items={[
+    {
+      key: '1',
+      label: 'XSS 和 CSRF 的区别是什么？（高频）',
+      children: (
+        <Typography.Paragraph>
+          <strong>攻击目标不同：</strong>XSS 的目标是<strong>受害者浏览器</strong>——注入脚本执行任意代码；CSRF 的目标是<strong>Web 应用服务器</strong>——伪造用户请求。<br />
+          <strong>利用机制不同：</strong>XSS 利用的是<strong>站点对用户输入的信任</strong>（未过滤直接输出）；CSRF 利用的是<strong>站点对浏览器的信任</strong>（浏览器自动携带 Cookie）。<br />
+          <strong>攻击结果不同：</strong>XSS 可以做到 CSRF 做不到的事（如读取页面 DOM、键盘记录、修改页面内容）；CSRF 只能发送请求，无法读取响应（受同源策略限制）。<br />
+          <strong>防御手段对比：</strong>CSRF Token 能防 CSRF 但不能防 XSS（XSS 可以读取 Token）；HttpOnly Cookie 能防 XSS 窃取 Session 但不能防 CSRF（浏览器仍携带 Cookie 发请求）。
+        </Typography.Paragraph>
+      ),
+    },
+    {
+      key: '2',
+      label: 'CSP 中 nonce 和 hash 的区别？什么场景用哪个？',
+      children: (
+        <Typography.Paragraph>
+          <strong>nonce（Number Used Once）：</strong>服务端每次响应时生成一个随机数，嵌入到 CSP 头和 script 标签的 nonce 属性中。攻击者无法预测 nonce 值，因此注入的 script 标签不会被浏览器执行。<strong>适用于动态生成的内联脚本</strong>（如服务端渲染时的初始化脚本）。<br />
+          <strong>hash：</strong>对内联脚本的内容计算 SHA-256/SHA-384/SHA-512 哈希，放入 CSP 头的 script-src 中。浏览器执行前会重新计算哈希并比对。<strong>适用于静态内联脚本</strong>（内容不变，如 webpack 的 inline chunk）。<br />
+          <strong>重要限制：</strong>nonce 必须是密码学安全的随机数且不可预测。攻击者唯一能绕过 nonce 的方式是在已存在的 nonce 脚本标签中注入代码——DOM Clobbering 就是利用这一点的攻击。
+        </Typography.Paragraph>
+      ),
+    },
+    {
+      key: '3',
+      label: 'SameSite Cookie 的三个值分别是什么意思？',
+      children: (
+        <Typography.Paragraph>
+          <strong>Strict（最严格）：</strong>完全禁止跨站请求携带 Cookie。用户从其他站点点击链接到目标站点时也不会携带，导致登录态丢失。适用于银行等对安全要求极高的场景。<br />
+          <strong>Lax（Chrome 默认）：</strong>允许「顶级导航的 GET 请求」携带 Cookie——即用户点击链接、或通过 {'<a>'} 标签跳转。POST 请求、iframe、img 标签、fetch/XMLHttpRequest 等子资源请求不携带。是安全与体验的最佳平衡点。<br />
+          <strong>None（最宽松）：</strong>所有跨站请求都携带 Cookie，但<strong>必须同时设置 Secure 属性</strong>（仅 HTTPS 传输），否则 Chrome 会拒绝。适用于需要跨站嵌入的资源（如第三方支付页面的 iframe）。
+        </Typography.Paragraph>
+      ),
+    },
+    {
+      key: '4',
+      label: 'localStorage 存 JWT Token 有什么安全问题？应该怎么存？',
+      children: (
+        <Typography.Paragraph>
+          localStorage 存 Token 的核心问题：<strong>任何 JS 代码都能读取</strong>。一旦发生 XSS，Token 直接暴露。而 HttpOnly Cookie 虽然防 XSS 读取但不能防 CSRF。
+          <br /><br />
+          <strong>推荐方案（BFF 模式）：</strong><br />
+          1. Access Token + Refresh Token 都存储在后端 Session 中。<br />
+          2. 前端只持有一个 httpOnly + Secure + SameSite=Strict 的 Session ID Cookie。<br />
+          3. 前端的 API 请求通过 BFF（Backend for Frontend）代理转发，由 BFF 附加 Token。<br />
+          4. Token 永不到达浏览器端，XSS 无法窃取。<br />
+          <br />
+          <strong>折衷方案（SPA 无 BFF 时）：</strong><br />
+          1. Access Token 存内存（JS 闭包 / React state），不持久化。刷新页面需重新获取。<br />
+          2. Refresh Token 存 httpOnly Cookie，配合 CSRF Token + SameSite=Lax。<br />
+          3. 定期轮换 Refresh Token（Refresh Token Rotation）。
+        </Typography.Paragraph>
+      ),
+    },
+    {
+      key: '5',
+      label: 'HTTPS 页面引入 HTTP 资源会发生什么？',
+      children: (
+        <Typography.Paragraph>
+          浏览器会执行 <strong>Mixed Content（混合内容）</strong> 策略：<br /><br />
+          <strong>主动混合内容：</strong>HTTP 的 script、link(CSS)、iframe、fetch/XMLHttpRequest、WebSocket 等「可执行」资源 → <strong>浏览器直接拦截，不加载</strong>。<br />
+          <strong>被动混合内容：</strong>HTTP 的 img、video、audio 等「显示型」资源 → 请求会被自动升级为 HTTPS，若不成功可能降级但地址栏警告。<br />
+          <br />
+          <strong>最佳实践：</strong>始终使用协议相对 URL（//cdn.example.com/script.js）或在生产环境硬编码 HTTPS。配置 <Typography.Text code>Content-Security-Policy: upgrade-insecure-requests</Typography.Text> 让浏览器自动升级。
+        </Typography.Paragraph>
+      ),
+    },
+    {
+      key: '6',
+      label: 'XSS 已经发生了，我有哪些手段可以「止损」？',
+      children: (
+        <Typography.Paragraph>
+          纵深防御的价值就体现在这里。即使 XSS 注入成功，仍有层层阻碍：<br /><br />
+          1. <strong>HttpOnly Cookie →</strong> 攻击者的 JS 无法通过 document.cookie 读取 Session ID。<br />
+          2. <strong>CSP →</strong> 攻击者试图加载外部恶意脚本或回传数据时，script-src 和 connect-src 会拦截。<br />
+          3. <strong>Trusted Types →</strong> 即使注入字符串，浏览器也拒绝作为 HTML 插入 innerHTML（强制使用 TrustedHTML 类型）。<br />
+          4. <strong>SRI →</strong> 攻击者劫持的 CDN 资源因哈希不匹配被拒绝执行。<br />
+          5. <strong>SameSite Cookie →</strong> 攻击者即使拿到 Session Cookie，跨站请求无法携带。<br />
+          6. <strong>CSP report-uri →</strong> 安全团队收到违规报告，立即止损。<br />
+          <br />
+          <strong>应急响应计划：</strong>确认 XSS 发生 → WAF/CDN 层添加紧急 CSP 头 → 吊销所有活跃 Session → RCA → 修复漏洞 → 回溯 CSP 报告找出其他可能的攻击。
+        </Typography.Paragraph>
+      ),
+    },
+  ]}
+/>
+
+---
+
+<Typography.Paragraph type="secondary" style={{ textAlign: 'center' }}>
+  本专题持续更新中。当前已深度讲解 <Tag color="green">XSS 跨站脚本攻击</Tag> 和 <Tag color="green">CSRF 跨站请求伪造</Tag>，其余专题请通过左侧菜单导航浏览。
+</Typography.Paragraph>

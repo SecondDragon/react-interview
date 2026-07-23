@@ -1,0 +1,22 @@
+flowchart TB
+    subgraph colA["列 A"]
+        A0[item 0]
+        A3[item 3]
+    end
+
+    subgraph colB["列 B"]
+        B1[item 1]
+    end
+
+    subgraph colC["列 C"]
+        C2[item 2]
+    end
+
+    A0 -.->|item 0 变高 50px<br>列 A 变高| A3
+    A0 -.->|影响列选择| B1
+    A0 -.->|影响列选择| C2
+
+    style A0 fill:#fff2f0,stroke:#ff4d4f
+    style A3 fill:#e6f7ff,stroke:#1890ff
+    style B1 fill:#e6f7ff,stroke:#1890ff
+    style C2 fill:#e6f7ff,stroke:#1890ff

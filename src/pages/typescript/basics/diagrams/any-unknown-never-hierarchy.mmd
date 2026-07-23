@@ -1,0 +1,38 @@
+graph TD
+    subgraph "Top Types（顶级类型）"
+        ANY["any<br/>"放弃所有类型检查""]
+        UNKNOWN["unknown<br/>"安全的 top type""]
+    end
+
+    subgraph "具体类型（Concrete Types）"
+        STRING["string"]
+        NUMBER["number"]
+        BOOLEAN["boolean"]
+        VOID["void"]
+        OBJECT["object<br/>{ name: string }"]
+        OTHER["...其他具体类型"]
+    end
+
+    subgraph "Bottom Type（底部类型）"
+        NEVER["never<br/>"空集——没有任何值""]
+    end
+
+    ANY --> STRING
+    ANY --> NUMBER
+    STRING --> UNKNOWN
+    NUMBER --> UNKNOWN
+    BOOLEAN --> UNKNOWN
+    VOID --> UNKNOWN
+    OBJECT --> UNKNOWN
+    OTHER --> UNKNOWN
+
+    NEVER --> STRING
+    NEVER --> NUMBER
+    NEVER --> BOOLEAN
+    NEVER --> VOID
+    NEVER --> OBJECT
+    NEVER --> OTHER
+
+    style ANY fill:#fff7e6,stroke:#fa8c16,color:#d46b08
+    style UNKNOWN fill:#e6f7ff,stroke:#1890ff,color:#096dd9
+    style NEVER fill:#fff0f6,stroke:#eb2f96,color:#c41d7f

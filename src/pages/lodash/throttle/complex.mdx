@@ -1,0 +1,73 @@
+import CodeDiff from '@/components/CodeDiff';
+import LiveDemo from './LiveDemo';
+import simpleCode from './demos/simple.ts?raw';
+import complexCode from './demos/complex.ts?raw';
+import { Card, Typography, List, Tag } from 'antd';
+import { throttleVersions } from './data';
+
+# 节流：复杂版
+
+<Typography.Paragraph type="secondary">
+  复杂版 throttle 在简单版基础上加入 <Typography.Text code>leading</Typography.Text> 与 <Typography.Text code>trailing</Typography.Text> 选项，可精确控制回调在周期中的执行时机。
+</Typography.Paragraph>
+
+## 一、为什么需要 leading / trailing？
+
+<Typography.Paragraph>
+  最简版 throttle 默认在周期开始时执行（leading）。但在某些场景下：
+</Typography.Paragraph>
+
+- **leading=false, trailing=true**：滚动加载时，希望用户停止滚动后才触发加载，而不是一开始滚动就立即加载。
+- **leading=true, trailing=false**：页面 resize 时，希望窗口稳定前立即响应一次，稳定后不再重复触发。
+
+## 二、版本演进
+
+<CodeDiff
+  oldValue={simpleCode}
+  newValue={complexCode}
+  leftTitle="最简版"
+  rightTitle="复杂版"
+  type="info"
+  hideDiffMarkers={true}
+/>
+
+## 三、完整代码
+
+<CodeDiff
+  code={complexCode}
+  title="复杂版 throttle 源码"
+  type="info"
+/>
+
+## 四、能力边界
+
+<Card title="这个版本新增的能力" size="small" style={{ marginBottom: '16px' }}>
+  <List
+    dataSource={throttleVersions[1].highlights}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color="green">✓</Tag> {item}
+      </List.Item>
+    )}
+  />
+</Card>
+
+<Card title="仍然缺少的能力" size="small">
+  <List
+    dataSource={throttleVersions[1].limitations}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color="red">✗</Tag> {item}
+      </List.Item>
+    )}
+  />
+</Card>
+
+## 五、互动演示
+
+<Card title={<span>Live Demo <Tag color="blue">复杂版</Tag></span>} style={{ marginTop: '24px' }}>
+  <Typography.Paragraph>
+    关闭 <Typography.Text code>leading</Typography.Text>、打开 <Typography.Text code>trailing</Typography.Text>，快速点击按钮，你会发现第一次点击不会立即执行，而是在等待周期结束后才执行。
+  </Typography.Paragraph>
+  <LiveDemo version="complex" />
+</Card>

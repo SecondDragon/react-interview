@@ -1,0 +1,48 @@
+import { Card, Typography, Alert } from 'antd';
+import OverviewCards from './OverviewCards';
+
+# lodash 手写函数库
+
+<Typography.Paragraph type="secondary">
+  从面试高频的 lodash 函数入手，抛弃“背诵源码”，通过<strong>最简版 → 复杂版 → 完全版</strong>的渐进式实现，理解每个函数的设计取舍。
+</Typography.Paragraph>
+
+<Alert
+  type="info"
+  message="学习方法"
+  description="先跑通最简版，理解核心机制；再补充选项，理解真实业务场景；最后对照 lodash 源码，补齐边界行为。"
+  showIcon
+  style={{ marginBottom: '24px' }}
+/>
+
+## 一、为什么要手写 lodash？
+
+<Typography.Paragraph>
+  lodash 是前端面试中的常青树。面试官问“实现一个 debounce”时，真正想考察的不是你能否背出源码，而是：
+</Typography.Paragraph>
+
+- 你是否理解 **this 指向与参数透传**。
+- 你是否能处理 **leading / trailing / maxWait** 等边界选项。
+- 你是否能写出 **可取消、可刷新、可查询状态** 的完整 API。
+
+<Typography.Paragraph>
+  本专题每个函数都会提供三个版本：
+</Typography.Paragraph>
+
+- **最简版**：只保留核心逻辑，先让代码跑起来。
+- **复杂版**：补充高频选项，覆盖 80% 的日常场景。
+- **完全版**：对齐 lodash 语义，处理边界与返回值。
+
+## 二、常用函数总览
+
+<Typography.Paragraph>
+  点击已实现的函数卡片可进入详细实现页；未实现函数会逐步补充。
+</Typography.Paragraph>
+
+<OverviewCards />
+
+## 三、当前进度
+
+<Typography.Paragraph>
+  目前已完成 <Typography.Text type="success" strong>debounce</Typography.Text> 与 <Typography.Text type="success" strong>throttle</Typography.Text> 的渐进式实现，每个版本都配有完整源码与可交互的 Live Demo。
+</Typography.Paragraph>

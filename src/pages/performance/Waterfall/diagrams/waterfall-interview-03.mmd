@@ -1,0 +1,20 @@
+flowchart TD
+    A[计算卡片 top / itemHeight] --> B{建表阶段}
+    B --> C["startChunk = floor(top / 800)"]
+    B --> D["endChunk = floor((top + itemHeight) / 800)"]
+    C --> E[遍历 c: startChunk..endChunk]
+    D --> E
+    E --> F["chunksMap.get(c).add(dataIdx)"]
+
+    G[滚动 / 渲染] --> H{检索阶段}
+    H --> I["startChunk = floor((scrollTop - buffer) / 800)"]
+    H --> J["endChunk = floor((scrollTop + h + buffer) / 800)"]
+    I --> K[遍历覆盖的 Chunk]
+    J --> K
+    K --> L[取 Set 内索引去重]
+    L --> M[返回 visibleIndices]
+
+    classDef build fill:#F6FFED,stroke:#52C41A,stroke-width:2px,color:#135200
+    classDef query fill:#E6F7FF,stroke:#1890FF,stroke-width:2px,color:#003A8C
+    class A,B,C,D,E,F build
+    class G,H,I,J,K,L,M query

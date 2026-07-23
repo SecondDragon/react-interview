@@ -1,0 +1,15 @@
+sequenceDiagram
+    participant V as "value: string | number"
+    participant TS as "TypeScript 编译器"
+    participant Code as "开发者代码"
+
+    V ->> TS: 传入联合类型值
+    Note over V,TS: 类型为 string | number<br/>只能访问共有的属性和方法
+
+    Code ->> TS: if (typeof value === "string")
+    TS ->> TS: 类型收窄（Narrowing）<br/>在 if 块内 value 类型变为 string
+    Note over TS: ✅ 可安全调用<br/>value.toUpperCase()
+
+    Code ->> TS: else (或 if typeof === "number")
+    TS ->> TS: 类型收窄为 number
+    Note over TS: ✅ 可安全调用<br/>value.toFixed(2)

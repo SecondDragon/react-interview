@@ -4,6 +4,7 @@ import { ItemPosition } from './useSizeMeasurer';
 interface VirtualizationConfig {
   chunkSize: number;
   overscan: number;
+  measureVersion?: number;
 }
 
 /**
@@ -32,7 +33,7 @@ export function useVirtualization(positions: ItemPosition[], config: Virtualizat
     });
 
     return map;
-  }, [positions, config.chunkSize]);
+  }, [positions, config.chunkSize, config.measureVersion]);
 
   // 2. 计算当前可见索引数组
   const visibleIndices = useMemo(() => {

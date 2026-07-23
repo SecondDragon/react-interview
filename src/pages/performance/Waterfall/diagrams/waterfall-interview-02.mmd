@@ -1,0 +1,17 @@
+flowchart TD
+    A[用户滚动] --> B[获取 visibleIndices]
+    B --> C[创建 POOL_SIZE 空数组]
+    C --> D[遍历每个 dataIdx]
+    D --> E[slotIdx = dataIdx % POOL_SIZE]
+    E --> F["pool[slotIdx] = {dataIdx, item, pos}"]
+    F --> G{所有 dataIdx 处理完?}
+    G -->|否| D
+    G -->|是| H[渲染 80 个固定槽位]
+    H --> I{槽位为 null?}
+    I -->|是| J[display: none]
+    I -->|否| K[显示并更新数据/位置]
+
+    classDef build fill:#E6FFFB,stroke:#13C2C2,stroke-width:2px,color:#006D75
+    classDef render fill:#FFF7E6,stroke:#FA8C16,stroke-width:2px,color:#873800
+    class A,B,C,D,E,F,G build
+    class H,I,J,K render

@@ -1,0 +1,23 @@
+flowchart TD
+    A["ListItem 首次渲染 / 图片加载 / 文本变化"] --> B{"ResizeObserver 触发"}
+    B --> C["measureItem(index, element)"]
+    C --> D["getBoundingClientRect().height"]
+    D --> E{"高度是否变化?"}
+    E -->|否| F["直接返回，不做重排"]
+    E -->|是| G["updateItemHeight(index, height)"]
+    G --> H["更新 pos.height / pos.bottom"]
+    H --> I["遍历后续所有项：top = 前一项.bottom"]
+    I --> J["重新计算 totalHeight"]
+    J --> K["measureVersion++ 触发重建 Chunk Map"]
+    K --> L["React 重新渲染 Spacer 与可见项"]
+    L --> M["列表重新定位，0 闪烁"]
+
+    classDef trigger fill:#E6F7FF,stroke:#1890FF,stroke-width:2px,color:#003A8C
+    classDef check fill:#FFF7E6,stroke:#FA8C16,stroke-width:2px,color:#873800
+    classDef update fill:#F6FFED,stroke:#52C41A,stroke-width:2px,color:#135200
+    classDef render fill:#F9F0FF,stroke:#722ED1,stroke-width:2px,color:#531DAB
+
+    class A,B,C,D trigger
+    class E,F check
+    class G,H,I,J,K update
+    class L,M render

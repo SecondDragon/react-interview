@@ -1,0 +1,30 @@
+flowchart LR
+    subgraph DataLayer["数据层"]
+        D[dataList]
+        P[pageRef / isLoadingRef / hasMoreRef]
+    end
+
+    subgraph LayoutLayer["布局层 useProWaterfall"]
+        L1[最短列算法]
+        L2[空间索引 Chunk Map]
+        L3[getVisibleIndices]
+    end
+
+    subgraph RenderLayer["渲染层 Ultimate.tsx"]
+        R1[SimpleBar Overlay 滚动]
+        R2[displayPool 固定 80 槽]
+        R3[稳定 key: slot-#]
+        R4[translate3d GPU 合成]
+    end
+
+    D --> L1
+    L1 --> L2
+    L2 --> L3
+    L3 --> R2
+    R2 --> R3
+    R3 --> R4
+
+    classDef layer fill:#E6F7FF,stroke:#1890FF,stroke-width:2px,color:#003A8C
+    classDef core fill:#F6FFED,stroke:#52C41A,stroke-width:2px,color:#135200
+    class DataLayer,LayoutLayer,RenderLayer layer
+    class L2,R3 core

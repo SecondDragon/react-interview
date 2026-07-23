@@ -1,0 +1,11 @@
+sequenceDiagram
+    participant Input as "原始类型 T = { a: A; b: B }"
+    participant Map as "映射 [P in keyof T]"
+    participant Output as "新类型"
+
+    Input ->> Map: keyof T = "a" | "b"
+    Map ->> Map: 遍历每个键
+    Map ->> Map: P = "a" → T[P] = A
+    Map ->> Map: P = "b" → T[P] = B
+    Map ->> Output: 生成 { a: 变换(A); b: 变换(B) }
+    Note over Output: 加上 readonly/? 或变换键名

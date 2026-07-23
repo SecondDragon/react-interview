@@ -1,0 +1,17 @@
+sequenceDiagram
+    participant U as 用户
+    participant S as SimpleBar
+    participant ULT as Ultimate.tsx
+    participant HOOK as useProWaterfall
+    participant DOM as DOM
+
+    U->>S: 滚动
+    S->>ULT: onScroll event
+    ULT->>ULT: 同步读取 event.currentTarget.scrollTop
+    ULT->>ULT: requestAnimationFrame(setScrollTop)
+    ULT->>HOOK: getVisibleIndices(scrollTop, viewport, buffer)
+    HOOK->>HOOK: 查 Chunk Map
+    HOOK-->>ULT: visibleIndices[]
+    ULT->>ULT: dataIdx % POOL_SIZE 映射槽位
+    ULT->>DOM: React diff: key=slot-# 不变<br/>仅更新 props/style
+    DOM->>DOM: translate3d 重定位

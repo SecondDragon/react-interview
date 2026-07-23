@@ -1,0 +1,48 @@
+flowchart LR
+    subgraph Data["数据层 data"]
+        D["T[] 数据源"]
+    end
+
+    subgraph Measure["测量层 useSizeMeasurer"]
+        M1["positionsRef: ItemPosition[]"]
+        M2["ResizeObserver 监听 ListItem"]
+        M3["updateItemHeight: 更新 + 平移"]
+        M4["measureVersion: 通知重建索引"]
+        M5["totalHeight: 撑开 Spacer"]
+    end
+
+    subgraph Virtual["虚拟化层 useVirtualization"]
+        V1["Chunk Map 空间分桶"]
+        V2["scrollTop / viewportHeight"]
+        V3["visibleIndices 计算"]
+    end
+
+    subgraph Render["渲染层 VirtualList"]
+        R1["Spacer 占位容器"]
+        R2["绝对定位列表容器"]
+        R3["ListItem 实际 DOM"]
+        R4["Sentinel 触底哨兵"]
+    end
+
+    D --> M1
+    M2 --> M3
+    M3 --> M5
+    M3 --> M4
+    M1 --> V1
+    M4 --> V1
+    V1 --> V3
+    V2 --> V3
+    V3 --> R2
+    R2 --> R3
+    M5 --> R1
+    R4 --> R4
+
+    classDef data fill:#E6F7FF,stroke:#1890FF,stroke-width:2px,color:#003A8C
+    classDef measure fill:#FFF7E6,stroke:#FA8C16,stroke-width:2px,color:#873800
+    classDef virtual fill:#F6FFED,stroke:#52C41A,stroke-width:2px,color:#135200
+    classDef render fill:#F9F0FF,stroke:#722ED1,stroke-width:2px,color:#531DAB
+
+    class Data data
+    class Measure measure
+    class Virtual virtual
+    class Render render

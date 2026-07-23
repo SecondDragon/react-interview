@@ -1,0 +1,253 @@
+import MermaidViewer from '@/components/MermaidViewer';
+import singleColumn from './diagrams/single-column.mmd?raw';
+import multiColumn from './diagrams/multi-column.mmd?raw';
+import WaterfallAdaptiveDemo from './WaterfallAdaptiveDemo';
+import TextHeightDemo from './TextHeightDemo';
+import HtmlHeightDemo from './HtmlHeightDemo';
+import {Alert,Typography,Card,List,Tag} from "antd";
+
+# 不定高图片瀑布流：一个不完美的实现
+
+<Typography.Paragraph type="secondary">
+  本页面不是一套“生产级完美方案”的宣传，而是一次诚实的探索：当我们尝试把“不定高虚拟列表”的思路搬到多列瀑布流时，会遇到什么根本性的困难？为什么完美实现不存在？我们目前能做到的最好方案是什么？
+</Typography.Paragraph>
+
+---
+
+## 一、我们为什么无法得到完美的未知高度虚拟瀑布流
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Paragraph>
+    在单列虚拟列表中，ResizeObserver 的方案工作得很好：每个 item 的 <Typography.Text code>top</Typography.Text> 只取决于它前面所有 item 的高度。当 item 0 的真实高度被测量出来，把 item 1, 2, 3... 整体往下挪即可。
+  </Typography.Paragraph>
+
+  <Typography.Title level={5}>单列：线性依赖</Typography.Title>
+  <MermaidViewer source={singleColumn} />
+
+  <Typography.Paragraph>
+    但在瀑布流中，这种线性依赖被打破了。每个 item 必须放入“当前最短的那一列”。这意味着：
+  </Typography.Paragraph>
+
+  <List
+    dataSource={[
+      'item 0 放在列 A；',
+      'item 1 放在列 B（因为列 A 此时最高）；',
+      'item 2 放在列 C；',
+      'item 3 可能又回到列 A，如果列 A 在 item 1、2 放完后又成了最短。',
+    ]}
+    renderItem={(item) => <List.Item>{item}</List.Item>}
+  />
+
+  <Typography.Title level={5}>多列：全局依赖</Typography.Title>
+  <MermaidViewer source={multiColumn} />
+
+  <Typography.Paragraph>
+    因此，如果 item 0 的真实高度比预估高 50px，列 A 就会变高 50px。这不仅仅是 item 0 后面的 item 要下移，而是<strong>后续所有 item 的列选择都可能改变</strong>。item 1 可能从列 B 跳到列 A，item 2 可能从列 C 跳到列 B...
+  </Typography.Paragraph>
+
+  <Alert
+    message="根本矛盾"
+    description="瀑布流需要精确知道每个 item 的高度才能决定它的列。但图片是远程资源，真实高度在加载前不可知。ResizeObserver 只能事后修正，无法事前避免布局错误。"
+    type="warning"
+    showIcon
+  />
+</Card>
+
+---
+
+## 二、测量顺序的不确定性让问题更难
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Paragraph>
+    在单列列表中，即使测量顺序不同，最终也只会影响收敛速度。因为每个 item 的位置只依赖它前面的 item，最终会从 item 0 到 item N 依次收敛。
+  </Typography.Paragraph>
+
+  <Typography.Paragraph>
+    在瀑布流中，测量顺序是<strong>异步且乱序的</strong>：
+  </Typography.Paragraph>
+
+  <List
+    dataSource={[
+      'item 5 的图片可能先加载完，真实高度 300px；',
+      '但 item 0, 1, 2, 3, 4 的图片还没加载，仍处于预估高度；',
+      'Hook 只能根据 item 5 的真实高度 + 其他 item 的预估高度重建布局；',
+      '等 item 0, 1, 2 的图片加载后，又要再次重建布局。',
+    ]}
+    renderItem={(item) => <List.Item>{item}</List.Item>}
+  />
+
+  <Typography.Paragraph>
+    每次重建都可能改变所有后续 item 的列选择。因此，在图片全部加载完成之前，我们看到的布局永远是“部分真实、部分猜测”的妥协状态。
+  </Typography.Paragraph>
+</Card>
+
+---
+
+## 三、文字高度能提前测量吗？
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Title level={5}>纯文本：可以，但有条件</Typography.Title>
+  <Typography.Paragraph>
+    如果文字内容、字体、字号、行高、容器宽度都确定，我们可以用 Canvas 的 <Typography.Text code>measureText</Typography.Text> 或创建一个离屏 DOM 元素来测量。2025 年 Cheng Lou 开源的 <Typography.Text strong>Pretext</Typography.Text> 就是做这个事的：它绕开 DOM 重排，用 Canvas 直接计算多行文本高度。
+  </Typography.Paragraph>
+
+  <Typography.Paragraph>
+    但 Pretext 能做的也有限：
+  </Typography.Paragraph>
+
+  <List
+    dataSource={[
+      '只能处理纯文本和简单内联富文本；',
+      '需要字体字符串和 CSS 完全同步；',
+      '不同浏览器字体渲染仍有细微差异；',
+      '无法处理块级 HTML、图片、复杂 CSS 盒模型。',
+    ]}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color="orange">⚠</Tag> {item}
+      </List.Item>
+    )}
+  />
+
+  <TextHeightDemo />
+</Card>
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Title level={5}>HTML 文本：几乎不可能脱离 DOM 精确测量</Typography.Title>
+  <Typography.Paragraph>
+    如果文字是 HTML，包含 <Typography.Text code>{'<p>'}</Typography.Text>、<Typography.Text code>{'<ul>'}</Typography.Text>、<Typography.Text code>{'<img>'}</Typography.Text>、CSS 样式等，测量难度会指数级上升：
+  </Typography.Paragraph>
+
+  <List
+    dataSource={[
+      '必须先解析 HTML 结构；',
+      '需要应用完整的 CSS 样式（包括继承、盒模型、flex 等）；',
+      '如果 HTML 里包含图片，又回到了“图片高度未知”的问题；',
+      '必须在一个真实或模拟的浏览器渲染环境中才能得出精确结果。',
+    ]}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color="red">✗</Tag> {item}
+      </List.Item>
+    )}
+  />
+
+  <HtmlHeightDemo />
+</Card>
+
+---
+
+## 四、Live Demo：不完美的瀑布流实现
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Paragraph>
+    下面的 Demo 采用了“图片固定比例占位 + 加载后按真实比例重布局”的策略。它不会完美，但能在大多数情况下避免卡片重叠，并展示布局跳变的过程。
+  </Typography.Paragraph>
+
+  <Typography.Paragraph>
+    你可以尝试：
+  </Typography.Paragraph>
+
+  <ul>
+    <li><strong>开启/关闭高度校正</strong>：观察固定比例占位和真实布局之间的差异。</li>
+    <li><strong>向下滚动</strong>：加载更多图片，观察新图片加载后布局如何跳变。</li>
+  </ul>
+
+  <WaterfallAdaptiveDemo />
+</Card>
+
+---
+
+## 五、为什么这个实现仍然不完美
+
+<Card style={{ marginBottom: 16 }}>
+  <List
+    dataSource={[
+      {
+        label: '图片比例与占位不一致时会有裁剪或留白',
+        desc: '我们默认使用 4:3 占位。如果图片是 9:16 或 1:1，加载前会有明显偏差。',
+      },
+      {
+        label: '快速滚动时布局跳变明显',
+        desc: '图片是异步加载的，新图片加载后，下面的卡片可能整体移动。',
+      },
+      {
+        label: 'ResizeObserver 只能事后修正',
+        desc: '在图片加载完成前，系统只能猜测。猜小了重叠，猜大了留白。',
+      },
+      {
+        label: '多列全局依赖导致任何一处变化都可能影响全局',
+        desc: 'item 0 高度变化，可能改变 item 1、2、3... 的列选择。',
+      },
+      {
+        label: '文字如果是 HTML，高度仍无法精确预估',
+        desc: '文本测量库只能处理纯文本或简单内联样式，复杂 HTML 仍需 DOM 渲染。',
+      },
+    ]}
+    renderItem={(item) => (
+      <List.Item>
+        <Typography.Paragraph style={{ marginBottom: 0 }}>
+          <Typography.Text strong>{item.label}</Typography.Text>
+          <br />
+          <Typography.Text type="secondary">{item.desc}</Typography.Text>
+        </Typography.Paragraph>
+      </List.Item>
+    )}
+  />
+</Card>
+
+---
+
+## 六、成熟方案对比
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Paragraph>真正能在生产中使用的不定高瀑布流方案，都离不开“事先知道高度”：</Typography.Paragraph>
+
+  <List
+    dataSource={[
+      {
+        label: '✅ 最成熟：服务端返回图片尺寸',
+        desc: 'Pinterest、小红书、Instagram 都是这么做的。后端在返回图片 URL 时同时返回 width 和 height，前端一次性精确布局。',
+      },
+      {
+        label: '⚠️ 次选：前端预加载图片后布局',
+        desc: '用 new Image() 先把图片加载到内存，获取 naturalWidth/naturalHeight 后再布局。有首屏延迟，但能精确。',
+      },
+      {
+        label: '⚠️ 折中：固定比例占位 + 加载后重排',
+        desc: '就是我们这个 Demo 的方案。能接受布局跳变和裁剪/留白，但不能避免。',
+      },
+      {
+        label: '✗ 不推荐：纯前端 ResizeObserver 完全未知高度',
+        desc: '只能在图片加载后修正，无法避免加载前的重叠或留白。',
+      },
+    ]}
+    renderItem={(item) => (
+      <List.Item>
+        <Typography.Paragraph style={{ marginBottom: 0 }}>
+          <Typography.Text strong>{item.label}</Typography.Text>
+          <br />
+          <Typography.Text type="secondary">{item.desc}</Typography.Text>
+        </Typography.Paragraph>
+      </List.Item>
+    )}
+  />
+</Card>
+
+---
+
+## 七、核心结论
+
+<Card style={{ marginBottom: 16 }}>
+  <Typography.Paragraph>
+    完美的“未知高度虚拟瀑布流”在前端是不存在的。它的本质矛盾是：
+  </Typography.Paragraph>
+
+  <Typography.Title level={5} style={{ textAlign: 'center', color: '#cf1322' }}>
+    瀑布流需要精确高度才能布局，但图片高度在加载前不可知。
+  </Typography.Title>
+
+  <Typography.Paragraph>
+    所有可行方案都在这个矛盾上做取舍：要么让后端告诉你高度，要么先加载图片再布局，要么接受占位偏差和布局跳变。Pretext 等文本测量库能帮我们更快测量文字，但无法解决多列全局依赖和测量顺序不确定的问题。
+  </Typography.Paragraph>
+</Card>

@@ -1,0 +1,28 @@
+graph TD
+    subgraph "泛型函数"
+        GF["function identity&lt;T&gt;(arg: T): T"]
+        GF1["类型参数由调用时推断"]
+        GF2["也可显式指定"]
+    end
+
+    subgraph "泛型约束"
+        GC["&lt;T extends { length: number }&gt;"]
+        GC1["保证 T 有 length 属性"]
+        GC2["错误：logLength(42)"]
+    end
+
+    subgraph "keyof 约束"
+        GK["&lt;K extends keyof T&gt;"]
+        GK1["K 必须是 T 的合法键"]
+        GK2["错误：getProperty(obj, 'missing')"]
+    end
+
+    subgraph "泛型 Class"
+        GCl["class Box&lt;T&gt;"]
+        GCl1["类型参数贯穿整个类"]
+        GCl2["new Box(42) → Box&lt;number&gt;"]
+    end
+
+    GF --> GC
+    GC --> GK
+    GK --> GCl

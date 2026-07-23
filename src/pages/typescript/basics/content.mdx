@@ -1,0 +1,859 @@
+import { Card, Typography, Alert, Tag, Space, Table, Divider, Row, Col } from 'antd';
+import CodeDiff from '@/components/CodeDiff';
+import MermaidViewer from '@/components/MermaidViewer';
+import LiveDemo from './LiveDemo';
+import UnionTypeDemo from './UnionTypeDemo';
+import InterfaceVsTypeDemo from './InterfaceVsTypeDemo';
+import SpecialTypesLiveDemo from './SpecialTypesLiveDemo';
+import QuizSection from './QuizSection';
+import badCode from './demos/basic-types.bad.tsx?raw';
+import goodCode from './demos/basic-types.good.tsx?raw';
+import typeSystemOverview from './diagrams/type-system-overview.mmd?raw';
+import narrowingFlow from './diagrams/narrowing-flow.mmd?raw';
+import anyUnknownNeverHierarchy from './diagrams/any-unknown-never-hierarchy.mmd?raw';
+
+# 第一章：基础类型系统
+
+<Typography.Paragraph type="secondary">
+  本章系统讲解 TypeScript 类型系统的核心概念，包括原始类型、类型注解与推断、类型断言、联合/交叉类型、字面量类型、元组与枚举。掌握这些基础是学习 TypeScript 的"第一道门槛"。
+</Typography.Paragraph>
+
+## 一、类型系统全景概览
+
+<Typography.Paragraph>
+  TypeScript 的类型系统可以分为四大类：原始类型、对象类型、特殊类型和复合类型。下图展示了完整的类型层级关系：
+</Typography.Paragraph>
+
+<MermaidViewer source={typeSystemOverview} />
+
+<Divider />
+
+## 二、any / unknown / never：三大特殊类型详解
+
+<Typography.Paragraph>
+  <code>any</code>、<code>unknown</code>、<code>never</code> 是 TypeScript 类型系统中三个最特殊的类型。任何对 TS 的深入理解都必须始于对这三者的准确把握。下面从<strong>类型层级理论</strong>、<strong>赋值规则</strong>、<strong>操作限制</strong>三个维度逐一深究。
+</Typography.Paragraph>
+
+### 2.1 类型层级中的位置：top type vs bottom type
+
+<Typography.Paragraph>
+  从<strong>集合论</strong>的角度看，TypeScript 的类型可以按"值的集合大小"排列成一个偏序层级。在这个层级中，<code>any</code> 和 <code>unknown</code> 处于最顶端，<code>never</code> 处于最底端：
+</Typography.Paragraph>
+
+<MermaidViewer source={anyUnknownNeverHierarchy} />
+
+<Typography.Paragraph>
+  <strong>赋值兼容性规则</strong>（箭头方向表示"可赋值性"）：
+</Typography.Paragraph>
+
+<SpecialTypesLiveDemo />
+
+### 2.2 从三个维度逐一对比
+
+#### 维度一：类型层级角色
+
+| 类型 | 层级角色 | 集合论解释 |
+|------|---------|-----------|
+| `any` | **Top Type（顶级类型）** | "全集"——包含所有 JS 值的类型 |
+| `unknown` | **Top Type（顶级类型）** | "全集"——包含所有 JS 值的类型 |
+| `never` | **Bottom Type（底部类型）** | "空集"——不包含任何值的类型 |
+
+<Typography.Paragraph>
+  <code>any</code> 和 <code>unknown</code> 处于层级的顶端，这意味着"任何类型的值都可以赋值给 any/unknown"。<code>never</code> 处于层级的底端，意味着"never 可以赋值给任何其他类型"（因为空集是所有集合的子集）。
+</Typography.Paragraph>
+
+#### 维度二：赋值双方向
+
+<Typography.Paragraph>
+  理解赋值规则时必须区分两个方向：<strong>作为源头（source）</strong>——把该类型的值赋给别人；<strong>作为目标（target）</strong>——把别的值赋给该类型。
+</Typography.Paragraph>
+
+| 方向 | any | unknown | never |
+|------|-----|---------|-------|
+| **作为源头（→ 别人）** | ✅ 可赋值给任何类型 | ❌ 只能赋值给 any 或 unknown | ✅ 可赋值给任何类型 |
+| **作为目标（别人 →）** | ✅ 接收任何类型 | ✅ 接收任何类型 | ❌ 只能接收 never |
+
+**细节点 1：`any` 作为源头的特殊性**
+
+<Typography.Paragraph>
+  <code>any</code> 作为源头时可以赋值给任何类型，即使运行时值类型不符。这意味着 TypeScript 编译器对 <code>any</code> 的赋值检查完全失效：
+</Typography.Paragraph>
+
+```
+const value: any = 42;
+const str: string = value;   // ✅ 编译通过，但运行时 str 的值是 42（number），不是 string！
+str.toUpperCase();           // ❌ 运行时崩溃：42.toUpperCase is not a function
+```
+
+<Typography.Paragraph>
+  这是 <code>any</code> 最大的危险——它在编译时"假装"类型是对的，但运行时完全不做转换。相比之下，<code>unknown</code> 阻止了这种行为。
+</Typography.Paragraph>
+
+**细节点 2：`unknown` 作为源头时的限制**
+
+```
+const value: unknown = 42;
+// const str: string = value;  // ❌ 编译错误：Type 'unknown' is not assignable to type 'string'
+
+// ✅ 必须先收窄
+if (typeof value === 'number') {
+  const num: number = value;  // 此时 value 已收窄为 number
+}
+```
+
+**细节点 3：`never` 作为源头时的合规性**
+
+```
+function throwError(): never {
+  throw new Error();
+}
+
+// never 可以赋值给任何类型（因为函数永远不会返回）
+const x: string = throwError();  // ✅ 编译通过，运行时也不可能到达此赋值
+```
+
+#### 维度三：操作限制
+
+<Typography.Paragraph>
+  这是 <code>any</code> 与 <code>unknown</code> <strong>最核心的实践差异</strong>。
+</Typography.Paragraph>
+
+| 操作 | any | unknown | never |
+|------|-----|---------|-------|
+| 调用方法 | ✅ 任意调用，不做检查 | ❌ 必须收窄后方可调用 | N/A |
+| 访问属性 | ✅ 任意访问，不做检查 | ❌ 必须收窄后方可访问 | N/A |
+| 作为函数参数 | ✅ 任意传参 | ❌ 必须收窄 | N/A |
+| 参与运算 | ✅ 任意运算 | ❌ 必须收窄 | N/A |
+
+```
+// any：完全放弃检查
+const a: any = 42;
+a.toUpperCase();       // ✅ 编译通过（但运行时崩溃）
+a.nonExistentProp;     // ✅ 编译通过（运行时是 undefined）
+a + 1;                 // ✅ 编译通过（43，没问题）
+a();                   // ✅ 编译通过（但运行时 crash：42 is not a function）
+
+// unknown：强制收窄
+const u: unknown = "hello";
+u.toUpperCase();       // ❌ 编译错误：Object is of type 'unknown'
+
+if (typeof u === 'string') {
+  u.toUpperCase();     // ✅ 收窄后安全调用
+}
+```
+
+### 2.3 never 的三种产生场景
+
+<Typography.Paragraph>
+  <code>never</code> 不是你可以"主动声明"的类型，而是 TS 编译器推导出的、表示"不可能"的类型。它总是在以下三种场景中产生：
+</Typography.Paragraph>
+
+**场景 1：抛出异常或死循环的函数**
+
+```
+function throwErr(msg: string): never {
+  throw new Error(msg);     // 函数永远无法正常返回
+}
+
+function infiniteLoop(): never {
+  while (true) {}           // 函数永远无法结束
+}
+```
+
+**场景 2：交叉类型中的不可能组合**
+
+```
+type Impossible = string & number;
+// Result: never —— 没有任何值能同时是 string 和 number
+```
+
+**场景 3：联合类型穷举检查后的剩余分支**
+
+```
+type Shape = "circle" | "square";
+
+function area(shape: Shape, size: number): number {
+  switch (shape) {
+    case "circle": return Math.PI * size ** 2;
+    case "square": return size * size;
+    default:
+      // shape 在这里被收窄为 never
+      // 因为所有分支都已穷举
+      const _exhaustive: never = shape;
+      return _exhaustive;
+  }
+}
+```
+
+<Typography.Paragraph>
+  场景 3 的穷举检查是 TypeScript 一种常见的<strong>编译时防御性编程</strong>技巧：当未来有人给 <code>Shape</code> 增加新的值（如 <code>"triangle"</code>）时，<code>default</code> 分支的 <code>never</code> 赋值会报错，提醒开发者更新 <code>switch</code> 的所有分支。
+</Typography.Paragraph>
+
+### 2.4 使用建议
+
+| 类型 | 推荐使用场景 | 禁止使用场景 |
+|------|-------------|-------------|
+| **any** | 渐进迁移 JS→TS 时的临时类型、第三方无类型库的兜底 | 新项目代码、需要类型安全的内部逻辑 |
+| **unknown** | JSON.parse 返回值、API 响应体、用户输入等"运行时才能确定类型"的值 | 类型已明确知晓的场景（此时应用具体类型） |
+| **never** | 穷举检查（exhaustive check）、抛出异常的函数返回类型 | 不适用（never 是推导出来的，通常不需要显式声明） |
+
+<Alert
+  type="warning"
+  showIcon
+  message="最佳实践：优先 unknown，禁用 any"
+  description={
+    <span>
+      在 <code>tsconfig.json</code> 中开启 <code>strict: true</code> 后，应尽量让 <code>noImplicitAny</code> 规则捕获隐式 any。如果确实需要"不确定的类型"，用 <code>unknown</code> 而非 <code>any</code>。<code>any</code> 破坏了类型系统的存在意义，<code>unknown</code> 保留了类型检查的完整性。
+    </span>
+  }
+/>
+
+<Divider />
+
+## 三、原始类型与对象类型
+
+<Typography.Paragraph>
+  TypeScript 的原始类型继承自 JavaScript，下面通过代码展示每个类型的使用方式和关键行为：
+</Typography.Paragraph>
+
+**原始类型（Primitive Types）：**
+
+```
+// number —— 所有数字（整数、浮点数、NaN、Infinity）
+const age: number = 25;
+const price: number = 19.99;
+const notANumber: number = NaN;
+const infinity: number = Infinity;
+
+// string —— 字符串
+const greeting: string = "Hello TypeScript";
+const template: string = `Age: ${age}`; // 模板字符串
+
+// boolean —— true / false
+const isDone: boolean = true;
+const isReady: boolean = false;
+
+// null 和 undefined —— 空值和未定义
+const empty: null = null;
+const notDefined: undefined = undefined;
+
+// symbol —— 唯一标识符（ES6+）
+const sym1: symbol = Symbol("key");
+const sym2: symbol = Symbol("key");
+// sym1 !== sym2  // Symbol 每次都不同
+
+// bigint —— 大整数（ES2020+）
+const big: bigint = 9007199254740991n;
+```
+
+**对象类型（Object Types）：**
+<Typography.Paragraph>
+  对象类型通过 <code>interface</code>、<code>type</code> 或 <code>class</code> 来定义。对象类型描述的是值的"形状"（Shape），只要结构匹配即可赋值——这被称为<strong>结构类型系统（Structural Type System）</strong>。
+</Typography.Paragraph>
+
+```
+// 方式一：interface 定义对象类型
+interface Person {
+  name: string;
+  age: number;
+}
+
+// 方式二：type 定义对象类型
+type Animal = {
+  species: string;
+  legs: number;
+};
+
+// 方式三：class 定义对象类型
+class Car {
+  constructor(public brand: string, public year: number) {}
+}
+
+// 使用
+const tom: Person = { name: "Tom", age: 25 };       // ✅ 正确
+const dog: Animal = { species: "dog", legs: 4 };     // ✅ 正确
+const myCar: Car = new Car("Toyota", 2024);          // ✅ 正确
+```
+
+### 结构类型系统（Duck Typing）
+
+<Typography.Paragraph>
+  以下代码展示"只要结构匹配即可赋值"的核心规则。注意 <code>StrangeThing</code> 没有显式实现 <code>Person</code> 接口，但因为结构相同，所以可以赋值给 <code>Person</code> 类型变量：
+</Typography.Paragraph>
+
+<Typography.Paragraph>
+  <Alert
+    type="info"
+    showIcon
+    message="关键概念：结构类型系统"
+    description={'TypeScript 采用结构类型系统（又称「鸭子类型」），只要两个类型结构相同即可互相赋值，不要求显式继承关系。这与 Java/C# 的名义类型系统（Nominal Type System）有本质区别。'}
+  />
+</Typography.Paragraph>
+
+```
+interface Person {
+  name: string;
+  age: number;
+}
+
+// 没有显式实现 Person 接口
+const strangeThing = { name: "Alice", age: 30 };
+
+// ✅ 结构相同，可以赋值给 Person 类型
+const person: Person = strangeThing;
+
+// ❌ 缺少 age 属性，不能赋值
+const wrong = { name: "Bob" };
+// const p: Person = wrong;  // 编译错误!
+
+// ❌ 额外属性不匹配（直接字面量会触发多余属性检查）
+// const p2: Person = { name: "Eve", age: 25, extra: true }; // 错误！
+```
+
+<Divider />
+
+## 四、类型注解与类型推断
+
+<Typography.Paragraph>
+  类型注解（Type Annotation）是开发者<strong>显式声明</strong>变量的类型：
+</Typography.Paragraph>
+
+```
+// 类型注解：开发者告诉 TS 变量的类型
+let count: number = 42;
+let name: string = "TypeScript";
+let isLoading: boolean = false;
+let items: string[] = ["a", "b", "c"];
+
+// 函数参数和返回值也可以加注解
+function add(x: number, y: number): number {
+  return x + y;
+}
+```
+
+<Typography.Paragraph>
+  类型推断（Type Inference）是 TypeScript <strong>自动推导</strong>类型。绝大多数情况下不需要显式注解：
+</Typography.Paragraph>
+
+```
+// 类型推断：TS 自己推导出类型
+let count = 42;             // 推断为 number
+let name = "TS";            // 推断为 string
+const result = count + 1;   // 推断为 number（const 不影响，仍是 number）
+
+// 数组推断
+let arr = [1, 2, 3];        // 推断为 number[]
+let mixed = [1, "hello"];   // 推断为 (string | number)[]
+```
+
+### 类型推断的三种场景
+
+<Typography.Paragraph>
+  1. <strong>从初始化值推断</strong> —— 声明时赋值，TS 根据右值推断类型
+</Typography.Paragraph>
+
+```
+let x = 3;          // 推断为 number
+let y = "hello";    // 推断为 string
+let z = true;       // 推断为 boolean
+```
+
+<Typography.Paragraph>
+  2. <strong>从返回值推断</strong> —— 函数根据 <code>return</code> 语句推断返回类型
+</Typography.Paragraph>
+
+```
+function add(a: number, b: number) {
+  return a + b;  // TS 自动推断返回类型为 number
+}
+
+function getMessage(flag: boolean) {
+  if (flag) {
+    return "success";  // 推断为 string
+  }
+  return "failed";     // same
+}
+```
+
+<Typography.Paragraph>
+  3. <strong>从上下文推断</strong> —— 回调函数、数组方法等根据上下文推断参数类型
+</Typography.Paragraph>
+
+```
+// 回调参数类型由 forEach 的签名推断
+[1, 2, 3].forEach((item) => {
+  // item 自动推断为 number
+  console.log(item.toFixed(2));
+});
+
+// DOM 事件参数类型由 addEventListener 推断
+document.addEventListener("click", (event) => {
+  // event 自动推断为 MouseEvent
+  console.log(event.clientX, event.clientY);
+});
+```
+
+<Typography.Paragraph>
+  <Alert
+    type="success"
+    showIcon
+    message="最佳实践"
+    description="绝大多数情况下不需要显式类型注解，让 TypeScript 自动推断即可。仅在函数参数、函数返回值、复杂类型定义时显式声明类型。"
+  />
+</Typography.Paragraph>
+
+<Divider />
+
+## 五、类型断言
+
+<Typography.Paragraph>
+  类型断言（Type Assertion）告诉编译器"开发者比编译器更了解这个值的类型"。它类似于其他语言中的"类型转换"，但**不会进行运行时的类型转换或检查**。
+</Typography.Paragraph>
+
+**两种语法（推荐用 `as`）：**
+
+```
+// ✅ as 语法（推荐，尤其在 TSX/JSX 文件中）
+const input = document.getElementById("email") as HTMLInputElement;
+input.value;  // ✅ 类型安全
+
+// ⚠️ 尖括号语法（仅限 .ts 文件，在 TSX 中与 JSX 标签冲突）
+const input2 = <HTMLInputElement>document.getElementById("email");
+```
+
+**典型使用场景：**
+```
+// 场景 1：从 any / unknown 收窄到具体类型
+const raw: unknown = JSON.parse('{"name":"Tom"}');
+const user = raw as { name: string };
+console.log(user.name);  // ✅ "Tom"
+
+// 场景 2：DOM 元素类型指定
+const canvas = document.querySelector("#myCanvas") as HTMLCanvasElement;
+const ctx = canvas.getContext("2d");  // ✅ canvas 是 HTMLCanvasElement，不是 Element
+
+// 场景 3：后端 API 返回值
+async function fetchUser(): Promise<User> {
+  const res = await fetch("/api/user");
+  return (await res.json()) as User;
+}
+```
+
+**⚠️ 类型断言不是类型转换！**
+
+<Typography.Paragraph>
+  类型断言只在编译阶段起作用，<strong>不会改变运行时的值</strong>。错误的断言不会产生 TS 编译错误，但会在运行时崩溃：
+</Typography.Paragraph>
+
+```
+function processValue(value: unknown) {
+  // ❌ 错误断言：运行时 value 不是 string 也会"假装"是
+  const str = value as string;
+  return str.toUpperCase();  // 如果 value 是 number，运行时崩溃！
+
+  // ✅ 正确做法：先运行时检查再断言
+  if (typeof value === "string") {
+    return (value as string).toUpperCase();
+  }
+}
+```
+
+**`as const` 断言：**
+<Typography.Paragraph>
+  <code>as const</code> 是 TypeScript 3.4 引入的 const 断言。它告诉编译器将此值推断为最具体的字面量类型，且所有属性标记为 <code>readonly</code>。
+</Typography.Paragraph>
+
+```
+// 对比：没有 as const 会被放宽
+const status1 = "success";         // 类型: string
+const status2 = "success" as const; // 类型: "success"
+
+// 对象属性全部变为 readonly 字面量
+const config = { url: "https://api.com", timeout: 5000 } as const;
+// config.url = "https://new.com";  // ❌ 编译错误！
+```
+
+<Alert
+  type="warning"
+  showIcon
+  message="注意：类型断言不是类型转换"
+  description="类型断言只在编译阶段起作用，不会改变运行时的值。错误的类型断言不会导致编译错误，但会在运行时导致崩溃。优先用类型守卫 + 类型收窄，而不是类型断言。"
+/>
+
+<Divider />
+
+## 六、联合类型与交叉类型
+
+### 联合类型（Union Types）`|`
+
+<Typography.Paragraph>
+  联合类型表示值可以是多种类型中的<strong>任意一种</strong>。用 <code>|</code> 符号分隔：
+</Typography.Paragraph>
+
+```
+// 基本用法
+type Status = "success" | "error" | "loading";
+let id: string | number;
+function printId(id: string | number) { ... }
+
+// 实际场景：API 响应可能有多种形态
+type ApiResponse<T> =
+  | { status: "success"; data: T }
+  | { status: "error"; message: string }
+  | { status: "loading" };
+```
+
+**关键规则：联合类型的变量只能访问所有成员共有的属性和方法，除非通过类型守卫收窄。**
+
+<Typography.Paragraph>
+  下方演示通过 <strong>Bird | Fish</strong> 的实例，直观展示"共有属性可访问、独占方法需收窄"的规则：
+</Typography.Paragraph>
+
+<UnionTypeDemo />
+
+### 交叉类型（Intersection Types）`&`
+
+<Typography.Paragraph>
+  交叉类型表示值必须<strong>同时满足</strong>所有类型的约束。用 <code>&</code> 符号连接：
+</Typography.Paragraph>
+
+```
+interface Person { name: string; }
+interface Employee { company: string; }
+
+// Staff = Person + Employee 的并集
+type Staff = Person & Employee;
+// 等效于：{ name: string; company: string; }
+
+// 使用
+const alice: Staff = {
+  name: "Alice",
+  company: "Tech Corp",
+};
+```
+
+<Typography.Paragraph>
+  交叉类型与联合类型的<strong>对比记忆</strong>：
+</Typography.Paragraph>
+
+```
+// 联合类型：A | B —— 要么是 A，要么是 B（"或"）
+// 交叉类型：A & B —— 既是 A 又是 B（"与"）
+
+// 用文字来理解：
+type A = { a: number };
+type B = { b: string };
+
+type Union = A | B;          // 可以有 a 或 b，但不能同时要求两者
+type Intersection = A & B;   // 必须同时有 a 和 b
+
+// 联合的赋值
+const u1: Union = { a: 1 };           // ✅ 满足 A
+const u2: Union = { b: "hello" };     // ✅ 满足 B
+
+// 交叉的赋值
+const i1: Intersection = { a: 1, b: "hello" };  // ✅ 全部满足
+// const i2: Intersection = { a: 1 };            // ❌ 缺少 b
+```
+
+### `interface` vs `type` 的详细对比
+
+<Typography.Paragraph>
+  <code>interface</code> 和 <code>type</code> 都能定义对象类型，但各有优劣。下方对比覆盖 <strong>4 个维度</strong>的差异：
+</Typography.Paragraph>
+
+<InterfaceVsTypeDemo />
+
+<Divider />
+
+## 七、字面量类型与 const 断言
+
+<Typography.Paragraph>
+  字面量类型（Literal Types）使用<strong>具体的值</strong>作为类型，包括字符串字面量、数字字面量、布尔字面量。
+</Typography.Paragraph>
+
+### 基础字面量类型
+
+```
+// 字符串字面量 —— 变量只能取该具体字符串
+type Direction = "up" | "down" | "left" | "right";
+const dir: Direction = "up";  // ✅ 正确
+// dir = "diagonal";          // ❌ 编译错误：不能将 "diagonal" 赋给 Direction
+
+// 数字字面量
+type DiceRoll = 1 | 2 | 3 | 4 | 5 | 6;
+const roll: DiceRoll = 4;     // ✅ 正确
+// roll = 7;                  // ❌ 编译错误
+
+// 布尔字面量
+type IsActive = true;
+const flag: IsActive = true;  // ✅ 正确
+// flag = false;              // ❌ 编译错误：false 不能赋给 true
+```
+
+### 实际应用场景
+
+```
+// 场景 1：API 响应状态
+type ApiStatus = "idle" | "loading" | "success" | "error";
+
+function handleStatus(status: ApiStatus) {
+  switch (status) {
+    case "idle":     // ...
+    case "loading":  // show spinner
+    case "success":  // show data
+    case "error":    // show error message
+  }
+}
+// handleStatus("timeout");  // ❌ 编译错误！"timeout" 不是有效状态
+
+// 场景 2：路由路径
+type RoutePath = "/home" | "/about" | "/contact";
+
+// 场景 3：配置选项
+type ThemeMode = "light" | "dark" | "system";
+type ButtonSize = "small" | "middle" | "large";
+```
+
+### `as const` 断言
+
+<Typography.Paragraph>
+  <code>as const</code> 是 TypeScript 3.4 引入的 const 断言。它告诉编译器将此值推断为最具体的字面量类型，且所有属性标记为 <code>readonly</code>。
+</Typography.Paragraph>
+
+```
+// 没有 as const：类型被放宽为 string
+const status1 = "success";   // 类型: string
+
+// 使用 as const：类型是最精确的字面量
+const status2 = "success" as const;  // 类型: "success"
+
+// 对象上的效果：所有属性变为 readonly 字面量
+const config = { url: "https://api.com", timeout: 5000 } as const;
+// config 的类型: { readonly url: "https://api.com"; readonly timeout: 5000 }
+// config.url = "https://new.com";  // ❌ 编译错误！readonly
+
+// 数组上的效果：变为 readonly 元组
+const actions = ["create", "edit", "delete"] as const;
+// 类型: readonly ["create", "edit", "delete"]
+```
+
+### 字面量类型 vs 枚举
+
+<Typography.Paragraph>
+  字面量联合类型可以替代枚举，且没有运行时开销：
+</Typography.Paragraph>
+
+```
+// 方式 A：枚举（有运行时开销）
+enum Color {
+  Red = "RED",
+  Green = "GREEN",
+}
+
+// 方式 B：字面量联合（无运行时开销）
+type ColorLiteral = "RED" | "GREEN";
+
+// 推荐优先使用字面量联合类型
+```
+
+<Alert
+  type="success"
+  showIcon
+  message="最佳实践"
+  description="在 API 响应状态、路由路径、配置选项等场景，优先使用字面量联合类型替代 string 类型，获得编译时的类型安全。字面量类型比枚举更轻量，且不会产生运行时代码。"
+/>
+
+<Divider />
+
+## 八、元组与枚举
+
+### 元组（Tuple）
+
+<Typography.Paragraph>
+  元组精确描述了数组<strong>每个位置</strong>的类型和<strong>长度</strong>。数组描述"集合"，元组描述"结构"。
+</Typography.Paragraph>
+
+```
+// 数组：元素类型相同，长度不限
+let arr: number[] = [1, 2, 3];
+arr.push(4);            // ✅ 可以任意增删
+
+// 元组：每个位置类型固定，长度固定
+let tuple: [string, number, boolean] = ["Tom", 25, true];
+// tuple[0] 的类型是 string
+// tuple[1] 的类型是 number
+// tuple[2] 的类型是 boolean
+
+// 元组也支持解构，变量类型能精确推导
+const [name, age, isActive] = tuple;
+// name: string, age: number, isActive: boolean
+```
+
+**可选元素与剩余元素：**
+```
+// 固定三元组
+type RGB = [number, number, number];
+const red: RGB = [255, 0, 0];
+
+// 可选元素（?）
+type Optional = [string, number?];
+const a: Optional = ["hello"];        // ✅ 只有一个元素
+const b: Optional = ["hello", 42];    // ✅ 两个元素
+
+// 可变长度元组（...）
+type NamedArgs = [string, ...number[]];
+const c: NamedArgs = ["sum"];                // ✅ 只有前缀
+const d: NamedArgs = ["sum", 1, 2, 3, 4];    // ✅ 前缀 + 任意多个 number
+```
+
+**元组的实际应用场景：**
+```
+// 场景 1：React useState 返回类型
+const [count, setCount] = useState(0);
+// 类型固定为 [number, Dispatch<SetStateAction<number>>]
+
+// 场景 2：CSV 行解析
+type CsvRow = [string, number, string, Date];
+const row: CsvRow = ["Alice", 28, "Engineer", new Date("2024-01-01")];
+
+// 场景 3：函数返回多个值
+function getMinMax(values: number[]): [number, number] {
+  return [Math.min(...values), Math.max(...values)];
+}
+const [min, max] = getMinMax([3, 1, 4, 1, 5]);  // [1, 5]
+```
+
+### 枚举（Enum）
+
+<Typography.Paragraph>
+  枚举定义了一组有命名的常量，分为数字枚举和字符串枚举。
+</Typography.Paragraph>
+
+**数字枚举：**
+```
+enum Color {
+  Red,    // 0
+  Green,  // 1
+  Blue,   // 2
+}
+
+// 使用
+const myColor: Color = Color.Red;  // 0
+const colorName: string = Color[1]; // "Green"（反向映射）
+```
+
+**字符串枚举：**
+```
+enum Direction {
+  Up = "UP",
+  Down = "DOWN",
+  Left = "LEFT",
+  Right = "RIGHT",
+}
+
+// 使用
+const dir: Direction = Direction.Up;    // "UP"
+// 注意：字符串枚举没有反向映射
+```
+
+**`const enum` 编译期内联：**
+<Typography.Paragraph>
+  <code>const enum</code> 在编译时枚举成员会被直接替换为字面量值，不生成 JavaScript 枚举对象。这可以减少运行时开销，适合摇树优化，但不能进行反向映射。
+</Typography.Paragraph>
+
+```
+// 普通 enum：生成 JS 对象（有运行时开销）
+enum Color { Red, Green, Blue }
+// 编译为:
+// var Color;
+// (function (Color) {
+//   Color[Color["Red"] = 0] = "Red";
+//   ...
+// })(Color || (Color = {}));
+
+// const enum：编译时内联消除（零运行时开销）
+const enum Color2 { Red, Green, Blue }
+const c = Color2.Red;
+// 编译后直接为: const c = 0;
+```
+
+<Alert
+  type="info"
+  showIcon
+  message="面试重点"
+  description="const enum 与普通 enum 的区别是高频面试题。记住核心：const enum 编译时内联消除，无运行时开销，但失去反向映射能力。如果使用 const enum，引入它的其他模块也必须将 const enum 声明标记为 const。"
+/>
+
+<Divider />
+
+## 九、类型收窄（Type Narrowing）
+
+<Typography.Paragraph>
+  类型收窄是 TypeScript 通过条件判断将宽泛的类型（如联合类型）缩小为具体子类型的过程。这也是类型守卫（Type Guard）的核心功能。
+</Typography.Paragraph>
+
+<MermaidViewer source={narrowingFlow} />
+
+**类型收窄的常见方式：**
+
+| 方式 | 示例 | 说明 |
+|------|------|------|
+| `typeof` 守卫 | `typeof x === "string"` | 适合原始类型 |
+| `instanceof` 守卫 | `x instanceof Date` | 适合类实例 |
+| `in` 操作符 | `"age" in obj` | 检查属性是否存在 |
+| 字面量收窄 | `if (x === "up")` | 比较具体值 |
+| 自定义守卫 | `function isStr(x): x is string` | 返回类型谓词 |
+| 可辨识联合 | `switch (type.kind)` | 区分不同分支 |
+
+<Alert
+  type="success"
+  showIcon
+  message="掌握类型收窄"
+  description={'类型收窄贯穿整个 TS 开发过程。掌握它意味着你可以在不牺牲类型安全的前提下，用「if-else」这样的普通 JS 逻辑来精细化控制类型。'}
+/>
+
+<Divider />
+
+## 十、代码对比：Bad vs Good
+
+<Typography.Paragraph>
+  以下对比展示基础类型系统的常见错误用法与最佳实践。左侧是滥用 <code>any</code>、忽略类型收窄、不恰当地使用枚举和缺少字面量约束的反面教材；右侧展示了类型安全的写法。
+</Typography.Paragraph>
+
+<CodeDiff
+  oldValue={badCode}
+  newValue={goodCode}
+  leftTitle="❌ 反面教材"
+  rightTitle="✅ 最佳实践"
+  type="error"
+  hideDiffMarkers={true}
+/>
+
+<Divider />
+
+## 十一、互动演示
+
+<Typography.Paragraph>
+  通过下方交互演示，亲自体验类型收窄、联合/交叉类型和字面量类型的工作机制。切换不同选项观察代码类型的变化。
+</Typography.Paragraph>
+
+<LiveDemo />
+
+<Divider />
+
+## 十二、经典面试题
+
+<Typography.Paragraph>
+  以下 <strong>12 道</strong>精选面试题覆盖了本章所有核心知识点。每道题都配有详细解析，帮助你巩固理解。
+</Typography.Paragraph>
+
+<Alert
+  type="warning"
+  showIcon
+  message="答题方式"
+  description="先阅读上方知识点，然后在下方答题区作答。每道题选择答案后可以提交查看结果和解析。建议先全部答完再查看解析，模拟真实面试环境。"
+  style={{ marginBottom: 16 }}
+/>
+
+<QuizSection />

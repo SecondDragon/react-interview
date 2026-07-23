@@ -1,0 +1,65 @@
+import CodeDiff from '@/components/CodeDiff';
+import LiveDemo from './LiveDemo';
+import simpleCode from './demos/simple.ts?raw';
+import { Card, Typography, List, Tag } from 'antd';
+import { throttleVersions } from './data';
+
+# 节流：最简版
+
+<Typography.Paragraph type="secondary">
+  最简版 throttle 解决一个问题：限制高频事件回调的执行频率，确保在 <Typography.Text code>wait</Typography.Text> 毫秒内最多执行一次。
+</Typography.Paragraph>
+
+## 一、设计思路
+
+<Typography.Paragraph>
+  核心机制只有一步：
+</Typography.Paragraph>
+
+1. 记录上一次执行的时间戳 <Typography.Text code>lastTime</Typography.Text>。
+2. 每次触发时，若当前时间与 <Typography.Text code>lastTime</Typography.Text> 的差值大于等于 <Typography.Text code>wait</Typography.Text>，才执行回调。
+
+<Typography.Paragraph>
+  与 debounce 不同，throttle 不会“等待你停手”，而是按固定节奏执行。
+</Typography.Paragraph>
+
+## 二、完整代码
+
+<CodeDiff
+  code={simpleCode}
+  title="最简版 throttle 源码"
+  type="info"
+/>
+
+## 三、能力边界
+
+<Card title="这个版本能做什么" size="small" style={{ marginBottom: '16px' }}>
+  <List
+    dataSource={throttleVersions[0].highlights}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color="green">✓</Tag> {item}
+      </List.Item>
+    )}
+  />
+</Card>
+
+<Card title="还缺少什么" size="small">
+  <List
+    dataSource={throttleVersions[0].limitations}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color="red">✗</Tag> {item}
+      </List.Item>
+    )}
+  />
+</Card>
+
+## 四、互动演示
+
+<Card title={<span>Live Demo <Tag color="blue">最简版</Tag></span>} style={{ marginTop: '24px' }}>
+  <Typography.Paragraph>
+    快速点击按钮，观察“原始触发次数”与“实际执行次数”的差异。无论点击多快，执行次数都会被限制在 wait 间隔内。
+  </Typography.Paragraph>
+  <LiveDemo version="simple" />
+</Card>

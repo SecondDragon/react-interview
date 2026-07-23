@@ -16,6 +16,7 @@ import {
   FileTextOutlined,
   BookOutlined,
   BuildOutlined,
+  CodeOutlined,
 } from '@ant-design/icons';
 
 export interface RouteConfig {
@@ -48,6 +49,7 @@ const WaterfallPage = lazy(() => import('../pages/performance/Waterfall/index'))
 const WaterfallProfessional = lazy(() => import('../pages/performance/Waterfall/Professional'));
 const WaterfallUltimate = lazy(() => import('../pages/performance/Waterfall/Ultimate'));
 const WaterfallUltimate2 = lazy(() => import('../pages/performance/Waterfall/Ultimate2'));
+const WaterfallAdaptive = lazy(() => import('../pages/performance/WaterfallAdaptive/index'));
 const IdleLoadPage = lazy(() => import('../pages/performance/IdleLoad/index'));
 const IdlePrefetchPageImporter = () => import('../pages/performance/IdlePrefetch/index');
 const IdlePrefetchPage = lazy(IdlePrefetchPageImporter);
@@ -55,7 +57,8 @@ const hoverPreloadImporter = () => import('../pages/performance/HoverPreload/ind
 const HoverPreloadPage = lazy(hoverPreloadImporter);
 const virtualTableImporter = () => import('../pages/performance/VirtualTable/index');
 const VirtualTablePage = lazy(virtualTableImporter);
-const noStableHeightVirtualListImporter = () => import('../pages/performance/NoStableHeightVirtualList/index');
+const noStableHeightVirtualListImporter = () =>
+  import('../pages/performance/NoStableHeightVirtualList/index');
 const NoStableHeightVirtualListPage = lazy(noStableHeightVirtualListImporter);
 const VirtuosoListPage = lazy(() => import('../pages/performance/VirtuosoList/index'));
 const concurrentRenderImporter = () => import('../pages/performance/ConcurrentRender/index');
@@ -64,9 +67,8 @@ const BigJsonParsePage = lazy(() => import('../pages/performance/BigJsonParse/in
 const ReverseChatVirtualListPage = lazy(
   () => import('../pages/performance/ReverseChatVirtualList/index')
 );
-const SimpleVirtualTablePage = lazy(
-  () => import('../pages/performance/SimpleVirtualTable/index')
-);
+const SimpleVirtualTablePage = lazy(() => import('../pages/performance/SimpleVirtualTable/index'));
+const AntdVirtualTablePage = lazy(() => import('../pages/performance/AntdVirtualTable/index'));
 const DynamicFormPage = lazy(() => import('../pages/components-encapsulation/DynamicForm/index'));
 const ProDynamicFormPage = lazy(
   () => import('../pages/components-encapsulation/ProDynamicForm/index')
@@ -121,7 +123,9 @@ const SSEReconnectEnhanced = lazy(() => import('../pages/network/sse-reconnect-e
 const SSEReconnectHybrid = lazy(() => import('../pages/network/sse-reconnect-hybrid'));
 const SSEBackendStorage = lazy(() => import('../pages/network/sse-backend-storage'));
 const WebSocketDemo = lazy(() => import('../pages/network/websocket-demo'));
-const StyleComponentsCSSOMPage = lazy(() => import('../pages/qiankun/styled-components-cssom/index'));
+const StyleComponentsCSSOMPage = lazy(
+  () => import('../pages/qiankun/styled-components-cssom/index')
+);
 const QiankunOverviewPage = lazy(() => import('../pages/qiankun/overview/index'));
 const QiankunCommunicationPage = lazy(() => import('../pages/qiankun/communication/index'));
 const QiankunSandboxPage = lazy(() => import('../pages/qiankun/sandbox/index'));
@@ -132,6 +136,21 @@ const FastFirstLoad = lazy(() => import('../pages/webpack/fast-first-load/index'
 
 const NextjsOverview = lazy(() => import('../pages/nextjs/index'));
 const NpmPackage = lazy(() => import('../pages/npm-package/index'));
+
+// lodash 手写函数库专题
+const LodashOverview = lazy(() => import('../pages/lodash/overview/index'));
+const LodashDebounce = lazy(() => import('../pages/lodash/debounce/index'));
+const LodashThrottle = lazy(() => import('../pages/lodash/throttle/index'));
+
+// 前端安全专题
+const SecurityOverview = lazy(() => import('../pages/security/overview/index'));
+const XssPage = lazy(() => import('../pages/security/xss/index'));
+const CsrfPage = lazy(() => import('../pages/security/csrf/index'));
+
+// TypeScript 专题
+const TypeScriptHome = lazy(() => import('../pages/typescript/index'));
+const TypeScriptBasics = lazy(() => import('../pages/typescript/basics/index'));
+const TypeScriptAdvanced = lazy(() => import('../pages/typescript/advanced/index'));
 
 export const dashboardRoutes: RouteConfig[] = [
   {
@@ -299,7 +318,7 @@ export const dashboardRoutes: RouteConfig[] = [
     label: 'qiankun 专题',
     icon: <ApiOutlined />,
     children: [
-       {
+      {
         path: '/dashboard/qiankun/overview',
         label: '概览',
         element: <QiankunOverviewPage />,
@@ -334,7 +353,6 @@ export const dashboardRoutes: RouteConfig[] = [
         label: 'loadMicroApp',
         element: <QiankunLoadMicroAppPage />,
       },
-
     ],
   },
   {
@@ -401,6 +419,11 @@ export const dashboardRoutes: RouteConfig[] = [
         element: <WaterfallUltimate2 />,
       },
       {
+        path: '/dashboard/performance/waterfall-adaptive',
+        label: '不定高图片自适应瀑布流',
+        element: <WaterfallAdaptive />,
+      },
+      {
         path: '/dashboard/performance/concurrent-render',
         label: '并发渲染(Task Slicing)',
         element: <ConcurrentRenderPage />,
@@ -421,6 +444,11 @@ export const dashboardRoutes: RouteConfig[] = [
         path: '/dashboard/performance/simple-virtual-table',
         label: '自研虚拟滚动表格',
         element: <SimpleVirtualTablePage />,
+      },
+      {
+        path: '/dashboard/performance/antd-virtual-table',
+        label: 'antd5 内置虚拟表格',
+        element: <AntdVirtualTablePage />,
       },
     ],
   },
@@ -562,6 +590,28 @@ export const dashboardRoutes: RouteConfig[] = [
     element: <NpmPackage />,
   },
   {
+    path: '/dashboard/security',
+    label: '前端安全专题',
+    icon: <SafetyOutlined />,
+    children: [
+      {
+        path: '/dashboard/security/overview',
+        label: '安全概览',
+        element: <SecurityOverview />,
+      },
+      {
+        path: '/dashboard/security/xss',
+        label: 'XSS 跨站脚本攻击',
+        element: <XssPage />,
+      },
+      {
+        path: '/dashboard/security/csrf',
+        label: 'CSRF 跨站请求伪造',
+        element: <CsrfPage />,
+      },
+    ],
+  },
+  {
     path: '/dashboard/nextjs',
     label: 'Next.js 专题',
     icon: <BookOutlined />,
@@ -570,6 +620,28 @@ export const dashboardRoutes: RouteConfig[] = [
         path: '/dashboard/nextjs/overview',
         label: '专题概览',
         element: <NextjsOverview />,
+      },
+    ],
+  },
+  {
+    path: '/dashboard/lodash',
+    label: 'lodash 手写函数库',
+    icon: <ToolOutlined />,
+    children: [
+      {
+        path: '/dashboard/lodash/overview',
+        label: '概览',
+        element: <LodashOverview />,
+      },
+      {
+        path: '/dashboard/lodash/debounce',
+        label: '防抖（debounce）',
+        element: <LodashDebounce />,
+      },
+      {
+        path: '/dashboard/lodash/throttle',
+        label: '节流（throttle）',
+        element: <LodashThrottle />,
       },
     ],
   },
@@ -651,6 +723,28 @@ export const dashboardRoutes: RouteConfig[] = [
         label: 'SSE 流式推送（旧）',
         hideInMenu: true,
         element: <SSEDemoPage />,
+      },
+    ],
+  },
+  {
+    path: '/dashboard/typescript',
+    label: 'TypeScript 专题',
+    icon: <CodeOutlined />,
+    children: [
+      {
+        path: '/dashboard/typescript/overview',
+        label: '专题概览',
+        element: <TypeScriptHome />,
+      },
+      {
+        path: '/dashboard/typescript/basics',
+        label: '第一章：基础类型系统',
+        element: <TypeScriptBasics />,
+      },
+      {
+        path: '/dashboard/typescript/advanced',
+        label: '第二章：进阶能力（泛型/条件类型/映射/守卫）',
+        element: <TypeScriptAdvanced />,
       },
     ],
   },

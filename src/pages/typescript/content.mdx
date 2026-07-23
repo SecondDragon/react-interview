@@ -1,0 +1,45 @@
+import { Card, Typography, Alert, Progress } from 'antd';
+import OverviewSection from './OverviewSection';
+
+# TypeScript 面试知识体系
+
+<Alert
+  type="success"
+  message="学习指南"
+  description="本模块涵盖 TS 原理到面试高频题，每个章节包含概念讲解、代码对比和经典面试题。第一章「基础类型系统」已完整上线，后续章节持续更新中。"
+  showIcon
+  style={{ marginBottom: '24px' }}
+/>
+
+## 关于 TypeScript
+
+<Card style={{ marginBottom: '24px' }}>
+  <Typography.Paragraph>
+    TypeScript 是 JavaScript 的超集，在保留 JS 动态特性的基础上引入了**静态类型系统**。
+    它能在**编译阶段**发现潜在的类型错误，配合 IDE 提供智能补全与重构支持，大幅提升大型项目的可维护性。
+  </Typography.Paragraph>
+
+  <Typography.Paragraph>
+    前端面试中，TS 的考察通常分为三个层次：
+  </Typography.Paragraph>
+
+  <Typography.Paragraph>
+    <strong>第一层 — 基础类型</strong>：类型注解、类型推断、联合/交叉类型、接口等基本概念。这是"会用"的门槛。
+  </Typography.Paragraph>
+
+  <Typography.Paragraph>
+    <strong>第二层 — 进阶能力</strong>：泛型、条件类型、映射类型、类型守卫。要求能写出可复用的类型工具。
+  </Typography.Paragraph>
+
+  <Typography.Paragraph>
+    <strong>第三层 — 类型体操</strong>：infer 推导、递归类型、模板字面量类型。考察对 TS 类型系统深度的理解。
+  </Typography.Paragraph>
+
+  <Typography.Paragraph>
+    本模块按照这三个层次，组织为 **10 个章节**，从基础到进阶逐一击破。
+  </Typography.Paragraph>
+</Card>
+
+## 章节概览
+
+<OverviewSection />

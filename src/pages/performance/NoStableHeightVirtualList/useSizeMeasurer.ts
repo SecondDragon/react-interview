@@ -16,6 +16,8 @@ export function useSizeMeasurer<T>(data: T[], defaultItemHeight: number) {
   const positionsRef = useRef<ItemPosition[]>([]);
   // 撑开容器的总高度，由于需要触发 React 渲染 Spacer，所以使用 State
   const [totalHeight, setTotalHeight] = useState(0);
+  // 测量版本号：positions 被 useRef 持有，引用稳定；通过版本号通知虚拟化引擎数据已变化
+  const [measureVersion, setMeasureVersion] = useState(0);
 
   /**
    * 初始化/扩展位置信息
@@ -63,7 +65,6 @@ export function useSizeMeasurer<T>(data: T[], defaultItemHeight: number) {
     const pos = positionsRef.current[index];
     if (!pos || pos.height === height) return;
 
-    const heightDiff = height - pos.height;
     pos.height = height;
     pos.bottom = pos.top + height;
 
@@ -76,6 +77,9 @@ export function useSizeMeasurer<T>(data: T[], defaultItemHeight: number) {
     // 更新 Spacer 高度
     const lastItem = positionsRef.current[positionsRef.current.length - 1];
     setTotalHeight(lastItem ? lastItem.bottom : 0);
+
+    // 触发版本递增，通知虚拟化引擎重新建立空间索引
+    setMeasureVersion((v) => v + 1);
   }, []);
 
   /**
@@ -95,6 +99,7 @@ export function useSizeMeasurer<T>(data: T[], defaultItemHeight: number) {
   return {
     positions: positionsRef.current,
     totalHeight,
+    measureVersion,
     measureItem,
   };
 }

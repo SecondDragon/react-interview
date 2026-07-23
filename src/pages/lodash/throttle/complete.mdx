@@ -1,0 +1,87 @@
+import CodeDiff from '@/components/CodeDiff';
+import LiveDemo from './LiveDemo';
+import complexCode from './demos/complex.ts?raw';
+import completeCode from './demos/complete.ts?raw';
+import { Card, Typography, List, Tag, Table } from 'antd';
+import { throttleVersions, throttleComparisonColumns, throttleComparisonDataSource } from './data';
+
+# 节流：完全版
+
+<Typography.Paragraph type="secondary">
+  完全版 throttle 对齐 lodash 语义：提供 <Typography.Text code>cancel</Typography.Text> / <Typography.Text code>flush</Typography.Text> API，并正确处理返回值。
+</Typography.Paragraph>
+
+## 一、完整控制 API
+
+<Typography.Paragraph>
+  在复杂版中，一旦设置了定时器就无法主动取消。完全版补充了：
+</Typography.Paragraph>
+
+- **cancel**：取消待执行的 trailing 回调，并重置状态。
+- **flush**：立即执行待执行的 trailing 回调。
+
+<Typography.Paragraph>
+  这两个 API 在组件卸载、路由跳转等场景中非常重要，可避免内存泄漏或无效的异步回调。
+</Typography.Paragraph>
+
+## 二、版本演进
+
+<CodeDiff
+  oldValue={complexCode}
+  newValue={completeCode}
+  leftTitle="复杂版"
+  rightTitle="完全版"
+  type="info"
+  hideDiffMarkers={true}
+/>
+
+## 三、完整代码
+
+<CodeDiff
+  code={completeCode}
+  title="完全版 throttle 源码"
+  type="info"
+/>
+
+## 四、三版对比
+
+<Table
+  dataSource={throttleComparisonDataSource}
+  columns={throttleComparisonColumns}
+  pagination={false}
+  bordered
+  size="small"
+/>
+
+## 五、能力边界
+
+<Card title="完全版新增的能力" size="small" style={{ marginBottom: '16px' }}>
+  <List
+    dataSource={throttleVersions[2].highlights}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color="green">✓</Tag> {item}
+      </List.Item>
+    )}
+  />
+</Card>
+
+<Card title="完全版的代价" size="small">
+  <List
+    dataSource={throttleVersions[2].limitations}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color="orange">!</Tag> {item}
+      </List.Item>
+    )}
+  />
+</Card>
+
+## 六、互动演示
+
+<Card title={<span>Live Demo <Tag color="blue">完全版</Tag></span>} style={{ marginTop: '24px' }}>
+  <Typography.Paragraph>
+    与复杂版相比，完全版增加了内部状态管理。你可以通过快速点击观察 leading/trailing 组合的效果。
+  </Typography.Paragraph>
+  <LiveDemo version="complete" />
+</Card>

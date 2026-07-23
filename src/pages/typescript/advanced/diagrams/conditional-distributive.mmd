@@ -1,0 +1,12 @@
+sequenceDiagram
+    participant Input as "联合类型 T = A | B | C"
+    participant Cond as "条件类型 T extends U ? X : Y"
+    participant Result as "结果类型"
+
+    Input ->> Cond: 传入联合类型
+    Note over Cond: 分布式计算：<br/>每个成员单独求值
+    Cond ->> Cond: 步骤 1: A extends U ? X : Y
+    Cond ->> Cond: 步骤 2: B extends U ? X : Y
+    Cond ->> Cond: 步骤 3: C extends U ? X : Y
+    Cond ->> Result: 合并结果 A' | B' | C'
+    Note over Result: 最终类型 = 各分支结果联合

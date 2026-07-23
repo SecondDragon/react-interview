@@ -21,6 +21,7 @@ import cssomVsTextcontentSource from './diagrams/cssom-vs-textcontent.mmd?raw';
 import raceConditionSource from './diagrams/race-condition.mmd?raw';
 import stylesheetLifecycleSource from './diagrams/stylesheet-lifecycle.mmd?raw';
 import reproductionPathSource from './diagrams/reproduction-path.mmd?raw';
+import raceNonDeterministicSource from './diagrams/race-non-deterministic.mmd?raw';
 
 
 # qiankun 专题：子应用样式丢失与 CSSOM 注入
@@ -367,7 +368,55 @@ console.log(style.sheet.cssRules.length); // → 2  （写入成功！）
 
 <Alert type="warning" message="这就是'刷新需要好几次才正常'的根本原因——纯粹的竞态条件，受网络延迟、CDN 速度、CPU 负载的随机影响。" />
 
-<MermaidViewer source={raceConditionSource} />
+### 为什么这个问题不是必现的——因为每次都是一次新的"掷骰子"
+
+<Alert type="error" message="这是一个典型的非确定性（non-deterministic）Bug——同样的用户操作步骤（同一个菜单、同一次会话），有时复现、有时不复现；同一个用户在不同时刻可能遇到不同结果。" style={{ marginBottom: 16 }} />
+
+<MermaidViewer source={raceNonDeterministicSource} />
+
+根本原因可以归纳为一句话：
+
+> **`qiankun.loadApp()` 每次启动时，都会重新发起两条并行路径的竞赛。两条路径的完成时间都是变量，每次竞赛的结果都不确定。因此这个 Bug 是"看概率"的，不存在一个"必定触发"的操作序列。**
+
+详解如下：
+
+<Card size="small" style={{ marginBottom: 12 }}>
+  <Typography.Paragraph style={{ marginBottom: 0 }}>
+    <strong>第一步：理解"每次操作都是一个新赛道"</strong><br />
+    用户每次点击菜单切换子应用，或硬刷新页面，<code>qiankun.loadApp()</code> 都会从头开始新一轮的并行执行。这不是"第一次触发后状态就固定了"的问题——<strong>每次操作都独立地重新掷一次骰子</strong>。
+  </Typography.Paragraph>
+</Card>
+
+<Card size="small" style={{ marginBottom: 12 }}>
+  <Typography.Paragraph style={{ marginBottom: 0 }}>
+    <strong>第二步：理解"两条路径的耗时都是变量"</strong><br />
+    路径① 沙箱初始化：是同步的 Proxy 创建 + 容器设置，耗时约 1-5ms（相对稳定但受 CPU 调度影响）<br />
+    路径② JS 加载：需要网络请求（fetch HTML Entry）+ 提取脚本 + eval 执行，耗时约 10-500ms（高度不稳定）<br />
+    <strong>两条路径各自的速度都在变化，所以它们的相对完成顺序也在变化。</strong>
+  </Typography.Paragraph>
+</Card>
+
+<Card size="small" style={{ marginBottom: 12, borderColor: '#f5222d' }}>
+  <Typography.Paragraph style={{ marginBottom: 0 }}>
+    <strong>第三步：理解"不是必现"意味着什么</strong><br />
+    同一个用户，在 10 次相同的操作中：
+  </Typography.Paragraph>
+  <ul style={{ marginBottom: 0, marginTop: 8 }}>
+    <li>第 1 次操作：CDN 缓存命中 + CPU 空闲 → JS 加载快 → 路径② 先完成 → <strong>❌ 样式丢失</strong></li>
+    <li>第 2 次操作：CDN 缓存未命中 + 网络慢 → JS 加载慢 → 路径① 先完成 → <strong>✅ 样式正常</strong></li>
+    <li>第 3 次操作：后台有 GC 在跑 → 沙箱初始化被暂停 → JS 先完成 → <strong>❌ 样式丢失</strong></li>
+    <li>…以此类推，每次结果都是独立的随机事件</li>
+  </ul>
+  <Typography.Paragraph style={{ marginBottom: 0, marginTop: 8 }}>
+    这就是"刷新 2-3 次才正常"和"别人那边是好的"的数学解释——<strong>不是操作错了，是每次的掷骰子结果不同</strong>。
+  </Typography.Paragraph>
+</Card>
+
+<Card size="small" style={{ background: '#fff7e6' }}>
+  <Typography.Paragraph style={{ marginBottom: 0 }}>
+    <strong>实际排查启示：</strong>此类非确定性 Bug 是最难排查的一类——开发者无法可靠复现，QA 难以写出确定性测试用例，甚至"修复后"也可能因为恰好没遇到失效率命中的时序而误判为修复成功。最终确认修复有效的方法只能是：在生产环境灰度放量，统计修复前后的丢样式报障率差异。
+  </Typography.Paragraph>
+</Card>
 
 ### 为什么只在生产环境出现
 

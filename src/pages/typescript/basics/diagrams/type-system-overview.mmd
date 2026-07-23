@@ -1,0 +1,25 @@
+graph TD
+    A["TypeScript 类型系统"] --> B["原始类型"]
+    A --> C["对象类型"]
+    A --> D["特殊类型"]
+    A --> E["复合类型"]
+
+    B --> B1["number"]
+    B --> B2["string"]
+    B --> B3["boolean"]
+    B --> B4["null / undefined"]
+    B --> B5["symbol / bigint"]
+
+    C --> C1["Interface<br/>{name: string}"]
+    C --> C2["Type Alias<br/>type T = ..."]
+    C --> C3["Class"]
+
+    D --> D1["any"]
+    D --> D2["unknown"]
+    D --> D3["never"]
+    D --> D4["void"]
+
+    E --> E1["Union Type<br/>A | B"]
+    E --> E2["Intersection Type<br/>A & B"]
+    E --> E3["Tuple<br/>[string, number]"]
+    E --> E4["Literal Type<br/>'up' | 'down'"]

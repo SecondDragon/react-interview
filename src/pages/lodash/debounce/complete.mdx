@@ -1,0 +1,84 @@
+import CodeDiff from '@/components/CodeDiff';
+import LiveDemo from './LiveDemo';
+import complexCode from './demos/complex.ts?raw';
+import completeCode from './demos/complete.ts?raw';
+import { Card, Typography, List, Tag, Table } from 'antd';
+import { debounceVersions, debounceComparisonColumns, debounceComparisonDataSource } from './data';
+
+# 防抖：完全版
+
+<Typography.Paragraph type="secondary">
+  完全版 debounce 对齐 lodash 语义：支持 <Typography.Text code>maxWait</Typography.Text>，提供 <Typography.Text code>cancel</Typography.Text> / <Typography.Text code>flush</Typography.Text> / <Typography.Text code>pending</Typography.Text> API，并正确处理返回值。
+</Typography.Paragraph>
+
+## 一、maxWait 解决什么问题？
+
+<Typography.Paragraph>
+  在复杂版中，如果用户持续高频触发，回调可能永远没有机会执行。例如用户疯狂输入 10 秒，搜索请求会被一直推迟。
+</Typography.Paragraph>
+
+<Typography.Paragraph>
+  <Typography.Text code>maxWait</Typography.Text> 设定了强制执行的“兜底”时间：即使事件仍在高频发生，只要距离上次执行超过 <Typography.Text code>maxWait</Typography.Text>，就会强制触发一次。
+</Typography.Paragraph>
+
+## 二、版本演进
+
+<CodeDiff
+  oldValue={complexCode}
+  newValue={completeCode}
+  leftTitle="复杂版"
+  rightTitle="完全版"
+  type="info"
+  hideDiffMarkers={true}
+/>
+
+## 三、完整代码
+
+<CodeDiff
+  code={completeCode}
+  title="完全版 debounce 源码"
+  type="info"
+/>
+
+## 四、三版对比
+
+<Table
+  dataSource={debounceComparisonDataSource}
+  columns={debounceComparisonColumns}
+  pagination={false}
+  bordered
+  size="small"
+/>
+
+## 五、能力边界
+
+<Card title="完全版新增的能力" size="small" style={{ marginBottom: '16px' }}>
+  <List
+    dataSource={debounceVersions[2].highlights}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color="green">✓</Tag> {item}
+      </List.Item>
+    )}
+  />
+</Card>
+
+<Card title="完全版的代价" size="small">
+  <List
+    dataSource={debounceVersions[2].limitations}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color="orange">!</Tag> {item}
+      </List.Item>
+    )}
+  />
+</Card>
+
+## 六、互动演示
+
+<Card title={<span>Live Demo <Tag color="blue">完全版</Tag></span>} style={{ marginTop: '24px' }}>
+  <Typography.Paragraph>
+    尝试持续快速输入，当间隔超过 <Typography.Text code>maxWait</Typography.Text> 时，即使你还在输入，也会强制执行一次回调。
+  </Typography.Paragraph>
+  <LiveDemo version="complete" />
+</Card>

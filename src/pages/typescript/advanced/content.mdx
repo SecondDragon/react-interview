@@ -1,0 +1,530 @@
+import { Card, Typography, Alert, Tag, Divider } from 'antd';
+import MermaidViewer from '@/components/MermaidViewer';
+import GenericsDemo from './GenericsDemo';
+import ConditionalTypesDemo from './ConditionalTypesDemo';
+import MappedTypesDemo from './MappedTypesDemo';
+import TypeGuardsDemo from './TypeGuardsDemo';
+import QuizSection from './QuizSection';
+import genericsOverview from './diagrams/generics-overview.mmd?raw';
+import conditionalDistributive from './diagrams/conditional-distributive.mmd?raw';
+import mappedTypesFlow from './diagrams/mapped-types-flow.mmd?raw';
+
+# 进阶能力：泛型、条件类型、映射类型与类型守卫
+
+<Alert
+  type="info"
+  showIcon
+  message="关于本章"
+  description="本章属于 TS 面试考察的第二层——进阶能力。要求不仅会使用类型，还能编写可复用的类型工具。每个主题都配有互动演示，建议按顺序阅读并动手操作。"
+  style={{ marginBottom: '24px' }}
+/>
+
+---
+
+## 一、泛型编程（Generics）
+
+<Typography.Paragraph>
+  泛型是 TypeScript 类型系统中最核心的抽象机制。它允许你在定义函数、类或接口时<strong>不指定具体类型</strong>，而是使用一个"类型参数"（Type Parameter），在调用时再确定具体类型。这让你写一套代码，支持多种类型，同时保持类型安全。
+</Typography.Paragraph>
+
+### 1.1 为什么需要泛型？
+
+<Typography.Paragraph>
+  没有泛型时，要为不同类型的值写相同的逻辑，只能使用 <code>any</code> 放弃类型检查，或者为每种类型重载函数——两者都不可取：
+</Typography.Paragraph>
+
+```
+// ❌ 用 any：完全丢失类型信息
+function identity(arg: any): any {
+  return arg;
+}
+const result = identity(42);
+// result 是 any，不能安全调用 number 方法
+
+// ✅ 用泛型：保留精确类型
+function identity<T>(arg: T): T {
+  return arg;
+}
+const result = identity(42);
+// result 是 number ✅ 可安全调用 toFixed()
+```
+
+### 1.2 泛型的核心机制
+
+<MermaidViewer source={genericsOverview} />
+
+<Typography.Paragraph>
+  泛型的使用遵循"推断优先，显式兜底"的原则。绝大多数情况下 TypeScript 编译器能自动推断类型参数，只在推断失败时手动指定：
+</Typography.Paragraph>
+
+<GenericsDemo />
+
+### 1.3 泛型约束详解
+
+<Typography.Paragraph>
+  没有约束的泛型类型参数 T 是"无限"的——你可以传入任何类型。这意味着在函数体内你对 T 的值几乎什么都不能做（只能赋值和传递）。<strong>泛型约束</strong>通过 <code>extends</code> 给 T 加上"下限"，让函数体可以安全地访问约束中的属性和方法。
+</Typography.Paragraph>
+
+```
+// 不约束：T 可以是任何类型
+function logSize<T>(arg: T): void {
+  // ❌ arg.length — 编译错误！string 有 length，但 number 没有
+  // 编译器不知道 T 有没有 length
+}
+
+// 约束：T 必须有 length: number
+function logSize<T extends { length: number }>(arg: T): number {
+  return arg.length;  // ✅ 安全访问
+}
+
+logSize("hello");    // ✅ string 有 length → 5
+logSize([1, 2, 3]);  // ✅ Array 有 length → 3
+// logSize(42);      // ❌ number 没有 length → 编译错误
+```
+
+### 1.4 泛型的应用模式
+
+#### 模式一：类型安全的属性访问（keyof 约束）
+
+```
+function getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {
+  return obj[key];
+}
+
+const person = { name: "Tom", age: 25 };
+const name: string = getProperty(person, "name");  // ✅
+const age: number = getProperty(person, "age");     // ✅
+// getProperty(person, "email");  // ❌ "email" 不在 keyof 中
+```
+
+#### 模式二：合并两个对象
+
+```
+function merge<T extends object, U extends object>(a: T, b: U): T & U {
+  return { ...a, ...b };
+}
+
+const result = merge({ name: "Tom" }, { age: 25 });
+// result 类型: { name: string } & { age: number }
+```
+
+#### 模式三：泛型容器类
+
+```
+class Stack<T> {
+  private items: T[] = [];
+
+  push(item: T): void {
+    this.items.push(item);
+  }
+
+  pop(): T | undefined {
+    return this.items.pop();
+  }
+
+  peek(): T | undefined {
+    return this.items[this.items.length - 1];
+  }
+}
+
+const numStack = new Stack<number>();
+numStack.push(10);
+numStack.push(20);
+const top = numStack.peek();  // top: number | undefined
+// numStack.push("hello");    // ❌ 类型错误
+```
+
+<Alert
+  type="success"
+  showIcon
+  message="泛型核心要点"
+  description={'(1) 类型参数在调用时推断；(2) extends 约束给 T 加上「能力下限」；(3) keyof T 约束确保键存在；(4) 泛型 class 的类型参数贯穿所有方法和属性。'}
+/>
+
+<Divider />
+
+---
+
+## 二、条件类型（Conditional Types）
+
+<Typography.Paragraph>
+  条件类型是 TypeScript 类型系统中的"三元表达式"。它根据类型是否满足某个条件，在编译时计算出不同的类型结果。条件类型使得类型系统变得"图灵完备"——你可以编写复杂的类型逻辑。
+</Typography.Paragraph>
+
+### 2.1 基础语法
+
+```
+// 基本形式：如果 T 满足 U 的类型约束，结果是 X，否则是 Y
+type IsString<T> = T extends string ? "yes" : "no";
+
+type A = IsString<string>;     // "yes"
+type B = IsString<number>;     // "no"
+type C = IsString<string | number>;
+// 分布式计算: IsString<string> | IsString<number> = "yes" | "no"
+```
+
+### 2.2 分布式条件类型（Distributive Conditional Types）
+
+<Typography.Paragraph>
+  这是条件类型最重要的行为：当条件类型作用于<strong>裸类型参数</strong>（即 T 没有被方括号包裹），且 T 是联合类型时，联合的每个成员会<strong>分别求值</strong>，然后合并结果。
+</Typography.Paragraph>
+
+<MermaidViewer source={conditionalDistributive} />
+
+<Typography.Paragraph>
+  分布式行为的本质是"对联合类型的每个成员独立应用条件，再将结果联合起来"。这种机制使条件类型天然具备"过滤"的能力：
+</Typography.Paragraph>
+
+```
+// Exclude<T, U> 的底层实现——过滤掉 T 中属于 U 的成员
+type MyExclude<T, U> = T extends U ? never : T;
+
+type Result = MyExclude<"a" | "b" | "c", "a">;
+// 分布计算：
+// ("a" extends "a" ? never : "a") → never
+// ("b" extends "a" ? never : "b") → "b"
+// ("c" extends "a" ? never : "c") → "c"
+// 结果: never | "b" | "c" = "b" | "c"
+```
+
+### 2.3 infer 类型推导
+
+<Typography.Paragraph>
+  <code>infer</code> 关键字在条件类型的 true 分支中声明一个"待推断"的类型变量。TypeScript 编译器会根据传入的具体类型自动推导它的值。这是 <code>ReturnType</code>、<code>Parameters</code> 等内置工具类型的实现基础：
+</Typography.Paragraph>
+
+```
+// 提取函数返回类型
+type MyReturnType<T> = T extends (...args: any[]) => infer R ? R : never;
+
+// 提取函数参数类型（元组）
+type MyParameters<T> = T extends (...args: infer P) => any ? P : never;
+
+// 提取 Promise 内部类型
+type Unwrap<T> = T extends Promise<infer U> ? U : T;
+
+type R1 = MyReturnType<() => string>;           // string
+type R2 = MyReturnType<(x: number) => boolean>; // boolean
+type P1 = MyParameters<(x: string, y: number) => void>; // [string, number]
+type U1 = Unwrap<Promise<string>>;  // string
+type U2 = Unwrap<number>;           // number（非 Promise 原样返回）
+```
+
+### 2.4 never 分发陷阱
+
+<Typography.Paragraph>
+  <code>never</code> 是空联合（没有任何成员的联合类型）。当 never 作为裸类型参数传入条件类型时，因为"空集分发得到空集"，结果始终是 <code>never</code>。这是类型体操中的经典陷阱：
+</Typography.Paragraph>
+
+```
+// ❌ 错误的写法：IsNever<never> 返回 never，而不是 true
+type IsNeverWrong<T> = T extends never ? true : false;
+type Test = IsNeverWrong<never>;  // never！❌
+
+// ✅ 正确的写法：用元组包裹抑制分发
+type IsNever<T> = [T] extends [never] ? true : false;
+type Test = IsNever<never>;  // true ✅
+```
+
+<ConditionalTypesDemo />
+
+<Alert
+  type="warning"
+  showIcon
+  message="条件类型关键规则"
+  description="(1) 裸类型参数 + 联合 → 分布式计算；(2) infer 只能在 extends 的 true 分支中声明新变量；(3) 元组包裹 [T] 抑制分发；(4) never 分发产生 never。"
+/>
+
+<Divider />
+
+---
+
+## 三、映射类型（Mapped Types）
+
+<Typography.Paragraph>
+  映射类型通过 <code>[P in keyof T]</code> 遍历类型 T 的所有键，对每个属性应用统一的变换——类似于 JavaScript 的 <code>Array.map()</code>，但操作对象是类型而非数组。
+</Typography.Paragraph>
+
+<MermaidViewer source={mappedTypesFlow} />
+
+### 3.1 基础映射
+
+```
+// 手写 Readonly：给每个属性加上 readonly
+type MyReadonly<T> = {
+  readonly [P in keyof T]: T[P];
+};
+
+// 手写 Partial：给每个属性加上可选标记
+type MyPartial<T> = {
+  [P in keyof T]?: T[P];
+};
+
+// 手写 Pick：只选择部分键
+type MyPick<T, K extends keyof T> = {
+  [P in K]: T[P];
+};
+
+// 使用
+interface Person {
+  name: string;
+  age: number;
+  email: string;
+}
+
+type ReadonlyPerson = MyReadonly<Person>;
+// { readonly name: string; readonly age: number; readonly email: string }
+
+type PartialPerson = MyPartial<Person>;
+// { name?: string; age?: number; email?: string }
+
+type NameAndAge = MyPick<Person, "name" | "age">;
+// { name: string; age: number }
+```
+
+### 3.2 修饰符操作
+
+<Typography.Paragraph>
+  映射类型支持通过 <code>+</code> 和 <code>-</code> 控制 <code>readonly</code> 和 <code>?</code> 修饰符。不加符号等同于 <code>+</code>（添加），<code>-readonly</code> 和 <code>-?</code> 表示移除：
+</Typography.Paragraph>
+
+```
+// Required：移除所有可选标记
+type MyRequired<T> = {
+  [P in keyof T]-?: T[P];
+};
+
+// Mutable：移除所有 readonly
+type Mutable<T> = {
+  -readonly [P in keyof T]: T[P];
+};
+
+// 同时移除 readonly 和可选
+type Concrete<T> = {
+  -readonly [P in keyof T]-?: T[P];
+};
+```
+
+### 3.3 as 重映射（Key Remapping, TS 4.1+）
+
+<Typography.Paragraph>
+  <code>as</code> 重映射是 TypeScript 4.1 引入的语法，允许在映射类型中<strong>变换键名</strong>或<strong>过滤键</strong>。它让映射类型的能力大幅提升：
+</Typography.Paragraph>
+
+```
+// 变换键名：name → getName, age → getAge
+type Getters<T> = {
+  [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K];
+};
+
+// 过滤键：只保留值类型为 string 的属性
+type StringOnly<T> = {
+  [K in keyof T as T[K] extends string ? K : never]: T[K];
+};
+
+// 删除特定键：排除 "id" 和 "createdAt"
+type WithoutMeta<T> = {
+  [K in keyof T as K extends "id" | "createdAt" ? never : K]: T[K];
+};
+```
+
+### 3.4 两步过滤模式
+
+<Typography.Paragraph>
+  这是一种强大的类型编程模式：先映射生成一个中间类型（条件符合保留值，不符合设为 never），再通过索引访问 <code>[keyof T]</code> 取出所有值，never 被自动过滤：
+</Typography.Paragraph>
+
+```
+// 提取值类型为 string 的键名
+type KeysOfType<T, U> = {
+  [K in keyof T]: T[K] extends U ? K : never;
+}[keyof T];
+
+// 使用
+interface Model {
+  id: number;
+  name: string;
+  createdAt: Date;
+  isActive: boolean;
+}
+
+type StrKeys = KeysOfType<Model, string>;  // "name"
+type NumKeys = KeysOfType<Model, number>;  // "id"
+type DateKeys = KeysOfType<Model, Date>;   // "createdAt"
+
+// 结合 Pick，提取特定值类型的属性
+type PickByType<T, U> = Pick<T, KeysOfType<T, U>>;
+type StrProps = PickByType<Model, string>;
+// { name: string }
+```
+
+<MappedTypesDemo />
+
+<Alert
+  type="success"
+  showIcon
+  message="映射类型核心要点"
+  description="(1) [P in keyof T] 遍历键；(2) readonly / ? 可通过 +/- 控制；(3) as 重映射可变换或过滤键名；(4) 映射 + [keyof T] 两步过滤是高级模式的基础。"
+/>
+
+<Divider />
+
+---
+
+## 四、类型守卫（Type Guards）
+
+<Typography.Paragraph>
+  类型守卫是 TypeScript 类型收窄（Narrowing）的核心机制。它通过运行时检查在编译时将变量的类型从宽泛的类型缩小到具体的子类型。类型守卫的种类包括内置守卫（typeof、instanceof、in）和自定义守卫（类型谓词、断言函数）。
+</Typography.Paragraph>
+
+### 4.1 六种类型守卫总览
+
+| 守卫方式 | 语法 | 适用场景 | 示例 |
+|----------|------|---------|------|
+| `typeof` | `typeof x === "string"` | 原始类型（string/number/boolean等） | `if (typeof x === "string")` |
+| `instanceof` | `x instanceof Date` | 类实例 | `if (x instanceof Error)` |
+| `in` | `"prop" in obj` | 对象属性存在性 | `if ("swim" in pet)` |
+| 字面量 | `x === "up"` | 字面量联合类型 | `if (dir === "left")` |
+| 类型谓词 | `function isStr(x): x is string` | 自定义复杂检查 | `if (isString(value))` |
+| 断言函数 | `function assertStr(x): asserts x is string` | 参数校验 | `assertString(input)` |
+
+### 4.2 类型谓词（Type Predicate）
+
+<Typography.Paragraph>
+  类型谓词 <code>x is Type</code> 是自定义类型守卫的最重要形式。它让开发者将"运行时检查结果"告诉 TypeScript 编译器——如果函数返回 true，参数的类型在编译时被收窄：
+</Typography.Paragraph>
+
+```
+// 定义类型谓词
+function isString(value: unknown): value is string {
+  return typeof value === "string";
+}
+
+// 使用：条件分支自动收窄
+const data: unknown = "hello";
+if (isString(data)) {
+  // 在这里 data 的类型是 string，不是 unknown
+  console.log(data.toUpperCase());  // ✅ "HELLO"
+  console.log(data.length);         // ✅ 5
+}
+```
+
+<Typography.Paragraph>
+  类型谓词在数组过滤中的类型收窄效果尤为突出——普通箭头函数返回 boolean 不会收窄类型，但传入类型谓词函数后，<code>filter</code> 的结果类型会被正确收窄：
+</Typography.Paragraph>
+
+```
+const mixed: (string | number)[] = [1, "hello", 42, "world"];
+
+// ❌ 普通箭头函数：结果类型仍是 (string | number)[]
+const strs1 = mixed.filter(x => typeof x === "string");
+
+// ✅ 类型谓词：结果类型是 string[]
+const isString = (x: unknown): x is string => typeof x === "string";
+const strs2 = mixed.filter(isString);  // string[]  ✅
+```
+
+### 4.3 可辨识联合（Discriminated Union）
+
+<Typography.Paragraph>
+  可辨识联合是 TypeScript 中最强大的模式之一。联合类型的每个成员都有一个<strong>字面量类型的共有属性</strong>（称为"辨识标签"），TypeScript 在 switch/case 中通过标签值自动收窄到具体分支，提供精确的类型推断：
+</Typography.Paragraph>
+
+```
+// 定义可辨识联合
+type ApiState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "success"; data: User[] }
+  | { status: "error"; message: string };
+
+// 在 switch 中自动收窄
+function handleState(state: ApiState) {
+  switch (state.status) {
+    case "idle":
+      // state 被收窄为 { status: "idle" }
+      break;
+    case "success":
+      // state 被收窄为 { status: "success"; data: User[] }
+      console.log(state.data.length);  // ✅ 安全访问 data
+      break;
+    case "error":
+      // state 被收窄为 { status: "error"; message: string }
+      console.error(state.message);    // ✅ 安全访问 message
+      break;
+  }
+}
+```
+
+### 4.4 断言守卫（Assertion Guards）
+
+<Typography.Paragraph>
+  断言守卫 <code>asserts x is T</code> 不返回 boolean。如果断言通过（函数正常返回），后续代码中变量类型被收窄；如果断言不通过，函数抛出异常。它特别适合在函数入口处进行参数校验：
+</Typography.Paragraph>
+
+```
+// 定义断言守卫
+function assertString(value: unknown): asserts value is string {
+  if (typeof value !== "string") {
+    throw new TypeError("Expected a string value");
+  }
+}
+
+// 使用：断言通过后，value 被收窄为 string
+function processUserInput(input: unknown) {
+  assertString(input);
+  // 到这里 input 的类型已经是 string
+  console.log(input.toUpperCase());  // ✅
+  console.log(input.length);         // ✅
+}
+
+// 类型谓词 vs 断言守卫对比
+function example(value: unknown) {
+  // 方式 A：类型谓词 + if 分支
+  if (isString(value)) {
+    // 这里 value 是 string
+  }
+  // 这里 value 恢复为 unknown
+
+  // 方式 B：断言守卫
+  assertString(value);
+  // 这里 value 就是 string（断言通过才到此处）
+}
+```
+
+<TypeGuardsDemo />
+
+<Alert
+  type="info"
+  showIcon
+  message="类型守卫选择策略"
+  description={
+    <div>
+      <p><strong>区分原始类型</strong>：用 typeof</p>
+      <p><strong>区分对象类型</strong>：用 in 操作符（检查独有属性）</p>
+      <p><strong>复杂分支逻辑</strong>：用可辨识联合 + switch/case</p>
+      <p><strong>自定义复杂检查</strong>：用类型谓词（x is T）</p>
+      <p><strong>参数校验/快速失败</strong>：用断言守卫（asserts x is T）</p>
+    </div>
+  }
+/>
+
+<Divider />
+
+---
+
+## 五、进阶面试题
+
+<Typography.Paragraph>
+  以下 <strong>16 道</strong>精选面试题覆盖了本章所有核心知识点。每道题都配有详细解析，帮助你巩固对泛型、条件类型、映射类型和类型守卫的理解。
+</Typography.Paragraph>
+
+<Alert
+  type="warning"
+  showIcon
+  message="答题方式"
+  description="先阅读上方知识点，然后在下方答题区作答。建议先全部答完再查看解析。这些题目包含了 TypeScript 面试中常见的进阶题和陷阱题。"
+  style={{ marginBottom: 16 }}
+/>
+
+<QuizSection />

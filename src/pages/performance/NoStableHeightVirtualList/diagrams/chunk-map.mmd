@@ -1,0 +1,24 @@
+flowchart TD
+    subgraph Build["建表阶段：计算位置时同步登记"]
+        A["遍历 positions"] --> B["startChunk = floor(top / 800)"]
+        A --> C["endChunk = floor(bottom / 800)"]
+        B --> D["for c = startChunk..endChunk"]
+        C --> D
+        D --> E["chunksMap[c].add(dataIdx)"]
+    end
+
+    subgraph Query["检索阶段：滚动时快速定位"]
+        F["scrollTop / viewportHeight / overscan"] --> G["startChunk = floor((scrollTop - overscan) / 800)"]
+        F --> H["endChunk = floor((scrollTop + h + overscan) / 800)"]
+        G --> I["for c = startChunk..endChunk"]
+        H --> I
+        I --> J["取 chunksMap[c] 内索引"]
+        J --> K["Set 去重并排序"]
+        K --> L["返回 visibleIndices"]
+    end
+
+    classDef build fill:#F6FFED,stroke:#52C41A,stroke-width:2px,color:#135200
+    classDef query fill:#E6F7FF,stroke:#1890FF,stroke-width:2px,color:#003A8C
+
+    class A,B,C,D,E build
+    class F,G,H,I,J,K,L query

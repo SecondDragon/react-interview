@@ -1,0 +1,59 @@
+flowchart TB
+    subgraph UserAction["👤 用户操作"]
+        A([用户点击菜单 / 硬刷新])
+    end
+
+    subgraph QK["qiankun.loadApp() 内部分岔"]
+        direction TB
+        B["🚀 loadApp() 启动"] --> RA["并行执行两条路径"]
+    end
+
+    subgraph Path1["路径①：沙箱代理初始化"]
+        P1_start["创建 Proxy 沙箱"] --> P1_work["设置 DOM 代理<br/>配置容器监听"] --> P1_done["✅ 沙箱代理就绪"]
+    end
+
+    subgraph Path2["路径②：子应用 JS 加载 + 执行"]
+        P2_start["fetch HTML Entry"] --> P2_fetch["提取 JS Bundle"] --> P2_eval["eval 执行子应用 JS"]
+        P2_eval --> P2_sc["styled-components 初始化"]
+        P2_sc --> P2_append["创建 &lt;style&gt; 标签<br/>appendChild(document.head)"]
+    end
+
+    RA --> Path1
+    RA --> Path2
+
+    Race{谁先跑完？<br/>这是纯粹的随机事件} -->|"路径① 先完成  🔄"| Good["沙箱代理已就绪 → 拦截 appendChild<br/>style 注入沙箱容器 → ✅ 样式正常"]
+    Race -->|"路径② 先完成  🔄"| Bad["沙箱未就绪 → appendChild<br/>写入真实 document.head<br/>沙箱后就绪 → 扫描并移除该 style<br/>→ ❌ style 变 detached，样式永久丢失"]
+
+    subgraph Factors["决定谁先跑完的随机因素 ⚡"]
+        F1["📡 网络延迟：CDN 响应时间<br/>TCP 连接池状态<br/>缓存命中/未命中<br/>每次请求都不同"]
+        F2["⚙️ JS 解析速度：V8 编译策略<br/>热代码缓存 warm code cache<br/>编译线程调度<br/>每台设备不同"]
+        F3["💻 用户设备负载：CPU 被其他进程抢占<br/>浏览器 GC 触发时机<br/>其他标签页的渲染调度<br/>同一设备不同时刻不同"]
+        F4["🌍 CDN 节点：不同地域边缘节点<br/>响应速度差异<br/>同一用户不同网络<br/>环境复现概率不同"]
+    end
+
+    F1 & F2 & F3 & F4 -.-> Race
+
+    subgraph Key["🔑 核心结论"]
+        K1["不是代码写错了，而是运行时的不确定性"]
+        K2["同样的操作步骤 → 可能走上面 ✅，也可能走下面 ❌"]
+        K3["这就是「刷新 2-3 次才正常」的原因<br/>——纯粹的统计概率问题"]
+    end
+
+    Good --> Key
+    Bad --> Key
+
+    classDef action fill:#87CEEB,stroke:#333,stroke-width:2px,color:darkblue
+    classDef process fill:#90EE90,stroke:#333,stroke-width:2px,color:darkgreen
+    classDef error fill:#FFB6C1,stroke:#DC143C,stroke-width:2px,color:black
+    classDef race fill:#FFD700,stroke:#333,stroke-width:2px,color:black
+    classDef factor fill:#E6E6FA,stroke:#333,stroke-width:2px,color:darkblue
+    classDef conclusion fill:#98FB98,stroke:#333,stroke-width:2px,color:darkgreen
+
+    class A action
+    class B,RA action
+    class P1_start,P1_work,P1_done,P2_start,P2_fetch,P2_eval,P2_sc,P2_append process
+    class Good process
+    class Bad error
+    class Race race
+    class F1,F2,F3,F4 factor
+    class K1,K2,K3 conclusion

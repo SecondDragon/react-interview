@@ -1,0 +1,65 @@
+import CodeDiff from '@/components/CodeDiff';
+import LiveDemo from './LiveDemo';
+import simpleCode from './demos/simple.ts?raw';
+import { Card, Typography, List, Tag } from 'antd';
+import { debounceVersions } from './data';
+
+# 防抖：最简版
+
+<Typography.Paragraph type="secondary">
+  最简版 debounce 只解决一个问题：高频触发时，如何让回调只在停止触发一段时间后才执行一次。
+</Typography.Paragraph>
+
+## 一、设计思路
+
+<Typography.Paragraph>
+  核心机制只有两步：
+</Typography.Paragraph>
+
+1. 每次触发时，先清除上一次的定时器。
+2. 重新设置一个新的定时器，延迟 <Typography.Text code>wait</Typography.Text> 毫秒后执行回调。
+
+<Typography.Paragraph>
+  这样，只要事件持续发生，回调就会被不断推迟；直到用户“停手”，定时器才有机会真正触发。
+</Typography.Paragraph>
+
+## 二、完整代码
+
+<CodeDiff
+  code={simpleCode}
+  title="最简版 debounce 源码"
+  type="info"
+/>
+
+## 三、能力边界
+
+<Card title="这个版本能做什么" size="small" style={{ marginBottom: '16px' }}>
+  <List
+    dataSource={debounceVersions[0].highlights}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color="green">✓</Tag> {item}
+      </List.Item>
+    )}
+  />
+</Card>
+
+<Card title="还缺少什么" size="small">
+  <List
+    dataSource={debounceVersions[0].limitations}
+    renderItem={(item) => (
+      <List.Item>
+        <Tag color="red">✗</Tag> {item}
+      </List.Item>
+    )}
+  />
+</Card>
+
+## 四、互动演示
+
+<Card title={<span>Live Demo <Tag color="blue">最简版</Tag></span>} style={{ marginTop: '24px' }}>
+  <Typography.Paragraph>
+    在输入框中快速输入，观察“原始触发次数”与“实际执行次数”的差异。你输入得越快，两者的差距就越大。
+  </Typography.Paragraph>
+  <LiveDemo version="simple" />
+</Card>

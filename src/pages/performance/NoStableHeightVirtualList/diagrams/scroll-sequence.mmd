@@ -1,0 +1,33 @@
+sequenceDiagram
+    participant U as 用户
+    participant SC as 滚动容器
+    participant HOOK as useVirtualization
+    participant VM as VirtualList
+    participant LI as ListItem
+    participant RO as ResizeObserver
+
+    U->>SC: 滚动 / 触发 onScroll
+    SC->>HOOK: handleScroll(e)
+    HOOK->>HOOK: 同步读取 scrollTop/clientHeight
+    HOOK->>HOOK: requestAnimationFrame(setState)
+    HOOK->>HOOK: 查 Chunk Map
+    HOOK-->>VM: visibleIndices
+    VM->>VM: positions[dataIdx] 取 top
+    VM->>LI: renderItem(item) + transform: translate3d(0, top, 0)
+    LI->>LI: 内容渲染完成
+    LI->>RO: 监听尺寸变化
+    RO->>LI: 高度变化回调
+    LI->>HOOK: measureItem(index, el)
+    HOOK->>HOOK: 更新 positions + 平移后续项
+    HOOK->>HOOK: measureVersion++
+    HOOK->>HOOK: 重建 Chunk Map
+
+    classDef user fill:#FFF7E6,stroke:#FA8C16,stroke-width:2px,color:#873800
+    classDef sys fill:#E6F7FF,stroke:#1890FF,stroke-width:2px,color:#003A8C
+    classDef hook fill:#F6FFED,stroke:#52C41A,stroke-width:2px,color:#135200
+    classDef render fill:#F9F0FF,stroke:#722ED1,stroke-width:2px,color:#531DAB
+
+    class U user
+    class SC,RO sys
+    class HOOK hook
+    class VM,LI render

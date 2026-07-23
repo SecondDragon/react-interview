@@ -84,11 +84,11 @@ export function VirtualList<T>({
   style,
 }: VirtualListProps<T>) {
   // 1. 初始化尺寸测量引擎
-  const { positions, totalHeight, measureItem } = useSizeMeasurer(data, defaultItemHeight);
+  const { positions, totalHeight, measureVersion, measureItem } = useSizeMeasurer(data, defaultItemHeight);
 
   // 2. 初始化虚拟化计算引擎
   const { visibleIndices, handleScroll, containerRef, scrollTop, viewportHeight } =
-    useVirtualization(positions, { chunkSize, overscan });
+    useVirtualization(positions, { chunkSize, overscan, measureVersion });
 
   // 3. 触底加载逻辑
   const sentinelRef = useRef<HTMLDivElement>(null);

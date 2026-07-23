@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>不定高虚拟列表 · 速查手册</title>
+  <style>
+    :root {
+      --bg: #fefefe;
+      --text: #222;
+      --muted: #666;
+      --accent: #1890ff;
+      --accent-dark: #003a8c;
+      --border: #e0e0e0;
+      --code-bg: #f6f8fa;
+      --warn: #fa8c16;
+      --success: #52c41a;
+      --danger: #f5222d;
+      --font-serif: "Georgia", "Noto Serif CJK SC", "STSong", serif;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      --font-mono: "SF Mono", "Fira Code", "Consolas", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    @media print {
+      body { font-size: 12pt; }
+      .no-print { display: none; }
+      a { text-decoration: none; color: var(--text); }
+    }
+
+    .container {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 48px 32px;
+    }
+
+    header {
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 24px;
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: 32px;
+      font-weight: 700;
+      margin: 0 0 12px;
+      color: var(--accent-dark);
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    h2 {
+      font-family: var(--font-serif);
+      font-size: 22px;
+      font-weight: 600;
+      margin: 40px 0 18px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      color: var(--accent-dark);
+    }
+
+    h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 28px 0 12px;
+      color: var(--text);
+    }
+
+    p {
+      margin: 0 0 14px;
+    }
+
+    ul, ol {
+      margin: 0 0 18px;
+      padding-left: 24px;
+    }
+
+    li { margin-bottom: 6px; }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #d73a49;
+    }
+
+    pre {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.5;
+      background: var(--code-bg);
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 18px 0;
+      border: 1px solid var(--border);
+    }
+
+    pre code {
+      background: transparent;
+      padding: 0;
+      color: #24292e;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin: 20px 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .card h3 { margin-top: 0; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 720px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 12px;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+
+    .tag-blue { background: #e6f7ff; color: var(--accent-dark); }
+    .tag-green { background: #f6ffed; color: #135200; }
+    .tag-orange { background: #fff7e6; color: #873800; }
+    .tag-red { background: #fff1f0; color: #820014; }
+
+    .formula {
+      font-family: var(--font-mono);
+      background: #f0f5ff;
+      border-left: 4px solid var(--accent);
+      padding: 12px 18px;
+      margin: 16px 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .summary {
+      font-size: 16px;
+      background: #f6ffed;
+      border-left: 4px solid var(--success);
+      padding: 16px 20px;
+      border-radius: 0 8px 8px 0;
+      margin: 20px 0;
+    }
+
+    .caution {
+      background: #fff7e6;
+      border-left: 4px solid var(--warn);
+      padding: 12px 18px;
+      border-radius: 0 8px 8px 0;
+      margin: 16px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      text-align: left;
+    }
+
+    th {
+      background: #fafafa;
+      font-weight: 600;
+    }
+
+    footer {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>不定高虚拟列表 · 速查手册</h1>
+      <p class="subtitle">Dynamic Height Virtual List · 核心概念、算法与实现要点</p>
+    </header>
+
+    <div class="summary">
+      <strong>核心策略：</strong>先渲染 → 后测量 → 动态纠偏。每个 item 先用 <code>defaultItemHeight</code> 预估占位，渲染后由 <code>ResizeObserver</code> 监听真实高度，更新位置缓存并平移后续项；同时通过空间分桶把可见项查找从 O(N) 降到近似 O(1)。
+    </div>
+
+    <h2>一、数据结构与状态</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>ItemPosition</h3>
+        <pre><code>{
+  index: number;   // 数据索引
+  top: number;     // 距离容器顶部偏移
+  height: number;   // 真实/预估高度
+  bottom: number;  // top + height
+}</code></pre>
+        <p>单个 item 的位置快照，是整棵“高度树”的最小单元。</p>
+      </div>
+      <div class="card">
+        <h3>useSizeMeasurer 状态</h3>
+        <ul>
+          <li><code>positionsRef</code>：缓存所有 item 位置。</li>
+          <li><code>totalHeight</code>：Spacer 总高度，触发 React 渲染。</li>
+          <li><code>measureVersion</code>：版本号，通知虚拟化引擎重建索引。</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>二、核心算法</h2>
+
+    <h3>1. 高度更新与平移</h3>
+    <div class="formula">
+      pos.height = measuredHeight<br>
+      pos.bottom = pos.top + measuredHeight<br><br>
+      for i = index + 1 .. N:<br>
+      &nbsp;&nbsp;positions[i].top = positions[i-1].bottom<br>
+      &nbsp;&nbsp;positions[i].bottom = positions[i].top + positions[i].height<br><br>
+      totalHeight = positions[N-1].bottom
+    </div>
+
+    <h3>2. 空间分桶（Chunk Map）</h3>
+    <div class="formula">
+      chunkSize = 800<br>
+      startChunk = floor(top / chunkSize)<br>
+      endChunk = floor(bottom / chunkSize)<br><br>
+      for c = startChunk .. endChunk:<br>
+      &nbsp;&nbsp;chunksMap[c].add(dataIdx)<br><br>
+      // 检索：<br>
+      startChunk = floor((scrollTop - overscan) / chunkSize)<br>
+      endChunk = floor((scrollTop + viewportHeight + overscan) / chunkSize)
+    </div>
+
+    <h2>三、组件职责</h2>
+    <table>
+      <tr>
+        <th>文件</th>
+        <th>职责</th>
+        <th>关键 API / 概念</th>
+      </tr>
+      <tr>
+        <td><code>useSizeMeasurer.ts</code></td>
+        <td>测量层：维护位置缓存、处理高度变化、平移后续项</td>
+        <td><code>ResizeObserver</code>、<code>positionsRef</code>、<code>measureVersion</code></td>
+      </tr>
+      <tr>
+        <td><code>useVirtualization.ts</code></td>
+        <td>虚拟化层：建立空间索引、计算可见项</td>
+        <td><code>Chunk Map</code>、<code>overscan</code>、<code>visibleIndices</code></td>
+      </tr>
+      <tr>
+        <td><code>VirtualList.tsx</code></td>
+        <td>渲染层：Spacer、绝对定位容器、ListItem、触底哨兵</td>
+        <td><code>translate3d</code>、<code>IntersectionObserver</code></td>
+      </tr>
+      <tr>
+        <td><code>index.tsx</code></td>
+        <td>数据层：提供数据、渲染函数、触底加载逻辑</td>
+        <td><code>data</code>、<code>renderItem</code>、<code>onEndReached</code></td>
+      </tr>
+    </table>
+
+    <h2>四、关键代码片段</h2>
+
+    <h3>ResizeObserver 监听与测量</h3>
+    <pre><code>useEffect(() => {
+  const el = itemRef.current;
+  if (!el) return;
+
+  const observer = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.target === el) {
+        onMeasure(index, el);
+      }
+    }
+  });
+
+  observer.observe(el);
+  return () => observer.disconnect();
+}, [index, onMeasure]);</code></pre>
+
+    <h3>只更新后续项的平移算法</h3>
+    <pre><code>const updateItemHeight = (index, height) => {
+  const pos = positionsRef.current[index];
+  if (!pos || pos.height === height) return;
+
+  pos.height = height;
+  pos.bottom = pos.top + height;
+
+  for (let i = index + 1; i < positionsRef.current.length; i++) {
+    positionsRef.current[i].top = positionsRef.current[i - 1].bottom;
+    positionsRef.current[i].bottom =
+      positionsRef.current[i].top + positionsRef.current[i].height;
+  }
+
+  const last = positionsRef.current[positionsRef.current.length - 1];
+  setTotalHeight(last ? last.bottom : 0);
+  setMeasureVersion(v => v + 1);
+};</code></pre>
+
+    <h3>空间分桶检索</h3>
+    <pre><code>const visibleIndices = useMemo(() => {
+  if (viewportHeight === 0) return [];
+
+  const startChunk = Math.floor((scrollTop - overscan) / chunkSize);
+  const endChunk = Math.floor((scrollTop + viewportHeight + overscan) / chunkSize);
+
+  const indicesSet = new Set&lt;number&gt;();
+  for (let c = startChunk; c <= endChunk; c++) {
+    const chunk = chunksMap.get(c);
+    if (chunk) chunk.forEach(idx => indicesSet.add(idx));
+  }
+
+  return Array.from(indicesSet).sort((a, b) => a - b);
+}, [chunksMap, scrollTop, viewportHeight, overscan, chunkSize]);</code></pre>
+
+    <h2>五、性能优化清单</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>计算层</h3>
+        <ul>
+          <li><span class="tag tag-green">O(1)</span>Chunk Map 空间分桶，替代全量遍历</li>
+          <li><span class="tag tag-green">增量</span>高度变化只平移后续项</li>
+          <li><span class="tag tag-green">版本号</span>measureVersion 触发最小范围重建</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>渲染层</h3>
+        <ul>
+          <li><span class="tag tag-blue">GPU</span>translate3d 合成层定位</li>
+          <li><span class="tag tag-blue">裁剪</span>只渲染可见 + overscan 项</li>
+          <li><span class="tag tag-blue">稳定</span>Spacer 撑开真实滚动高度</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>事件层</h3>
+        <ul>
+          <li><span class="tag tag-orange">rAF</span>requestAnimationFrame 节流滚动</li>
+          <li><span class="tag tag-orange">快照</span>同步读取 scrollTop，避免事件回收空指针</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>加载层</h3>
+        <ul>
+          <li><span class="tag tag-red">IO</span>IntersectionObserver 监听触底哨兵</li>
+          <li><span class="tag tag-red">加锁</span>isLoading / hasMore 防并发请求</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>六、生产注意</h2>
+    <div class="caution">
+      <ul style="margin: 0;">
+        <li><strong>预估高度：</strong>贴近真实值可减少首屏修正次数。</li>
+        <li><strong>Key 选择：</strong>支持删除/排序时改用稳定唯一 id，而非索引。</li>
+        <li><strong>浏览器兼容：</strong>ResizeObserver / IntersectionObserver 需要 polyfill 或 SSR 兜底。</li>
+        <li><strong>大数据量：</strong>positions 随数据线性增长，可考虑只缓存已测量项。</li>
+        <li><strong>图片未知：</strong>最好由后端返回图片尺寸，减少 ResizeObserver 修正。</li>
+      </ul>
+    </div>
+
+    <h2>七、面试金句</h2>
+    <div class="card">
+      <ul>
+        <li>“不定高虚拟列表的本质矛盾是：滚动定位需要知道高度，但高度往往在渲染后才能拿到。”</li>
+        <li>“我们用‘预估高度 + ResizeObserver 事后纠偏’来化解这个矛盾，先让列表能滚，再让它滚得准。”</li>
+        <li>“空间分桶把纵向空间按 800px 分桶，检索复杂度从 O(N) 降到近似 O(1)。”</li>
+        <li>“用 translate3d 把定位从 Layout 层下放到 Composite 层，只做位图移动，不重新布局。”</li>
+      </ul>
+    </div>
+
+    <footer>
+      <p>对应源码：src/pages/performance/NoStableHeightVirtualList/</p>
+      <p>生成时间：2026-07-20 · 供面试复习与快速查阅使用</p>
+    </footer>
+  </div>
+</body>
+</html>

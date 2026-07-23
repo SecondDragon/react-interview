@@ -1,6 +1,9 @@
 import { defineConfig, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import mdx from '@mdx-js/rollup';
+import remarkGfm from 'remark-gfm';
+import remarkDirective from 'remark-directive';
+import rehypeSlug from 'rehype-slug';
 import path from 'path';
 
 /**
@@ -103,6 +106,8 @@ export default defineConfig({
     }),
     mdx({
       providerImportSource: '@mdx-js/react',
+      remarkPlugins: [remarkGfm, remarkDirective],
+      rehypePlugins: [rehypeSlug],
     }),
     mockSSEPlugin(),
   ],
