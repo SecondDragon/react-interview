@@ -1,0 +1,6 @@
+flowchart TD
+  A[资源需要验证] --> B{是否有 ETag?}
+  B -->|是| C[使用 If-None-Match 校验]
+  B -->|否| D[使用 If-Modified-Since 校验]
+  C --> E[优先级更高，内容指纹]
+  D --> F[秒级时间戳，可能误判]

@@ -1,0 +1,124 @@
+import { Card, Table, Typography } from 'antd';
+import CodeDiff from '@/components/CodeDiff';
+import MermaidViewer from '@/components/MermaidViewer';
+import HttpCacheLiveDemo from './LiveDemo';
+import InterviewQA from './InterviewQA';
+import httpCacheFlow from './diagrams/http-cache-flow.mmd?raw';
+import strongVsNegotiate from './diagrams/strong-vs-negotiate.mmd?raw';
+import etagVsLastModified from './diagrams/etag-vs-last-modified.mmd?raw';
+import cacheHeadersBad from './demos/cache-headers.bad.conf?raw';
+import cacheHeadersGood from './demos/cache-headers.good.conf?raw';
+import etagBad from './demos/etag-implementation.bad.cjs?raw';
+import etagGood from './demos/etag-implementation.good.cjs?raw';
+import {
+  directives,
+  directivesColumns,
+  comparisonData,
+  comparisonColumns,
+  interviewQuestions,
+} from './data';
+
+<Typography.Title level={2}>HTTP 缓存机制</Typography.Title>
+
+<Typography.Paragraph type="secondary">
+  HTTP 缓存是浏览器缓存体系中最核心的一层。它分为强缓存和协商缓存：强缓存命中时浏览器不发请求，协商缓存命中时浏览器发请求但服务器只返回 304。
+</Typography.Paragraph>
+
+<Card title="一、HTTP 缓存完整决策流程" style={{ marginBottom: 24 }}>
+  <MermaidViewer source={httpCacheFlow} />
+</Card>
+
+<Card title="二、强缓存" style={{ marginBottom: 24 }}>
+  强缓存由浏览器根据响应头自主判断，命中后直接从本地读取资源，不发送网络请求。
+
+  ## 2.1 Expires
+
+  `Expires` 是 HTTP/1.0 的头部，指定资源的绝对过期时间。它的缺点是依赖客户端本地时钟，如果用户修改了系统时间，缓存行为就会异常。
+
+  ## 2.2 Cache-Control
+
+  `Cache-Control` 是 HTTP/1.1 引入的强缓存头部，优先级高于 `Expires`。常见指令如下：
+
+  <Table
+    dataSource={directives}
+    columns={directivesColumns}
+    pagination={false}
+    bordered
+    rowKey="key"
+  />
+
+  ## 2.3 刷新行为对强缓存的影响
+
+  - **地址栏回车 / 正常跳转**：按正常缓存策略处理。
+  - **F5 / 点击刷新按钮**：强缓存失效，但协商缓存仍可能命中。
+  - **Ctrl+F5 / Cmd+Shift+R**：强制禁用所有缓存，重新请求完整资源。
+</Card>
+
+<Card title="三、协商缓存" style={{ marginBottom: 24 }}>
+  强缓存失效后，浏览器会携带验证字段向服务器确认资源是否变化。
+
+  ## 3.1 Last-Modified / If-Modified-Since
+
+  服务器在响应中返回 `Last-Modified`，浏览器再次请求时携带 `If-Modified-Since`。如果资源在该时间后未修改，服务器返回 304。
+
+  缺陷：
+  - 秒级精度，1 秒内多次修改无法感知。
+  - 文件内容未变但修改时间变化时，会误返回 200。
+
+  ## 3.2 ETag / If-None-Match
+
+  `ETag` 是服务器为资源生成的唯一标识（通常是内容哈希）。浏览器再次请求时携带 `If-None-Match`，服务器比对后决定是否返回 304。
+
+  `ETag` 优先级高于 `Last-Modified`，因为它直接反映内容变化。
+
+  <MermaidViewer source={etagVsLastModified} />
+
+  ## 3.3 ETag 实现对比
+
+  <CodeDiff
+    oldValue={etagBad}
+    newValue={etagGood}
+    leftTitle="❌ 基于路径的 ETag"
+    rightTitle="✅ 基于内容哈希的 ETag"
+    type="error"
+    hideDiffMarkers={true}
+    language="javascript"
+  />
+</Card>
+
+<Card title="四、强缓存 vs 协商缓存" style={{ marginBottom: 24 }}>
+  <MermaidViewer source={strongVsNegotiate} />
+
+  <Table
+    dataSource={comparisonData}
+    columns={comparisonColumns}
+    pagination={false}
+    bordered
+    rowKey="key"
+    style={{ marginTop: 24 }}
+  />
+</Card>
+
+<Card title="五、缓存响应头配置对比" style={{ marginBottom: 24 }}>
+  以下 Nginx 配置展示了静态资源缓存的常见错误与正确写法：
+
+  <CodeDiff
+    oldValue={cacheHeadersBad}
+    newValue={cacheHeadersGood}
+    leftTitle="❌ 反面教材"
+    rightTitle="✅ 最佳实践"
+    type="error"
+    hideDiffMarkers={true}
+    language="nginx"
+  />
+</Card>
+
+<Card title="六、互动演示：缓存命中模拟器" style={{ marginBottom: 24, border: '2px solid #1890ff' }}>
+  通过下方的模拟器观察不同响应头与用户操作下的缓存行为：
+
+  <HttpCacheLiveDemo />
+</Card>
+
+<Card title="七、面试高频考点" style={{ background: '#f0f5ff' }}>
+  <InterviewQA questions={interviewQuestions} />
+</Card>

@@ -123,6 +123,10 @@ const SSEReconnectEnhanced = lazy(() => import('../pages/network/sse-reconnect-e
 const SSEReconnectHybrid = lazy(() => import('../pages/network/sse-reconnect-hybrid'));
 const SSEBackendStorage = lazy(() => import('../pages/network/sse-backend-storage'));
 const WebSocketDemo = lazy(() => import('../pages/network/websocket-demo'));
+const BrowserCacheOverview = lazy(
+  () => import('../pages/network/browser-cache/overview/index')
+);
+const HttpCachePage = lazy(() => import('../pages/network/browser-cache/http-cache/index'));
 const StyleComponentsCSSOMPage = lazy(
   () => import('../pages/qiankun/styled-components-cssom/index')
 );
@@ -650,6 +654,23 @@ export const dashboardRoutes: RouteConfig[] = [
     label: '网络请求专题',
     icon: <GlobalOutlined />,
     children: [
+      {
+        path: '/dashboard/network/browser-cache',
+        label: '浏览器缓存机制',
+        icon: <GlobalOutlined />,
+        children: [
+          {
+            path: '/dashboard/network/browser-cache/overview',
+            label: '缓存分层概览',
+            element: <BrowserCacheOverview />,
+          },
+          {
+            path: '/dashboard/network/browser-cache/http-cache',
+            label: 'HTTP 缓存',
+            element: <HttpCachePage />,
+          },
+        ],
+      },
       {
         path: '/dashboard/network/silent-refresh',
         label: '无感刷新',

@@ -1,0 +1,8 @@
+flowchart LR
+  subgraph 强缓存["强缓存（本地决策）"]
+    A1[Expires] --> A2[Cache-Control]
+  end
+  subgraph 协商缓存["协商缓存（需服务器确认）"]
+    B1[Last-Modified / If-Modified-Since] --> B2[ETag / If-None-Match]
+  end
+  强缓存 -->|失效后进入| 协商缓存

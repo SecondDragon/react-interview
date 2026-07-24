@@ -1,0 +1,34 @@
+import { Card, Table, Typography } from 'antd';
+import MermaidViewer from '@/components/MermaidViewer';
+import CacheLayersDemo from './CacheLayersDemo';
+import WhyCacheList from './WhyCacheList';
+import cacheLayersFlow from './diagrams/cache-layers.mmd?raw';
+import { cacheLayers, layersColumns, whyCacheList } from './data';
+
+<Typography.Title level={2}>浏览器缓存机制概览</Typography.Title>
+
+<Typography.Paragraph type="secondary">
+  浏览器缓存是前端性能优化与面试中的高频考点。理解缓存分层、命中顺序以及每层的特点，才能在工程实践中做出合理的缓存决策。
+</Typography.Paragraph>
+
+<Card title="一、为什么需要缓存" style={{ marginBottom: 24 }}>
+  <WhyCacheList items={whyCacheList} />
+</Card>
+
+<Card title="二、浏览器缓存分层" style={{ marginBottom: 24 }}>
+  当浏览器需要某个资源时，会按照以下优先级逐层查找：
+
+  <MermaidViewer source={cacheLayersFlow} />
+
+  <CacheLayersDemo layers={cacheLayers} />
+</Card>
+
+<Card title="三、各层缓存对比">
+  <Table
+    dataSource={cacheLayers}
+    columns={layersColumns}
+    pagination={false}
+    bordered
+    rowKey="key"
+  />
+</Card>

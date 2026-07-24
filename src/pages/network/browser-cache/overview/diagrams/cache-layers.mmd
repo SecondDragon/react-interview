@@ -1,0 +1,10 @@
+flowchart TD
+  A[浏览器发起请求] --> B{Service Worker 是否拦截?}
+  B -->|命中| C[返回 Service Worker Cache]
+  B -->|未命中| D{Memory Cache 命中?}
+  D -->|命中| E[返回 Memory Cache]
+  D -->|未命中| F{Disk Cache 命中?}
+  F -->|命中| G[返回 Disk Cache]
+  F -->|未命中| H{Push Cache 命中?}
+  H -->|命中| I[返回 Push Cache]
+  H -->|未命中| J[发起 HTTP 网络请求]

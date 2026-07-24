@@ -1,0 +1,8 @@
+flowchart TD
+  A[浏览器发起请求] --> B{强缓存是否有效?}
+  B -->|有效| C[200 from memory/disk cache]
+  B -->|无效| D{请求是否携带验证字段?}
+  D -->|否| E[200 完整网络请求]
+  D -->|是| F{服务器校验 ETag / Last-Modified}
+  F -->|未变化| G[304 Not Modified]
+  F -->|已变化| H[200 返回新响应体]
